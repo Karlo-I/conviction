@@ -1,0 +1,21 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Database — runtime artifact, never commit
+conviction.db
+
+# Environment variables — contains secrets
+.env
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+venv/
+notes/
+readme_old/
