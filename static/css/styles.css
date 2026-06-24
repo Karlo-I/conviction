@@ -1,0 +1,29 @@
+/* static/css/styles.css */
+/* Conviction: base styles — expanded in Week 4 polish pass */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: system-ui, sans-serif;
+    line-height: 1.6;
+    padding: 1rem;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+}
+
+.flash {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.flash.error { background: #fee; color: #c00; }
+.flash.success { background: #efe; color: #060; }

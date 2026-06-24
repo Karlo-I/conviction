@@ -4,10 +4,11 @@
 # Logic, decisions, and direction are the author's own.
 
 import click
+import models
 import os
 import sqlite3
-from flask import current_app, Flask, render_template, redirect, url_for, session, g
-
+from flask import current_app, flash, Flask, g, render_template, redirect, request, session, url_for
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -28,7 +29,8 @@ def get_db():
     return g.db
 
 
-# runs automatically after every request to close the database connection if one was opened
+# Runs automatically after every request to close the database connection if one was opened
+# Registered via @app.teardown_appcontext; connects to get_db and Flask's rquest lifecycle
 @app.teardown_appcontext
 def close_db(error):
     db = g.pop('db', None)
@@ -37,7 +39,7 @@ def close_db(error):
 
 
 # CLI command to initialise the database by executing schema.sql
-# Run with 'flask --app app init-db' in terminal (noted in notes_app.py.md as reference)
+# Run once with 'flask --app app init-db' in terminal; connects to schema.sql and get_db
 @app.cli.command('init-db')
 def init_db():
     db = get_db()
@@ -46,19 +48,78 @@ def init_db():
     click.echo('Database initialised.')
 
 
-# Routes
+## ROUTES ##
+
+# Renders the landing page
+# Passes no data to the template - index.html extends layout.html directly
 @app.route('/')
 def index():
     return render_template('index.html')
 
+
+# Registers a new user: validates from input, hashes password, creates user and session
+# Calls models.create_user and get_db; on success writes to session and redirects to index
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        consent = request.form.get('consent')
+
+        if not username or not password:
+            flash('Username and password are required.', 'error')
+            return render_template('register.html')
+        
+        if password != confirm_password:
+            flash('Password do not match. Please try again.', 'error')
+            return render_template('register.html')
+        
+        if not consent:
+            flash('You must accept the terms to register.', 'error')
+            return render_template('register.html')
+        
+        password_hash = generate_password_hash(password)
+        user = models.create_user(get_db(), username, password_hash)
+
+        if user is None:
+            flash('Username is already taken.', 'error')
+            return render_template('register.html')
+        
+        session['user_id'] = user['id']
+        session['username'] = user['username']
+        return redirect(url_for('index'))
+
     return render_template('register.html')
 
+
+# Authenticates an existing user: checks username and password agaisnt the database
+# Calls models.get_user_by_username and get_db; on success writes to session and redirects to index
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+
+        if not username or not password:
+            flash('Username and password are required.', 'error')
+            return render_template('login.html')
+        
+        user = models.get_user_by_username(get_db(), username)
+
+        if user is None or not check_password_hash(user['password_hash'], password):
+            flash('Incorrect username or password.', 'error')
+            return render_template('login.html')
+        
+        session['user_id'] = user['id']
+        session['userame'] = user['username']
+        return redirect(url_for('index'))
+    
     return render_template('login.html')
 
+
+# Clears the session cookie, effectively logging the user out
+# No database interaction - session state lives in the cookie, not the database
 @app.route('/logout')
 def logout():
     session.clear()
