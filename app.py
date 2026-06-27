@@ -144,6 +144,7 @@ def lens(slug):
         issue_slug = row['slug']
         if issue_slug not in issues:
             issues[issue_slug] = {
+                'issue_id': row['id'],
                 'title': row['title'],
                 'description': row['description'],
                 'indicator_name': row['indicator_name'],
@@ -160,6 +161,32 @@ def lens(slug):
     return render_template('lens.html', lens=lens, issues=issues)
     
 
+# Handles token spend on an issue - checks balance, writes ledger, redirects to lens
+# Calls models.get_token_balance, models.add_token_transactions; requires login
+@app.route('/spend', methods=['POST'])
+def spend():
+    if 'user_id' not in session:
+        flash('You need to be logged in to spend tokens.', 'error')
+        return redirect(url_for('login'))
+    
+    db = get_db()
+    user_id = session['user_id']
+    issue_id = request.form.get('issue_id', type=int)
+    lens_slug = request.form.get('lens_slug', '')
+
+    if not issue_id or not lens_slug:
+        flash('Invalid request.', 'error')
+        return redirect(url_for('index'))
+    
+    balance = models.get_token_balance(db, user_id)
+
+    if balance < 1:
+        flash('Insufficient tokens', 'error')
+        return redirect(url_for('lens', slug=lens_slug))
+    
+    models.add_token_transactions(db, user_id, -1, 'spend', issue_id=issue_id)
+    flash('Token spent.', 'success')
+    return redirect(url_for('lens', slug=lens_slug))
 
 # IMPORTANT: Delete these two lines when the project moves to PROD
 if __name__ == '__main__':

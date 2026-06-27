@@ -12,6 +12,16 @@
         <h2>{{ issue.title }}</h2>
         <p>{{ issue.description }}</p>
 
+        {% if session.user_id %}
+        <form method="POST" action="{{ url_for('spend') }}">
+            <input type="hidden" name="issue_id" value="{{ issue.issue_id }}">
+            <input type="hidden" name="lens_slug" value="{{ lens.slug }}">
+            <button type="submit">Spend token</button>
+        </form>
+        {% else %}
+        <a href="{{ url_for('login') }}">Log in to spend tokens</a>
+        {% endif %}
+
         {% if issue.data_points %}
         <div class="data-table">
             <h3>{{ issue.indicator_name }} ({{ issue.unit }})</h3>
@@ -39,5 +49,8 @@
         {% endif %}
     </div>
     {% endfor %}
+
+
+
 </div>
 {% endblock %}
