@@ -33,7 +33,8 @@ CREATE TABLE IF NOT EXISTS indicators (
     issue_id INTEGER NOT NULL REFERENCES issues(id),
     name TEXT NOT NULL,
     source TEXT,
-    unit TEXT
+    unit TEXT,
+    UNIQUE(issue_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS data_points (
@@ -43,7 +44,8 @@ CREATE TABLE IF NOT EXISTS data_points (
     year INTEGER NOT NULL,
     -- REAL is a floating point number, a value type in SQLite
     value REAL NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(indicator_id, country_code, year)
 );
 
 -- ============================================================

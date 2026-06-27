@@ -1,0 +1,43 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ lens.title }} — Conviction{% endblock %}
+
+{% block content %}
+<div class="lens-container">
+    <h1>{{ lens.title }}</h1>
+    <p>{{ lens.description }}</p>
+
+    {% for slug, issue in issues.items() %}
+    <div class="issue">
+        <h2>{{ issue.title }}</h2>
+        <p>{{ issue.description }}</p>
+
+        {% if issue.data_points %}
+        <div class="data-table">
+            <h3>{{ issue.indicator_name }} ({{ issue.unit }})</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Country</th>
+                        <th>Year</th>
+                        <th>{{ issue.indicator_name }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for point in issue.data_points %}
+                    <tr>
+                        <td>{{ point.country }}</td>
+                        <td>{{ point.year }}</td>
+                        <td>{{ point.value }}{{ issue.unit }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>No data available for this issue yet.</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

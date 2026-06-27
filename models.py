@@ -182,7 +182,7 @@ def can_retake_quiz(db, user_id, retake_days=90):
     return delta.days >= retake_days
 
 
-## PLATFORM CONFIG #
+## PLATFORM CONFIG ##
 
 # Return a single value from platform_config by key, or None if not found
 # Called throughout app.py and models.py wherever behaviour is governed by platform_config rows as shown in schemas.sql
@@ -192,3 +192,29 @@ def get_config(db, key):
         'SELECT value FROM platform_config WHERE key = ?', (key,)
     ).fetchone()
     return result['value'] if result else None
+
+## LENS ##
+
+# Return the lens row matching the given slug, or None if not found.
+# Called by app.py lens route; slug comes from the URL parameter.
+def get_lens_by_slug(db, slug):
+    return db.execute(
+        'SELECT * FROM lenses WHERE slug = ?', (slug,)
+    ).fetchone()
+
+
+# Return all issues for a lens, each joined with its indicators and latest data points.
+# Called by app.py lens route; feeds lens.html with the data structure for rendering.
+def get_issues_by_lens(db, lens_id):
+    return db.execute(
+        '''
+        SELECT i.*, ind.name as indicator_name, ind.unit,
+            dp.country_code, dp.year, dp.value
+        FROM issues i
+        LEFT JOIN indicators ind ON ind.issue_id = i.id
+        LEFT JOIN data_points dp ON dp.indicator_id = ind.id
+        WHERE i.lens_id = ?
+        ORDER BY i.id, dp.value DESC
+        ''',
+        (lens_id,)
+    ).fetchall()

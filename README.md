@@ -1,6 +1,6 @@
 # Conviction
 ### CS50x Final Project — Living Project Brief
-**Last Updated:** June 23, 2026 (rev 10)
+**Last Updated:** June 25, 2026 (rev 12)
 **Status:** Planning / Pre-build
 
 ---
@@ -22,8 +22,6 @@ Users take a short diagnostic quiz that personalises which lens they see first, 
 
 The platform is designed for people who already sense something is wrong and want to understand the mechanism — and made accessible enough that people who don't yet see the problem can be brought in through the quiz. It names no individual actors. It presents mechanisms, evidence chains, and sourced data and lets users draw their own conclusions.
 
-The project is deliberately non-western in its data sourcing. The extraction pattern it documents is global — it just manifests differently in Nairobi, Manila, Oslo, and Penticton.
-
 ---
 
 ## The Thesis
@@ -32,7 +30,7 @@ The systems that govern how people eat, live, and move are optimised for extract
 
 The root problem is not individual greed or moral failure. It is that certain systems select for and reward short-term extraction, externalised harm, and regulatory capture — and will continue to do so regardless of who occupies positions of power within them. Change the people; the system produces new versions of the same behaviour. Change the rules; the behaviour changes. This platform is about the rules.
 
-The platform names no individuals and no corporations. It classifies mechanisms — financial capture, regulatory arbitrage, externalised cost, information asymmetry — and presents the evidence chains that demonstrate those mechanisms operating. The evidence speaks. Users conclude.
+The platform classifies mechanisms — financial capture, regulatory arbitrage, externalised cost, information asymmetry — and presents the evidence chains that demonstrate those mechanisms operating. The evidence speaks. Users conclude.
 
 ---
 
@@ -374,7 +372,14 @@ project/
 ├── forces.py               # Forces layer logic — cross-lens mechanism queries
 ├── strava.py               # Strava OAuth flow and activity reward logic (post-submission)
 ├── schema.sql              # SQL schema (run once to initialise DB)
-├── seed.py                 # Script to load real data from APIs/CSVs
+├── seed.py                 # Seeds the database with real global data. Runs outside Flask's
+                            # request context with its own SQLite connection — independent of
+                            # app.py's get_db. Currently seeds the food lens with one issue
+                            # (ultra-processed-food), one indicator (adult obesity rate), and
+                            # real WHO GHO API data points for 15 countries across Africa, Asia,
+                            # Latin America, and Western regions. WHO API returns ISO 3166-1
+                            # alpha-3 country codes — conversion to alpha-2 for Leaflet.js
+                            # handled at the heatmap endpoint in Week 3, not here.
 ├── seed_forces.py          # Script to seed forces and force_issue_links data
 ├── requirements.txt        # Python dependencies
 ├── README.md               # This file
@@ -437,7 +442,7 @@ The digest is then displayed to all peer validators on `validate.html`. The AI r
 
 | Week | Dates | Goal | Done? |
 |---|---|---|---|
-| 1 | June 19–25 | Schema init, Flask skeleton, auth (register/login), first dataset seeded | ☐ |
+| 1 | June 19–25 | Schema init, Flask skeleton, auth (register/login), first dataset seeded | ✓ |
 | 2 | June 26–Jul 2 | Three lenses with real data, token spend system, diagnostic quiz | ☐ |
 | 3 | Jul 3–9 | Heatmap, contribution flow, agent.py digest, peer validation, token earning | ☐ |
 | 4 | Jul 10–16 | Polish, sharing mechanic, README finalise, video, deploy to Render, submit | ☐ |
@@ -455,6 +460,10 @@ The digest is then displayed to all peer validators on `validate.html`. The AI r
 | Forces layer | Lobbying expenditure, regulatory change timelines, industry funding of research | investigative journalism databases, academic papers, government disclosure records | Manual curation → JSON seed data |
 
 **Note on reference sources:** WHO, World Bank, FAO, and Our World in Data are used as reference points for comparison — not as golden sources or arbiters of truth. Each has documented institutional context, funding relationships, and coverage limitations recorded in the `sources` table. Where user-contributed evidence diverges from these sources, the divergence is surfaced explicitly in the AI digest rather than resolved in favour of the institutional source.
+
+**Food lens thesis:** The argument is not about raw price comparison across countries — everyone already knows food costs more in Oslo than Nairobi. The argument is about affordability relative to income, and what that affordability gap does to food choices. In many lower-income countries, ultra-processed food has become cheaper relative to local wages than fresh whole food — not because it is inherently cheap, but because it has been made artificially cheap through agricultural subsidies, supply chain consolidation, and regulatory environments shaped by the food industry. The result is that poor nutrition has become the economically rational choice for billions of people. That is not individual failure. It is a designed outcome. The health consequences — obesity, diabetes, cardiovascular disease — are measurable and global. The food lens surfaces the mechanism behind the affordability gap, not just the gap itself.
+
+**Mobility lens thesis:** Car dependency is not a natural outcome of human preference. It is an engineered outcome produced by decades of infrastructure investment decisions, zoning laws, suburban planning models, and the systematic defunding of public transit — many of which were actively shaped by automotive and oil industry interests. The person driving two hours a day in traffic is not expressing a preference; they are trapped in a system that left them no viable alternative. The measurable consequences include cardiovascular disease from sedentary commuting, respiratory illness from vehicle emissions, financial stress from car ownership costs, urban heat islands, pedestrian death rates, and social isolation from built environments designed around vehicles rather than people. Counter-evidence is built into the lens: cycling infrastructure investment in Amsterdam, Copenhagen, Bogotá, and Nairobi demonstrates that modal shift happens when the infrastructure exists. The data shows both the damage and the proof that alternatives work.
 
 **Note on forces data:** The forces layer is community-built, not editor-curated. Users submit force claims via the contribution flow — these go through an elevated peer validation threshold (`force_approval_threshold` in `platform_config`) before being elevated into the `forces` and `force_issue_links` tables. The platform founder seeds two or three initial force entries during user testing to establish the quality bar. After that, the community builds the layer. `seed_forces.py` handles the initial seed only.
 
@@ -474,6 +483,8 @@ The digest is then displayed to all peer validators on `validate.html`. The AI r
 - **Sharing mechanic gaming:** `shares` table tracks daily count per user. Python checks against `platform_config.max_shares_per_day` before awarding tokens.
 - **Token balance drift:** Ledger is always written first inside a database transaction. Balance derived from ledger on any discrepancy.
 - **AI agent cost at scale:** Negligible at low traffic. `platform_config.max_contributions_per_day` rate-limits submissions without a code deploy.
+- **Validator read-only limitation:** Validators can read the AI digest and the contributor's submitted evidence, but cannot add, annotate, or counter-submit evidence of their own. A validator who knows of a relevant source has no mechanism to surface it. This is a deliberate scope decision for MVP. Acknowledged explicitly in `how_it_works.html` — "validators evaluate evidence submitted with the contribution; they cannot add new evidence at this stage." A `contribution_comments` table is scoped for post-submission.
+- **Alpha-3 vs alpha-2 country codes:** WHO API returns ISO 3166-1 alpha-3 codes (e.g. `KEN`, `PHL`). `data_points` stores these natively. Leaflet.js requires alpha-2 (e.g. `KE`, `PH`) for map rendering. Conversion handled via a lookup dictionary in the heatmap endpoint in `app.py` during Week 3 — no schema change required.
 - **Strava OAuth complexity:** Deferred to post-submission. Schema ready; `strava.py` not built.
 
 ---

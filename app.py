@@ -126,6 +126,41 @@ def logout():
     return redirect(url_for('index'))
 
 
+# Renders the lens for a given slug (food, housing, mobility)
+# Calls models.get_lens_by_slug and models.get_issues_by_lens; passes data to lens.html
+@app.route('/lens/<slug>')
+def lens(slug):
+    db = get_db()
+    lens = models.get_lens_by_slug(db, slug)
+
+    if lens is None:
+        return redirect(url_for('index'))
+    
+    rows = models.get_issues_by_lens(db, lens['id'])
+
+    # Group data points by issue
+    issues = {}
+    for row in rows:
+        issue_slug = row['slug']
+        if issue_slug not in issues:
+            issues[issue_slug] = {
+                'title': row['title'],
+                'description': row['description'],
+                'indicator_name': row['indicator_name'],
+                'unit': row['unit'],
+                'data_points': []
+            }
+        if row['country_code']:
+            issues[issue_slug]['data_points'].append({
+                'country': row['country_code'],
+                'year': row['year'],
+                'value': round(row['value'], 1)
+            })
+    
+    return render_template('lens.html', lens=lens, issues=issues)
+    
+
+
 # IMPORTANT: Delete these two lines when the project moves to PROD
 if __name__ == '__main__':
     app.run(debug=True)
