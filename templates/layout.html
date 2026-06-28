@@ -13,6 +13,7 @@
         <div>
             {% if session.user_id %}
                 <span>{{ session.username }}</span>
+                <a href="{{ url_for('quiz_route') }}">Quiz</a>
                 <a href="{{ url_for('logout') }}">Log out</a>
             {% else %}
                 <a href="{{ url_for('register') }}">Register</a>

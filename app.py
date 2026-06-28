@@ -6,11 +6,13 @@
 import click
 import models
 import os
+import quiz
 import sqlite3
 from flask import current_app, flash, Flask, g, render_template, redirect, request, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+app.jinja_env.globals['enumerate'] = enumerate
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 DATABASE = 'conviction.db'
 
@@ -187,6 +189,42 @@ def spend():
     models.add_token_transactions(db, user_id, -1, 'spend', issue_id=issue_id)
     flash('Token spent.', 'success')
     return redirect(url_for('lens', slug=lens_slug))
+
+
+# Renders quiz on GET, scores responses and redirects to recommend lens on POST
+# Calls quiz.get_questions, quiz.score_responses, models.save_quiz_response, models.can_retake_quiz
+@app.route('/quiz', methods=['GET', 'POST'])
+def quiz_route():
+    if 'user_id' not in session:
+        flash('You need to be logged in to take the quiz.', 'error')
+        return redirect(url_for('login'))
+    
+    db = get_db()
+    user_id = session['user_id']
+
+    retake_days = int(models.get_config(db, 'quiz_retake_days'))
+    if not models.can_retake_quiz(db, user_id, retake_days=retake_days):
+        flash(f'You can retake the quiz every {retake_days} days.', 'error')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        responses = {q['id']: request.form.get(q['id']) for q in quiz.get_questions()}
+
+        if any(v is None for v in responses.values()):
+            flash('Please answer all questions.', 'error')
+            return render_template('quiz.html', questions=quiz.get_questions())
+        
+        recommended_slug = quiz.score_response(responses)
+
+        lens = models.get_lens_by_slug(db, recommended_slug)
+        models.save_quiz_response(db, user_id, responses, lens['id'])
+
+        session['recommended_lens'] = recommended_slug
+        flash(f'Based on your answers, we recommend starting with the {lens["title"]} lens.', 'success')
+        return redirect(url_for('lens', slug=recommended_slug))
+    
+    return render_template('quiz.html', questions=quiz.get_questions())
+
 
 # IMPORTANT: Delete these two lines when the project moves to PROD
 if __name__ == '__main__':

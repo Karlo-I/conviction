@@ -193,6 +193,7 @@ def get_config(db, key):
     ).fetchone()
     return result['value'] if result else None
 
+
 ## LENS ##
 
 # Return the lens row matching the given slug, or None if not found.

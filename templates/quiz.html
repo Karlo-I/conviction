@@ -1,0 +1,26 @@
+{% extends 'layout.html' %}
+
+{% block title %}Quiz — Conviction{% endblock %}
+
+{% block content %}
+<div class="quiz-container">
+    <h1>What do you feel most directly?</h1>
+    <p>Five questions. Your answers determine where you start — you can explore all three lenses from there.</p>
+
+    <form method="POST" action="{{ url_for('quiz_route') }}">
+        {% for question in questions %}
+        <div class="quiz-question">
+            <p>{{ loop.index }}. {{ question.text }}</p>
+            {% for i, option in enumerate(question.options) %}
+            <label>
+                <input type="radio" name="{{ question.id }}" value="{{ i }}" required>
+                {{ option.text }}
+            </label>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <button type="submit">See my result</button>
+    </form>
+</div>
+{% endblock %}
