@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 
-{% block title %}Quiz — Conviction{% endblock %}
+{% block title %}Quiz{% endblock %}
 
 {% block content %}
 <div class="quiz-container">
@@ -8,12 +8,14 @@
     <p>Five questions. Your answers determine where you start — you can explore all three lenses from there.</p>
 
     <form method="POST" action="{{ url_for('quiz_route') }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
         {% for question in questions %}
         <div class="quiz-question">
             <p>{{ loop.index }}. {{ question.text }}</p>
             {% for i, option in enumerate(question.options) %}
-            <label>
-                <input type="radio" name="{{ question.id }}" value="{{ i }}" required>
+            <label for="{{ question.id }}_opt{{ i }}">
+                <input type="radio" id="{{ question.id }}_opt{{ i }}" name="{{ question.id }}" value="{{ i }}" required>
                 {{ option.text }}
             </label>
             {% endfor %}

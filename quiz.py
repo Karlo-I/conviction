@@ -63,9 +63,10 @@ QUIZ_QUESTIONS = [
 
 
 # Score quiz responses and return the recommended lens slug
-# Called by app.py quiz after form POST; responses is a dict of {question_id: option_index}
+# Called by app.py quiz after form POST; returns None if all responses are invalid
 def score_response(responses):
     totals = {'food': 0, 'housing': 0, 'mobility': 0}
+    valid_questions_scored = 0
 
     for question in QUIZ_QUESTIONS:
         qid = question['id']
@@ -76,9 +77,13 @@ def score_response(responses):
             option = question['options'][option_index]
             for lens, weight in option['weights'].items():
                 totals[lens] += weight
+            valid_questions_scored += 1
         except (ValueError, IndexError):
             continue
-
+    
+    if valid_questions_scored == 0:
+        return None
+    
     return max(totals, key=totals.get)
 
 

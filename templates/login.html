@@ -1,12 +1,14 @@
 {% extends 'layout.html' %}
 
-{% block title %}Log in{% endblock %}
+{% block title %}Log in — Conviction{% endblock %}
 
 {% block content %}
 <div class="auth-container">
     <h1>Log in</h1>
 
     <form method="POST" action="{{ url_for('login') }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
         <div class="form-group">
             <label for="username">Username</label>
             <input type="text" id="username" name="username" required autofocus>

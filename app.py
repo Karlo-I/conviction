@@ -7,18 +7,40 @@ import click
 import models
 import os
 import quiz
+import secrets
 import sqlite3
-from flask import current_app, flash, Flask, g, jsonify, render_template, redirect, request, session, url_for
+from flask import abort, current_app, flash, Flask, g, jsonify, render_template, redirect, request, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.jinja_env.globals['enumerate'] = enumerate
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-DATABASE = 'conviction.db'
+if not app.debug and os.environ.get('SECRET_KEY') is None:
+    raise ValueError('SECRET_KEY environment variable is not set in production.')
+app.config['SESSION_COOKIE_SECURE'] = not app.debug
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+
+# Ensure application is not vulnerable to Cross-Site Request Forgery 
+# or CSRF - a malicious site forcing a logged-in user to spend tokens or upvote a contribution
+def generate_csrf_token():
+    if '_csrf_token' not in session:
+        session['_csrf_token'] = secrets.token_hex(16)
+    return session['_csrf_token']
+
+app.jinja_env.globals['csrf_token'] = generate_csrf_token
+
+@app.before_request
+def csrf_protect():
+    if request.method == 'POST':
+        token = session.get('_csrf_token', None)
+        if not token or token != request.form.get('_csrf_token'):
+            abort(403)
 
 
 # open db connection and store in g
 # if db connection don't already exist, create one and store in g
+DATABASE = 'conviction.db'
 def get_db(): 
     if 'db' not in g:
         g.db = sqlite3.connect(
@@ -77,6 +99,10 @@ def register():
             flash('Password do not match. Please try again.', 'error')
             return render_template('register.html')
         
+        if len(password) < 8:
+            flash('Password must be at least 8 characters.', 'error')
+            return render_template('register.html')
+        
         if not consent:
             flash('You must accept the terms to register.', 'error')
             return render_template('register.html')
@@ -114,7 +140,7 @@ def login():
             return render_template('login.html')
         
         session['user_id'] = user['id']
-        session['userame'] = user['username']
+        session['username'] = user['username']
         return redirect(url_for('index'))
     
     return render_template('login.html')
@@ -138,28 +164,7 @@ def lens(slug):
     if lens is None:
         return redirect(url_for('index'))
     
-    rows = models.get_issues_by_lens(db, lens['id'])
-
-    # Group data points by issue
-    issues = {}
-    for row in rows:
-        issue_slug = row['slug']
-        if issue_slug not in issues:
-            issues[issue_slug] = {
-                'issue_id': row['id'],
-                'title': row['title'],
-                'description': row['description'],
-                'indicator_name': row['indicator_name'],
-                'unit': row['unit'],
-                'data_points': []
-            }
-        if row['country_code']:
-            issues[issue_slug]['data_points'].append({
-                'country': row['country_code'],
-                'year': row['year'],
-                'value': round(row['value'], 1)
-            })
-    
+    issues = models.get_issues_with_data(db, lens['id'])    
     return render_template('lens.html', lens=lens, issues=issues)
     
 
@@ -186,6 +191,21 @@ def spend():
         flash('Insufficient tokens', 'error')
         return redirect(url_for('lens', slug=lens_slug))
     
+    # Prevent a malicious user from intercepting POST request and change the issue_id 
+    # to an issue in a different lens, or an ID that doesn't exist, corrupting the ledger
+    issue = db.execute(
+        '''
+        SELECT i.id FROM issues i
+        JOIN lenses l ON i.lens_id = l.id
+        WHERE i.id = ? AND l.slug = ?
+        ''',
+        (issue_id, lens_slug)
+    ).fetchone()
+
+    if issue is None:
+        flash('Invalid issue.', 'error')
+        return redirect(url_for('index'))
+    
     models.add_token_transactions(db, user_id, -1, 'spend', issue_id=issue_id)
     flash('Token spent.', 'success')
     return redirect(url_for('lens', slug=lens_slug))
@@ -202,7 +222,7 @@ def quiz_route():
     db = get_db()
     user_id = session['user_id']
 
-    retake_days = int(models.get_config(db, 'quiz_retake_days'))
+    retake_days = int(models.get_config(db, 'quiz_retake_days') or 90)
     if not models.can_retake_quiz(db, user_id, retake_days=retake_days):
         flash(f'You can retake the quiz every {retake_days} days.', 'error')
         return redirect(url_for('index'))
@@ -215,6 +235,10 @@ def quiz_route():
             return render_template('quiz.html', questions=quiz.get_questions())
         
         recommended_slug = quiz.score_response(responses)
+
+        if recommended_slug is None:
+            flash('Invalid quiz submission. Please try again.', 'error')
+            return render_template('quiz.html', questions=quiz.get_questions())
 
         lens = models.get_lens_by_slug(db, recommended_slug)
         models.save_quiz_response(db, user_id, responses, lens['id'])
@@ -253,6 +277,56 @@ def heatmap_data():
         
     return jsonify({'mode': mode, 'data': data})
 
+
+# Render contribution form on GET, validate and store submission on POST
+# Calls models.get_all_indicators, models.create_contribution; requires login
+@app.route('/contribute', methods=['GET', 'POST'])
+def contribute():
+    if 'user_id' not in session:
+        flash('You need to be logged in to contribute.', 'error')
+        return redirect(url_for('login'))
+
+    db = get_db()
+
+    if request.method == 'POST':
+        user_id = session['user_id']
+        country_code = request.form.get('country_code', '').strip()
+        note = request.form.get('note', '').strip()
+        contribution_type = request.form.get('contribution_type', 'data_point')
+        indicator_id = request.form.get('indicator_id') or None
+        value = request.form.get('value') or None
+        source_url = request.form.get('source_url', '').strip() or None
+        source_excerpt = request.form.get('source_excerpt', '').strip() or None
+
+        if not country_code or not note:
+            flash('Country and claim are required.', 'error')
+            return render_template('contribute.html',
+                                   indicators=models.get_all_indicators(db))
+
+        try:
+            if indicator_id:
+                indicator_id = int(indicator_id)
+            if value:
+                value = float(value)
+        except ValueError:
+            flash('Invalid value submitted. Please enter a number', 'error')
+            return render_template('contribute.html',
+                                   indicators=models.get_all_indicators(db))
+
+        models.create_contribution(
+            db, user_id, country_code, note,
+            contribution_type=contribution_type,
+            indicator_id=indicator_id,
+            value=value,
+            source_url=source_url,
+            source_excerpt=source_excerpt
+        )
+
+        flash('Contribution submitted. It will appear after peer validation.', 'success')
+        return redirect(url_for('index'))
+
+    return render_template('contribute.html',
+                           indicators=models.get_all_indicators(db))
 
 # IMPORTANT: Delete these two lines when the project moves to PROD
 if __name__ == '__main__':

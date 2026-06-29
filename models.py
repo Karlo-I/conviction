@@ -14,29 +14,24 @@ from datetime import datetime, timezone
 # Insert a new user row and log the 10-token registration transaction
 # Called by app.py register route; writes to users and token_transactions in schema.sql
 def create_user(db, username, password_hash):
-    """Insert a new user and award opening token transaction"""
+
     try:
         db.execute(
-            '''
-            INSERT INTO users (username, password_hash) 
-            VALUES (?, ?)
-            ''',
+            'INSERT INTO users (username, password_hash) VALUES (?, ?)',
             (username, password_hash)
         )
-        db.commit()
-        user = get_user_by_username(db, username)
+        user = db.execute(
+            'SELECT * FROM users WHERE username = ?', (username,)
+        ).fetchone()
         db.execute(
-            '''
-            INSERT INTO token_transactions (user_id, amount, reason) 
-            VALUES (?, ?, ?)
-            ''',
+            'INSERT INTO token_transactions (user_id, amount, reason) VALUES (?, ?, ?)',
             (user['id'], 10, 'registration')
         )
         db.commit()
         return user
-    # if user registers with a username that already exists, the INSERT fails and raises this error
-    # except handle the failure gracefully by returning None and without the app crashing
+    
     except sqlite3.IntegrityError:
+        db.rollback()
         return None
     
 
@@ -62,12 +57,20 @@ def get_user_by_id(db, user_id):
 
 ## TOKEN FUNCTIONS ##
 
-# Recalculate balance by summing the token_transactions ledger for this user
-# Used as a reconciliation check; app.py displays token_balance cache from users table
+# Read the cached token balance from the users table — used for display
+# Called by app.py spend route and anywhere balance needs to be shown quickly
 def get_token_balance(db, user_id):
-    """Derive balance from ledger - never trust the cached value alone"""
     result = db.execute(
-        'SELECT SUM(amount) as balance FROM token_transactions WHERE user_id = ?', 
+        'SELECT token_balance FROM users WHERE id = ?', (user_id,)
+    ).fetchone()
+    return result['token_balance'] if result else 0
+
+
+# Recalculate balance from the ledger — used for integrity checks only
+# Call this to verify the cache is accurate; never call this for routine display
+def reconcile_token_balance(db, user_id):
+    result = db.execute(
+        'SELECT SUM(amount) as balance FROM token_transactions WHERE user_id = ?',
         (user_id,)
     ).fetchone()
     return result['balance'] or 0
@@ -224,37 +227,80 @@ def get_issues_by_lens(db, lens_id):
     ).fetchall()
 
 
+# Return issues for a lens with data points grouped into a dictionary structure
+# Called by app.py lens route
+def get_issues_with_data(db, lens_id):
+    rows = db.execute(
+        '''SELECT i.*, ind.name as indicator_name, ind.unit,
+                  dp.country_code, dp.year, dp.value
+           FROM issues i
+           LEFT JOIN indicators ind ON ind.issue_id = i.id
+           LEFT JOIN data_points dp ON dp.indicator_id = ind.id
+           WHERE i.lens_id = ?
+           ORDER BY i.id, dp.year ASC''',
+        (lens_id,)
+    ).fetchall()
+
+    issues = {}
+    for row in rows:
+        issue_slug = row['slug']
+        if issue_slug not in issues:
+            issues[issue_slug] = {
+                'issue_id': row['id'],
+                'title': row['title'],
+                'description': row['description'],
+                'indicator_name': row['indicator_name'],
+                'unit': row['unit'],
+                'data_points': []
+            }
+        if row['country_code']:
+            issues[issue_slug]['data_points'].append({
+                'country': row['country_code'],
+                'year': row['year'],
+                'value': round(row['value'], 1) if row['value'] is not None else 0
+            })
+
+    return list(issues.values())
+
+
 ## HEATMAP ##
 
-# Return total token spend per country, ordered by spend volume descending
-# Called by app.py heatmap_data endpoint; aggregates token_transactions joined to contributions
+# Return total token spend per country using DISTINCT to prevent inflation from multiple indicators
+# Called by app.py heatmap_data endpoint; COUNT(DISTINCT) ensures each transaction counts once
 def get_heatmap_data(db):
     return db.execute(
-        '''
-        SELECT dp.country_code, COUNT(tt.id) as total_spend
-        FROM token_transactions tt
-        JOIN issues i ON tt.issue_id = i.id
-        JOIN indicators ind ON ind.issue_id = i.id
-        JOIN data_points dp ON dp.indicator_id = ind.id
-        WHERE tt.reason = 'spend'
-        GROUP BY dp.country_code
-        ORDER BY total_spend DESC
-        '''
+        '''SELECT dp.country_code, COUNT(DISTINCT tt.id) as total_spend
+           FROM token_transactions tt
+           JOIN issues i ON tt.issue_id = i.id
+           JOIN indicators ind ON ind.issue_id = i.id
+           JOIN data_points dp ON dp.indicator_id = ind.id
+           WHERE tt.reason = 'spend'
+           GROUP BY dp.country_code
+           ORDER BY total_spend DESC'''
     ).fetchall()
 
 
-# Return countries with real data but low token spend - the 'least heard' heatmap mode
-# Called by app.py heatmap_data endpoint when mode=least_heard query parameter is present
+# Returns countries with data but low token spend for the least-heard heatmap mode.
+# Called by app.py heatmap_data endpoint; DISTINCT prevents same inflation issue.
 def get_least_heard_data(db):
     return db.execute(
-        '''
-        SELECT dp.country_code, COUNT(dp.id) as data_coverage,
-            COALESCE(SUM(CASE WHEN tt.reason = 'spend' THEN 1 ELSE 0 END), 0) as total_spend
-        FROM data_points dp
-        LEFT JOIN indicators ind ON dp.indicator_id = ind.id
-        LEFT JOIN issues i ON ind.issue_id = i.id
-        LEFT JOIN token_transactions tt ON tt.issue_id = i.id
-        GROUP BY dp.country_code
-        ORDER BY total_spend ASC, data_coverage DESC
-        '''
+        '''SELECT dp.country_code, COUNT(dp.id) as data_coverage,
+                  COUNT(DISTINCT CASE WHEN tt.reason = 'spend' THEN tt.id ELSE NULL END) as total_spend
+           FROM data_points dp
+           LEFT JOIN indicators ind ON dp.indicator_id = ind.id
+           LEFT JOIN issues i ON ind.issue_id = i.id
+           LEFT JOIN token_transactions tt ON tt.issue_id = i.id
+           GROUP BY dp.country_code
+           ORDER BY total_spend ASC, data_coverage DESC'''
     ).fetchall()
+
+
+## USER CONTRIBUTION ##
+
+# Return all indicators with their source — used to populate the contribute form dropdown
+# Called by app.py contribute route on GET; connects indicator selection to contributions table
+def get_all_indicators(db):
+    return db.execute(
+        'SELECT id, name, source FROM indicators ORDER BY name'
+    ).fetchall()
+

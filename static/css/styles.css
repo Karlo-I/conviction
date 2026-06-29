@@ -27,3 +27,37 @@ nav {
 
 .flash.error { background: #fee; color: #c00; }
 .flash.success { background: #efe; color: #060; }
+
+/* Nav active state (Improve #24) */
+nav a.active {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+/* Quiz option cards (Improve #36) */
+.quiz-question label {
+    display: block;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #fff;
+}
+
+.quiz-question label:hover {
+    border-color: #457b9d;
+    background-color: #f8f9fa;
+}
+
+.quiz-question input[type="radio"] {
+    margin-right: 10px;
+    accent-color: #457b9d;
+}
+
+.quiz-question label:has(input[type="radio"]:checked) {
+    border-color: #457b9d;
+    background-color: #eef2f5;
+    font-weight: bold;
+}

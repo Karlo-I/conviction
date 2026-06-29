@@ -5,20 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Conviction{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <meta property="og:title" content="Conviction — You already know something is wrong.">
+    <meta property="og:description" content="Explore how financial capture, regulatory arbitrage, and externalised costs shape what we eat, where we live, and how we move.">
+    <meta property="og:type" content="website">
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
 
     <nav>
-        <a href="{{ url_for('index') }}">Conviction</a>
+        <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Conviction</a>
         <div>
-            <a href="{{ url_for('heatmap') }}">Map</a>
+            <a href="{{ url_for('heatmap') }}" class="{% if request.endpoint == 'heatmap' %}active{% endif %}">Map</a>
             {% if session.user_id %}
-                <span>{{ session.username }}</span>
-                <a href="{{ url_for('quiz_route') }}">Quiz</a>
+                <span class="username-display">{{ session.username }}</span>
+                <a href="{{ url_for('quiz_route') }}" class="{% if request.endpoint == 'quiz_route' %}active{% endif %}">Quiz</a>
+                <a href="{{ url_for('contribute') }}" class="{% if request.endpoint == 'contribute' %}active{% endif %}">Contribute</a>
                 <a href="{{ url_for('logout') }}">Log out</a>
             {% else %}
-                <a href="{{ url_for('register') }}">Register</a>
-                <a href="{{ url_for('login') }}">Log in</a>
+                <a href="{{ url_for('register') }}" class="{% if request.endpoint == 'register' %}active{% endif %}">Register</a>
+                <a href="{{ url_for('login') }}" class="{% if request.endpoint == 'login' %}active{% endif %}">Log in</a>
             {% endif %}
         </div>
     </nav>
@@ -35,5 +40,6 @@
         {% block content %}{% endblock %}
     </main>
 
+    {% block scripts %}{% endblock %}
 </body>
 </html>

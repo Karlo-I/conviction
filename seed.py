@@ -111,8 +111,9 @@ def fetch_who_obesity(db, indicator_id):
 
     # WHO GHO API source info: https://www.who.int/data/gho/info/gho-odata-api
     url = 'https://ghoapi.azureedge.net/api/NCD_BMI_30C'
+    country_filter = " or ".join([f"SpatialDim eq '{c}'" for c in target_countries])
     params = {
-        '$filter': "Dim1 eq 'SEX_BTSX'",  # both sexes combined
+        '$filter': f"Dim1 eq 'SEX_BTSX' and ({country_filter})",  # both sexes combined
         '$select': 'SpatialDim,TimeDim,NumericValue',
     }
 
@@ -244,6 +245,10 @@ def fetch_worldbank_housing(db, indicator_id):
     except requests.RequestException as e:
         print(f'World Bank API request failed: {e}')
         return
+    
+    if not isinstance(data, list) or len(data) < 2:
+        print('  World Bank API returned no data or an error.')
+        return
 
     records = data[1]
     if not records:
@@ -351,6 +356,10 @@ def fetch_worldbank_mobility(db, indicator_id):
         data = response.json()
     except requests.RequestException as e:
         print(f'World Bank API request failed: {e}')
+        return
+    
+    if not isinstance(data, list) or len(data) < 2:
+        print('  World Bank API returned no data or an error.')
         return
 
     records = data[1]

@@ -2,13 +2,17 @@
 
 {% block title %}Conviction Map{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% endblock %}
+
 {% block content %}
 <div class="heatmap-container">
     <h1>Where conviction is concentrating</h1>
 
     <div class="heatmap-controls">
-        <button id="btn-conviction" class="active" onclick="setMode('conviction')">Highest conviction</button>
-        <button id="btn-least-heard" onclick="setMode('least_heard')">Least heard</button>
+        <button id="btn-conviction" class="active" onclick="setMode('conviction')" aria-pressed="true">Highest conviction</button>
+        <button id="btn-least-heard" onclick="setMode('least_heard')" aria-pressed="false">Least heard</button>
     </div>
 
     <div id="mode-description">
@@ -18,10 +22,10 @@
 
     <div id="map" style="height: 500px; width: 100%;"></div>
 </div>
+{% endblock %}
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% block scripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
     const map = L.map('map').setView([20, 0], 2);
 
@@ -37,46 +41,14 @@
         markers = [];
     }
 
-    function setMode(mode) {
-        currentMode = mode;
+    // Country names for popup display (#30)
+    const countryNames = {
+        'KEN': 'Kenya', 'NGA': 'Nigeria', 'ZAF': 'South Africa', 'EGY': 'Egypt',
+        'PHL': 'Philippines', 'IND': 'India', 'BGD': 'Bangladesh', 'THA': 'Thailand',
+        'MEX': 'Mexico', 'BRA': 'Brazil', 'COL': 'Colombia', 'CAN': 'Canada',
+        'GBR': 'United Kingdom', 'AUS': 'Australia', 'NOR': 'Norway'
+    };
 
-        document.getElementById('btn-conviction').classList.toggle('active', mode === 'conviction');
-        document.getElementById('btn-least-heard').classList.toggle('active', mode === 'least_heard');
-        document.getElementById('desc-conviction').style.display = mode === 'conviction' ? 'block' : 'none';
-        document.getElementById('desc-least-heard').style.display = mode === 'least_heard' ? 'block' : 'none';
-
-        loadMap(mode);
-    }
-
-    function loadMap(mode) {
-        clearMarkers();
-
-        fetch(`/api/heatmap?mode=${mode}`)
-            .then(response => response.json())
-            .then(json => {
-                json.data.forEach(point => {
-                    const coords = countryCoords[point.country];
-                    if (!coords) return;
-
-                    const radius = Math.max(5, point.value * 8);
-                    const marker = L.circleMarker(coords, {
-                        radius: radius,
-                        fillColor: mode === 'conviction' ? '#e63946' : '#457b9d',
-                        color: '#fff',
-                        weight: 1,
-                        fillOpacity: 0.7
-                    }).addTo(map);
-
-                    marker.bindPopup(`
-                        <strong>${point.country}</strong><br>
-                        ${mode === 'conviction' ? 'Token spend: ' + point.value : 'Data coverage: ' + point.value}
-                    `);
-                    markers.push(marker);
-                });
-            });
-    }
-
-    // ISO alpha-3 to approximate lat/lng — expanded as needed
     const countryCoords = {
         'KEN': [-1.286389, 36.817223],
         'NGA': [9.057990, 7.495080],
@@ -94,6 +66,54 @@
         'AUS': [-25.274398, 133.775136],
         'NOR': [60.472024, 8.468946]
     };
+
+    function setMode(mode) {
+        currentMode = mode;
+
+        document.getElementById('btn-conviction').classList.toggle('active', mode === 'conviction');
+        document.getElementById('btn-least-heard').classList.toggle('active', mode === 'least_heard');
+
+        // aria-pressed for accessibility (#31)
+        document.getElementById('btn-conviction').setAttribute('aria-pressed', mode === 'conviction');
+        document.getElementById('btn-least-heard').setAttribute('aria-pressed', mode === 'least_heard');
+
+        document.getElementById('desc-conviction').style.display = mode === 'conviction' ? 'block' : 'none';
+        document.getElementById('desc-least-heard').style.display = mode === 'least_heard' ? 'block' : 'none';
+
+        loadMap(mode);
+    }
+
+    function loadMap(mode) {
+        clearMarkers();
+
+        fetch(`/api/heatmap?mode=${mode}`)
+            .then(response => response.json())
+            .then(json => {
+                json.data.forEach(point => {
+                    const coords = countryCoords[point.country];
+                    if (!coords) return;
+
+                    // Square root scale capped at 40px — prevents exploding markers (#29)
+                    const radius = Math.min(40, Math.max(5, Math.sqrt(point.value) * 6));
+
+                    const marker = L.circleMarker(coords, {
+                        radius: radius,
+                        fillColor: mode === 'conviction' ? '#e63946' : '#457b9d',
+                        color: '#fff',
+                        weight: 1,
+                        fillOpacity: 0.7
+                    }).addTo(map);
+
+                    // Use human-readable country name in popup (#30)
+                    const displayName = countryNames[point.country] || point.country;
+                    marker.bindPopup(`
+                        <strong>${displayName}</strong><br>
+                        ${mode === 'conviction' ? 'Token spend: ' + point.value : 'Data coverage: ' + point.value}
+                    `);
+                    markers.push(marker);
+                });
+            });
+    }
 
     loadMap('conviction');
 </script>

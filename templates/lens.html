@@ -7,13 +7,14 @@
     <h1>{{ lens.title }}</h1>
     <p>{{ lens.description }}</p>
 
-    {% for slug, issue in issues.items() %}
+    {% for issue in issues %}
     <div class="issue">
         <h2>{{ issue.title }}</h2>
         <p>{{ issue.description }}</p>
 
         {% if session.user_id %}
         <form method="POST" action="{{ url_for('spend') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="issue_id" value="{{ issue.issue_id }}">
             <input type="hidden" name="lens_slug" value="{{ lens.slug }}">
             <button type="submit">Spend token</button>
