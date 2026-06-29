@@ -8,7 +8,7 @@ import models
 import os
 import quiz
 import sqlite3
-from flask import current_app, flash, Flask, g, render_template, redirect, request, session, url_for
+from flask import current_app, flash, Flask, g, jsonify, render_template, redirect, request, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -224,6 +224,34 @@ def quiz_route():
         return redirect(url_for('lens', slug=recommended_slug))
     
     return render_template('quiz.html', questions=quiz.get_questions())
+
+
+# Serve the heatmap page
+# Render heatmap.html - Leaflet.js fetches '/api/heatmap' separately via JavaScript
+@app.route('/heatmap')
+def heatmap():
+    return render_template('heatmap.html')
+
+
+# Return aggregate token spend or least-heard data as JSON for Leaflet.js
+# Calls models.get_heatmap_data or models.get_least_heard_data depending on mode perimeter
+@app.route('/api/heatmap')
+def heatmap_data():
+    db = get_db()
+    mode = request.args.get('mode', 'conviction')
+
+    if mode == 'least_heard':
+        rows = models.get_least_heard_data(db)
+        data = [{'country': r['country_code'],
+                 'value': r['data_coverage'],
+                 'spend': r['total_spend']} for r in rows]
+        
+    else:
+        rows = models.get_heatmap_data(db)
+        data = [{'country': r['country_code'],
+                 'value': r['total_spend']} for r in rows]
+        
+    return jsonify({'mode': mode, 'data': data})
 
 
 # IMPORTANT: Delete these two lines when the project moves to PROD

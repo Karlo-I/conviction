@@ -1,0 +1,100 @@
+{% extends 'layout.html' %}
+
+{% block title %}Conviction Map{% endblock %}
+
+{% block content %}
+<div class="heatmap-container">
+    <h1>Where conviction is concentrating</h1>
+
+    <div class="heatmap-controls">
+        <button id="btn-conviction" class="active" onclick="setMode('conviction')">Highest conviction</button>
+        <button id="btn-least-heard" onclick="setMode('least_heard')">Least heard</button>
+    </div>
+
+    <div id="mode-description">
+        <p id="desc-conviction">Countries where users are spending the most tokens.</p>
+        <p id="desc-least-heard" style="display:none">Countries with real data but low token spend — underrepresented voices.</p>
+    </div>
+
+    <div id="map" style="height: 500px; width: 100%;"></div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    const map = L.map('map').setView([20, 0], 2);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let currentMode = 'conviction';
+    let markers = [];
+
+    function clearMarkers() {
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+
+        document.getElementById('btn-conviction').classList.toggle('active', mode === 'conviction');
+        document.getElementById('btn-least-heard').classList.toggle('active', mode === 'least_heard');
+        document.getElementById('desc-conviction').style.display = mode === 'conviction' ? 'block' : 'none';
+        document.getElementById('desc-least-heard').style.display = mode === 'least_heard' ? 'block' : 'none';
+
+        loadMap(mode);
+    }
+
+    function loadMap(mode) {
+        clearMarkers();
+
+        fetch(`/api/heatmap?mode=${mode}`)
+            .then(response => response.json())
+            .then(json => {
+                json.data.forEach(point => {
+                    const coords = countryCoords[point.country];
+                    if (!coords) return;
+
+                    const radius = Math.max(5, point.value * 8);
+                    const marker = L.circleMarker(coords, {
+                        radius: radius,
+                        fillColor: mode === 'conviction' ? '#e63946' : '#457b9d',
+                        color: '#fff',
+                        weight: 1,
+                        fillOpacity: 0.7
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <strong>${point.country}</strong><br>
+                        ${mode === 'conviction' ? 'Token spend: ' + point.value : 'Data coverage: ' + point.value}
+                    `);
+                    markers.push(marker);
+                });
+            });
+    }
+
+    // ISO alpha-3 to approximate lat/lng — expanded as needed
+    const countryCoords = {
+        'KEN': [-1.286389, 36.817223],
+        'NGA': [9.057990, 7.495080],
+        'ZAF': [-30.559482, 22.937506],
+        'EGY': [26.820553, 30.802498],
+        'PHL': [12.879721, 121.774017],
+        'IND': [20.593684, 78.962880],
+        'BGD': [23.684994, 90.356331],
+        'THA': [15.870032, 100.992541],
+        'MEX': [23.634501, -102.552784],
+        'BRA': [-14.235004, -51.925280],
+        'COL': [4.570868, -74.297333],
+        'CAN': [56.130366, -106.346771],
+        'GBR': [55.378051, -3.435973],
+        'AUS': [-25.274398, 133.775136],
+        'NOR': [60.472024, 8.468946]
+    };
+
+    loadMap('conviction');
+</script>
+{% endblock %}

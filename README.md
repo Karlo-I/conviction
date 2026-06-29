@@ -1,6 +1,6 @@
 # Conviction
 ### CS50x Final Project — Living Project Brief
-**Last Updated:** June 25, 2026 (rev 12)
+**Last Updated:** June 27, 2026 (rev 13)
 **Status:** Planning / Pre-build
 
 ---
@@ -443,7 +443,7 @@ The digest is then displayed to all peer validators on `validate.html`. The AI r
 | Week | Dates | Goal | Done? |
 |---|---|---|---|
 | 1 | June 19–25 | Schema init, Flask skeleton, auth (register/login), first dataset seeded | ✓ |
-| 2 | June 26–Jul 2 | Three lenses with real data, token spend system, diagnostic quiz | ☐ |
+| 2 | June 26–Jul 2 | Three lenses with real data, token spend system, diagnostic quiz | ✓ |
 | 3 | Jul 3–9 | Heatmap, contribution flow, agent.py digest, peer validation, token earning | ☐ |
 | 4 | Jul 10–16 | Polish, sharing mechanic, README finalise, video, deploy to Render, submit | ☐ |
 | Post-submission | Jul 17+ | Strava OAuth integration, real-time heatmap via WebSockets, ML quiz upgrade | ☐ |
@@ -555,14 +555,6 @@ Features deferred to after CS50 submission. Schema already supports all of these
 - **Forces content dispute mechanism** — Flagging flow for challenging a force entry's evidence chain, with a documented review process.
 
 **AI Attribution:** Every Python and JavaScript file in this project includes a header comment attributing Claude (Anthropic) as a development aid, describing what it assisted with in that specific file, and confirming that logic, decisions, and direction were the author's own. This satisfies CS50's AI citation requirement and documents the collaboration honestly.
-
----
-
-## Conversation Context (for new Claude sessions)
-
-Paste this section at the start of any new conversation:
-
-> I am building a CS50x final project called Conviction — a Flask/Python/JS/SQLite web app where users explore global systemic issues through three lenses (food, housing, mobility) and a fourth forces layer surfacing cross-domain mechanisms. Users spend tokens to signal conviction, earn tokens by contributing and validating data, and watch a global heatmap with a "least heard" toggle. The quiz is the final onboarding step, retakeable every 90 days. User contributions include pasted source text and a citation URL — the AI agent processes the text, validators check the URL manually. Pre-approved data sources (WHO, World Bank, FAO) are reference points not arbiters of truth — divergence between user sources and institutional data is surfaced as insight. The forces layer is community-built via elevated peer validation threshold, not editor-curated. No email address is collected — privacy by design, hCaptcha for bot prevention, no account recovery. Registration grants 10 opening tokens immediately. The platform has seven guiding principles, documented legal/ethical framework, and echo chamber prevention architecture. Strava is post-submission; schema is ready. All code files will include AI attribution comments. Full schema, stack, file structure, and action plan are in README.md. I am a technical PM with mid-level engineering knowledge — explain concepts clearly, don't oversimplify, flag syntax connecting to other functions or files. We are currently on: **[INSERT CURRENT WEEK/TASK]**.
 
 ---
 

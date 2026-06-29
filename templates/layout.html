@@ -11,6 +11,7 @@
     <nav>
         <a href="{{ url_for('index') }}">Conviction</a>
         <div>
+            <a href="{{ url_for('heatmap') }}">Map</a>
             {% if session.user_id %}
                 <span>{{ session.username }}</span>
                 <a href="{{ url_for('quiz_route') }}">Quiz</a>

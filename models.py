@@ -177,7 +177,10 @@ def can_retake_quiz(db, user_id, retake_days=90):
     last = get_last_quiz_response(db, user_id)
     if not last:
         return True
-    last_date = datetime.fromisoformat(last['created_at']).replace(tzinfo=timezone.utc)
+    last_date = last['created_at']
+    if isinstance(last_date, str):
+        last_date = datetime.fromisoformat(last_date)
+    last_date = last_date.replace(tzinfo=timezone.utc)
     delta = datetime.now(timezone.utc) - last_date
     return delta.days >= retake_days
 
@@ -218,4 +221,40 @@ def get_issues_by_lens(db, lens_id):
         ORDER BY i.id, dp.value DESC
         ''',
         (lens_id,)
+    ).fetchall()
+
+
+## HEATMAP ##
+
+# Return total token spend per country, ordered by spend volume descending
+# Called by app.py heatmap_data endpoint; aggregates token_transactions joined to contributions
+def get_heatmap_data(db):
+    return db.execute(
+        '''
+        SELECT dp.country_code, COUNT(tt.id) as total_spend
+        FROM token_transactions tt
+        JOIN issues i ON tt.issue_id = i.id
+        JOIN indicators ind ON ind.issue_id = i.id
+        JOIN data_points dp ON dp.indicator_id = ind.id
+        WHERE tt.reason = 'spend'
+        GROUP BY dp.country_code
+        ORDER BY total_spend DESC
+        '''
+    ).fetchall()
+
+
+# Return countries with real data but low token spend - the 'least heard' heatmap mode
+# Called by app.py heatmap_data endpoint when mode=least_heard query parameter is present
+def get_least_heard_data(db):
+    return db.execute(
+        '''
+        SELECT dp.country_code, COUNT(dp.id) as data_coverage,
+            COALESCE(SUM(CASE WHEN tt.reason = 'spend' THEN 1 ELSE 0 END), 0) as total_spend
+        FROM data_points dp
+        LEFT JOIN indicators ind ON dp.indicator_id = ind.id
+        LEFT JOIN issues i ON ind.issue_id = i.id
+        LEFT JOIN token_transactions tt ON tt.issue_id = i.id
+        GROUP BY dp.country_code
+        ORDER BY total_spend ASC, data_coverage DESC
+        '''
     ).fetchall()
