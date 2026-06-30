@@ -356,6 +356,74 @@ def contribute_confirm(contribution_id):
     return render_template('contribute_confirm.html', contribution=contribution)
 
 
+# Render the peer validation queue with pending contributions and their digests
+# Calls models.get_pending_contributions; requires login
+@app.route('/validate')
+def validate():
+    if 'user_id' not in session:
+        flash('You need to be logged in to validate contributions.', 'error')
+        return redirect(url_for('login'))
+    
+    db = get_db()
+    contributions = models.get_pending_contributions(db)
+    return render_template('validate.html', contributions=contributions)
+
+
+# Handle a validator's approve/reject vote on a contribution
+# Calls models.cast_vote, models.get_vote_count, models.approve_contribution; checks threshold
+@app.route('/validate/<int:contribution_id>', methods=['POST'])
+def cast_vote(contribution_id):
+    if 'user_id' not in session:
+        flash('You need to be logged in to vote.', 'error')
+        return redirect(url_for('login'))
+    
+    db = get_db()
+    user_id = session['user_id']
+    vote = request.form.get('vote')
+
+    if vote not in ('approve', 'reject'):
+        flash('Invalid vote.', 'error')
+        return redirect(url_for('validate'))
+    
+    contribution = db.execute(
+        'SELECT * FROM contributions WHERE id = ?', (contribution_id,)
+    ).fetchone()
+
+    if contribution is None or contribution['status'] != 'pending':
+        flash('This contribution is no longer pending.', 'error')
+        return redirect(url_for('validate'))
+    
+    if contribution['user_id'] == user_id:
+        flash('You cannot validate your own contribution.', 'error')
+        return redirect(url_for('validate'))
+    
+    success = models.cast_vote(db, contribution_id, user_id, vote)
+
+    if not success:
+        flash('You have already voted on this contribution.', 'error')
+        return redirect(url_for('validate'))
+    
+    tokens_per_validation = int(models.get_config(db, 'tokens_per_validation') or 1)
+    models.add_token_transactions(db, user_id, tokens_per_validation, 'validation')
+
+    approve_count = models.get_vote_count(db, contribution_id, 'approve')
+    threshold_key = 'force_approval_threshold' if contribution['contribution_type'] == 'force_claim' else 'validation_threshold'
+    threshold = int(models.get_config(db, threshold_key) or 2)
+    print(f'DEBUG: approve_count={approve_count}, threshold={threshold}')
+
+    if approve_count >= threshold:
+        print('DEBUG: threshold met, approving')
+        models.approve_contribution(db, contribution_id)
+        tokens_per_contribution = int(models.get_config(db, 'tokens_per_contribution') or 3)
+        models.add_token_transactions(db, contribution['user_id'], tokens_per_contribution, 'contribution')
+        flash('Contribution approved and added to the platform.', 'success')
+    else:
+        print(f'DEBUG: threshold not met - approve_count={approve_count} threshold={threshold}')
+        flash('Vote recorded.', 'success')
+
+    return redirect(url_for('validate'))
+
+
 # IMPORTANT: Delete these two lines when the project moves to PROD
 if __name__ == '__main__':
     app.run(debug=True)

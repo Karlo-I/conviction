@@ -316,3 +316,39 @@ def get_all_indicators(db):
         'SELECT id, name, source FROM indicators ORDER BY name'
     ).fetchall()
 
+
+## CAST AND VALIDATE VOTE ##
+
+# Record a vote on a contribution; return False if user already voted (UNIQUE constraint)
+# Called by app.py cast_vote route; relies on UNIQUE(contribution_id, user_id) in schema.sql
+def cast_vote(db, contribution_id, user_id, vote):
+    try:
+        db.execute(
+            'INSERT INTO contribution_votes (contribution_id, user_id, vote) VALUES (?, ?, ?)',
+            (contribution_id, user_id, vote)
+        )
+        db.commit()
+        return True
+    except sqlite3.IntegrityError:
+        db.rollback()
+        return False
+
+
+# Return the count of votes of a given type for a contribution
+# Called by app.py cast_vote route to check against the approval threshold
+def get_vote_count(db, contribution_id, vote_type):
+    result = db.execute(
+        'SELECT COUNT(*) as count FROM contribution_votes WHERE contribution_id = ? AND vote = ?',
+        (contribution_id, vote_type)
+    ).fetchone()
+    return result['count']
+
+
+# Mark a contribution as approved and set the review timestamp
+# Called by app.py cast_vote route when the approval threshold is met
+def approve_contribution(db, contribution_id):
+    db.execute(
+        "UPDATE contributions SET status = 'approved', reviewed_at = CURRENT_TIMESTAMP WHERE id = ?",
+        (contribution_id,)
+    )
+    db.commit()

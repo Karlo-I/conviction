@@ -20,6 +20,7 @@
                 <span class="username-display">{{ session.username }}</span>
                 <a href="{{ url_for('quiz_route') }}" class="{% if request.endpoint == 'quiz_route' %}active{% endif %}">Quiz</a>
                 <a href="{{ url_for('contribute') }}" class="{% if request.endpoint == 'contribute' %}active{% endif %}">Contribute</a>
+                <a href="{{ url_for('validate') }}" class="{% if request.endpoint == 'validate' %}active{% endif %}">Validate</a>
                 <a href="{{ url_for('logout') }}">Log out</a>
             {% else %}
                 <a href="{{ url_for('register') }}" class="{% if request.endpoint == 'register' %}active{% endif %}">Register</a>
