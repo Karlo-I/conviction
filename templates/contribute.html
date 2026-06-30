@@ -8,6 +8,7 @@
     <p>Share local data, observations, or evidence that adds to or challenges what the platform shows. All contributions go through peer validation before appearing.</p>
 
     <form method="POST" action="{{ url_for('contribute') }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
         <div class="form-group">
             <label for="contribution_type">Contribution type</label>

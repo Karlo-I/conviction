@@ -141,6 +141,18 @@ def get_contribution_by_id(db, contribution_id):
     ).fetchone()
 
 
+# Returns a single contribution joined with its AI digest, or None if not found.
+# Called by app.py confirm route; used to render contribute_confirm.html.
+def get_contribution_with_digest(db, contribution_id):
+    return db.execute(
+        '''SELECT c.*, cd.summary, cd.confidence, cd.sources
+           FROM contributions c
+           LEFT JOIN contribution_digests cd ON cd.contribution_id = c.id
+           WHERE c.id = ?''',
+        (contribution_id,)
+    ).fetchone()
+
+
 ## QUIZ FUNCTIONS ##
 
 # Serialize responses dict to JSON and store against user_id or session_id

@@ -1,0 +1,42 @@
+{% extends 'layout.html' %}
+
+{% block title %}Contribution Submitted{% endblock %}
+
+{% block content %}
+<div class="confirm-container">
+    <h1>Contribution submitted</h1>
+    <p>Your contribution is now pending peer validation. Two validators need to approve it before it appears on the platform.</p>
+
+    <div class="contribution-summary">
+        <h2>What you submitted</h2>
+        <p><strong>Country:</strong> {{ contribution.country_code }}</p>
+        {% if contribution.value %}
+        <p><strong>Value submitted:</strong> {{ contribution.value }}</p>
+        {% endif %}
+        <p><strong>Claim:</strong> {{ contribution.note }}</p>
+        {% if contribution.source_url %}
+        <p><strong>Source:</strong> <a href="{{ contribution.source_url }}" target="_blank">{{ contribution.source_url }}</a></p>
+        {% endif %}
+    </div>
+
+    {% if contribution.summary %}
+    <div class="digest">
+        <h2>What we found</h2>
+
+        {% if contribution.confidence == 'evidence found' %}
+        <p class="confidence confidence-found">Evidence found in reference sources</p>
+        {% elif contribution.confidence == 'partial evidence' %}
+        <p class="confidence confidence-partial">Partial evidence found</p>
+        {% else %}
+        <p class="confidence confidence-none">No data available in reference sources</p>
+        {% endif %}
+
+        <p>{{ contribution.summary }}</p>
+    </div>
+    {% else %}
+    <p>AI digest is being generated. Check back shortly.</p>
+    {% endif %}
+
+    <a href="{{ url_for('index') }}">Back to home</a>
+</div>
+{% endblock %}

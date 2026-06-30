@@ -3,14 +3,18 @@
 # AI assistance: Claude (Anthropic) assisted with Flask structure and route scaffolding.
 # Logic, decisions, and direction are the author's own.
 
+import agent
 import click
 import models
 import os
 import quiz
 import secrets
 import sqlite3
+from dotenv import load_dotenv
 from flask import abort, current_app, flash, Flask, g, jsonify, render_template, redirect, request, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
+
+load_dotenv()
 
 app = Flask(__name__)
 app.jinja_env.globals['enumerate'] = enumerate
@@ -322,11 +326,35 @@ def contribute():
             source_excerpt=source_excerpt
         )
 
-        flash('Contribution submitted. It will appear after peer validation.', 'success')
-        return redirect(url_for('index'))
+        contribution = db.execute(
+            'SELECT id FROM contributions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+            (user_id,)
+        ).fetchone()
+        contribution_id = contribution['id']
+
+        agent.run_agent(db, contribution_id)
+
+        return redirect(url_for('contribute_confirm', contribution_id=contribution_id))
 
     return render_template('contribute.html',
                            indicators=models.get_all_indicators(db))
+
+
+# Renders the contribution confirmation page with the AI digest
+# Calls models.get_contribution_with_digest; contribution_id comes from the URL
+@app.route('/contribute/confirm/<int:contribution_id>')
+def contribute_confirm(contribution_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    db = get_db()
+    contribution = models.get_contribution_with_digest(db, contribution_id)
+
+    if contribution is None or contribution['user_id'] != session['user_id']:
+        return redirect(url_for('index'))
+    
+    return render_template('contribute_confirm.html', contribution=contribution)
+
 
 # IMPORTANT: Delete these two lines when the project moves to PROD
 if __name__ == '__main__':
