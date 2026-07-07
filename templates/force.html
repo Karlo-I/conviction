@@ -4,17 +4,20 @@
 
 {% block content %}
 <div class="force-detail">
-    <p><a href="{{ url_for('forces') }}">← All forces</a></p>
+    <p><a href="{{ url_for('forces') }}" style="font-size: 0.9rem; color: #457b9d; text-decoration: none;">← All forces</a></p>
     <h1>{{ force.title }}</h1>
 
     <div class="evidence-chain">
         <h2>Corroborating sources</h2>
         {% if force.evidence_chain %}
             {% for entry in force.evidence_chain %}
-            <div class="evidence-entry">
-                <p>{{ entry.claim }}</p>
+            {# Updated to use evidence-card class #}
+            <div class="evidence-card">
+                <p style="margin-bottom: 1rem; line-height: 1.6;">{{ entry.claim }}</p>
                 {% if entry.source_url %}
-                <p><a href="{{ entry.source_url }}" target="_blank">Source</a></p>
+                <a href="{{ entry.source_url }}" target="_blank" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; display: inline-block; text-decoration: none; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; transition: all 0.2s;">
+                    View Original Source &rarr;
+                </a>
                 {% endif %}
             </div>
             {% endfor %}
@@ -25,9 +28,14 @@
 
     <div class="cross-lens-links">
         <h2>Where this appears</h2>
-        {% for li in force.linked_issues %}
-        <p><a href="{{ url_for('lens', slug=li.lens_slug) }}">{{ li.lens_title }}</a> — {{ li.issue_title }}</p>
-        {% endfor %}
+        {# Updated to use lens-tag class #}
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem;">
+            {% for li in force.linked_issues %}
+            <a href="{{ url_for('lens', slug=li.lens_slug) }}" class="lens-tag">
+                {{ li.lens_title }} — {{ li.issue_title }}
+            </a>
+            {% endfor %}
+        </div>
     </div>
 </div>
 {% endblock %}

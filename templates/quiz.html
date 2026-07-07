@@ -3,26 +3,31 @@
 {% block title %}Quiz{% endblock %}
 
 {% block content %}
-<div class="quiz-container">
+<div class="quiz-container" style="max-width: 700px;">
     <h1>What do you feel most directly?</h1>
-    <p>Five questions. Your answers determine where you start — you can explore all three lenses from there.</p>
+    <p style="margin-bottom: 2rem; color: #666;">Five questions. Your answers determine where you start — you can explore all three lenses from there.</p>
 
     <form method="POST" action="{{ url_for('quiz_route') }}">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
         {% for question in questions %}
-        <div class="quiz-question">
-            <p>{{ loop.index }}. {{ question.text }}</p>
-            {% for i, option in enumerate(question.options) %}
-            <label for="{{ question.id }}_opt{{ i }}">
-                <input type="radio" id="{{ question.id }}_opt{{ i }}" name="{{ question.id }}" value="{{ i }}" required>
-                {{ option.text }}
-            </label>
-            {% endfor %}
+        <div class="quiz-question" style="margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid #e9ecef;">
+            <p style="font-weight: 600; font-size: 1.1rem; margin-bottom: 1rem; color: #1d3557;">{{ loop.index }}. {{ question.text }}</p>
+            
+            <div class="quiz-options">
+                {% for i, option in enumerate(question.options) %}
+                <label class="quiz-option-label" for="{{ question.id }}_opt{{ i }}">
+                    <input type="radio" id="{{ question.id }}_opt{{ i }}" name="{{ question.id }}" value="{{ i }}" required>
+                    <span>{{ option.text }}</span>
+                </label>
+                {% endfor %}
+            </div>
         </div>
         {% endfor %}
 
-        <button type="submit">See my result</button>
+        <button type="submit" style="background-color: #457b9d; color: white; border: none; padding: 0.75rem 2rem; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: block; margin: 0 auto;">
+            See my result
+        </button>
     </form>
 </div>
 {% endblock %}

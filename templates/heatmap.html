@@ -11,8 +11,12 @@
     <h1>Where conviction is concentrating</h1>
 
     <div class="heatmap-controls">
-        <button id="btn-conviction" class="active" onclick="setMode('conviction')" aria-pressed="true">Highest conviction</button>
-        <button id="btn-least-heard" onclick="setMode('least_heard')" aria-pressed="false">Least heard</button>
+        <button id="btn-conviction" class="active" onclick="setMode('conviction')" aria-pressed="true" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+            Highest conviction
+        </button>
+        <button id="btn-least-heard" onclick="setMode('least_heard')" aria-pressed="false" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+            Least heard
+        </button>
     </div>
 
     <div id="mode-description">

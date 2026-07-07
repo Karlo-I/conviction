@@ -47,10 +47,23 @@
 
         <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" name="vote" value="approve">Approve</button>
-            <button type="submit" name="vote" value="reject">Reject</button>
+            <button type="submit" name="vote" value="approve" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                Approve
+            </button>
+            <button type="submit" name="vote" value="reject" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                Reject
+            </button>
         </form>
     </div>
     {% endfor %}
+
+    <!-- Back to Top Button -->
+    <div style="margin-top: 3rem; text-align: center;">
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" 
+                style="font-size: 0.9rem; color: #457b9d; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0.5rem;">
+            &uarr; Back to top
+        </button>
+    </div>
+
 </div>
 {% endblock %}

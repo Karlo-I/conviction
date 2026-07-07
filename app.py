@@ -190,7 +190,12 @@ def lens(slug):
     
     issues = models.get_issues_with_data(db, lens['id'])    
     forces = models.get_forces_for_lens(db, lens['id'])
-    return render_template('lens.html', lens=lens, issues=issues, forces=forces)
+    approved_contributions = models.get_approved_contributions_for_lens(db, lens['id'])
+
+    # ADD THIS PRINT STATEMENT:
+    print(f"DEBUG: Found {len(approved_contributions)} approved contributions for {lens['title']}")
+
+    return render_template('lens.html', lens=lens, issues=issues, forces=forces, approved_contributions=approved_contributions)
     
 
 # Handles token spend on an issue - checks balance, writes ledger, redirects to lens

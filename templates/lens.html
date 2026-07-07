@@ -4,11 +4,17 @@
 
 {% block content %}
 <div class="lens-container">
+
+    <!-- Return Button -->
+    <div style="margin-top: 3rem;">
+        <a href="{{ url_for('index') }}" style="font-size: 0.9rem; color: #457b9d; text-decoration: none;">&larr; All lenses</a>
+    </div>
+
     <h1>{{ lens.title }}</h1>
     <p>{{ lens.description }}</p>
 
     {% for issue in issues %}
-    <div class="issue">
+    <div class="issue" style="padding-bottom: 3rem; margin-bottom: 3rem; border-bottom: 2px solid #e9ecef;">
         <h2>{{ issue.title }}</h2>
         <p>{{ issue.description }}</p>
 
@@ -17,48 +23,123 @@
             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="issue_id" value="{{ issue.issue_id }}">
             <input type="hidden" name="lens_slug" value="{{ lens.slug }}">
-            <button type="submit">Spend token</button>
+            <button type="submit" name="vote" value="reject" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                Spend token
+            </button>
         </form>
         {% else %}
         <a href="{{ url_for('login') }}">Log in to spend tokens</a>
         {% endif %}
 
-        {% if issue.data_points %}
-        <div class="data-table">
-            <h3>{{ issue.indicator_name }} ({{ issue.unit }})</h3>
-            <table>
+        {# SMART GROUPING: Official Data as Table #}
+        {% if issue.official_data %}
+        <div class="data-table-section" style="margin-top: 2rem; padding-top: 1rem; border-left: 4px solid #457b9d;">
+            <h3 style="margin-bottom: 1rem; padding-left: 2rem; color: #2d3436;">{{ issue.indicator_name }} ({{ issue.unit }})</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 2rem;">
                 <thead>
-                    <tr>
-                        <th>Country</th>
-                        <th>Year</th>
-                        <th>{{ issue.indicator_name }}</th>
+                    <tr style="border-bottom: 2px solid #e9ecef; text-align: left;">
+                        <th style="padding-left: 2rem;">Country</th>
+                        <th style="padding: 0.75rem;">Year</th>
+                        <th style="padding: 0.75rem;">{{ issue.indicator_name }}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for point in issue.data_points %}
-                    <tr>
-                        <td>{{ point.country }}</td>
-                        <td>{{ point.year }}</td>
-                        <td>{{ point.value }}{{ issue.unit }}</td>
+                    {% for point in issue.official_data %}
+                    <tr style="border-bottom: 1px solid #f1f3f5;">
+                        <td style="padding-left: 2rem; font-weight: bold;">{{ point.country }}</td>
+                        <td style="padding: 0.75rem; color: #666;">{{ point.year }}</td>
+                        <td style="padding: 0.75rem;">{{ point.value|round(1) }}{{ issue.unit }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        {% else %}
-        <p>No data available for this issue yet.</p>
         {% endif %}
+
+        {# SMART GROUPING: Community Evidence as Cards #}
+        {% if issue.community_contributions %}
+        <div class="community-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e9ecef;">
+            <h3 style="margin-bottom: 1rem; color: #2d3436;">Community Evidence for {{ issue.title }}</h3>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1.5rem;">
+                Peer-validated observations and data points from our community.
+            </p>
+
+            {% for c in issue.community_contributions %}
+            <div class="validate-card" style="margin-bottom: 1.5rem; border-left: 4px solid #457b9d;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <div>
+                        <strong style="font-size: 1.1rem; color: #1d3557;">{{ c.country }}</strong>
+                        <span style="color: #666; margin-left: 0.5rem;">• {{ c.year }}</span>
+                    </div>
+                    <span style="font-size: 0.85rem; color: #666;">
+                        Submitted by <strong>{{ c.username }}</strong>
+                    </span>
+                </div>
+                
+                {% if c.title %}
+                    <h4 style="margin-bottom: 0.5rem; color: #2d3436;">{{ c.title }}</h4>
+                {% endif %}
+                
+                {% if c.note %}
+                    <p style="margin-bottom: 1rem; line-height: 1.6;">{{ c.note }}</p>
+                {% endif %}
+                
+                {% if c.value %}
+                    <p style="margin-bottom: 1rem; font-weight: bold; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; display: inline-block;">
+                        Value: {{ c.value|round(1) }}{{ issue.unit }}
+                    </p>
+                {% endif %}
+                
+                {% if c.source_url %}
+                    <p style="margin-bottom: 1rem; font-size: 0.9rem;">
+                        <strong>Source:</strong> 
+                        <a href="{{ c.source_url }}" target="_blank" rel="noopener noreferrer" style="color: #457b9d;">
+                            {{ c.source_url }}
+                        </a>
+                    </p>
+                {% endif %}
+                
+                {% if c.ai_summary %}
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                    <details>
+                        <summary style="cursor: pointer; color: #457b9d; font-weight: 500; font-size: 0.9rem;">
+                            View AI Evidence Digest
+                        </summary>
+                        <div style="margin-top: 0.5rem; padding: 1rem; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #457b9d;">
+                            <p style="margin: 0; font-size: 0.9rem; line-height: 1.6;">{{ c.ai_summary }}</p>
+                        </div>
+                    </details>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {# Fallback if absolutely no data exists #}
+        {% if not issue.official_data and not issue.community_contributions %}
+            <p style="margin-top: 2rem; color: #666; font-style: italic;">No data or community evidence available for this issue yet.</p>
+        {% endif %}
+
     </div>
     {% endfor %}
 
     {% if forces %}
-    <div class="related-forces">
+    <div class="related-forces" style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #e9ecef;">
         <h2>Related forces</h2>
         {% for f in forces %}
         <p><a href="{{ url_for('force_detail', slug=f.slug) }}">{{ f.title }}</a></p>
         {% endfor %}
     </div>
     {% endif %}
+
+    <!-- Back to Top Button -->
+    <div style="margin-top: 3rem; text-align: center;">
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" 
+                style="font-size: 0.9rem; color: #457b9d; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0.5rem;">
+            &uarr; Back to top
+        </button>
+    </div>
 
 </div>
 {% endblock %}

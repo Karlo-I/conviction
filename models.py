@@ -93,6 +93,29 @@ def get_pending_contributions(db):
     ).fetchall()
 
 
+# Fetch all approved contributions linked to any issue in this lens
+# Include username and all fields needed for display
+def get_approved_contributions_for_lens(db, lens_id):
+    return db.execute(
+        '''
+        SELECT 
+            c.*,
+            u.username,
+            i.title AS issue_title,
+            ind.name AS indicator_name
+        FROM contributions c
+        JOIN users u ON c.user_id = u.id
+        JOIN contribution_lens_links cll ON cll.contribution_id = c.id
+        JOIN issues i ON i.id = cll.issue_id
+        LEFT JOIN indicators ind ON ind.id = c.indicator_id
+        WHERE c.status = 'approved'
+          AND i.lens_id = ?
+        ORDER BY c.created_at DESC
+        ''',
+        (lens_id,)
+    ).fetchall()
+
+
 def get_contribution_by_id(db, contribution_id):
     return db.execute(
         '''
@@ -422,37 +445,68 @@ def get_issues_by_lens(db, lens_id):
 
 
 def get_issues_with_data(db, lens_id):
-    rows = db.execute(
-        '''SELECT i.*, ind.name as indicator_name, ind.unit,
-                  dp.country_code, dp.year, dp.value
-           FROM issues i
-           LEFT JOIN indicators ind ON ind.issue_id = i.id
-           LEFT JOIN data_points dp ON dp.indicator_id = ind.id
-           WHERE i.lens_id = ?
-           ORDER BY i.id, dp.year ASC''',
+    """Get issues with their indicators and data points, PLUS approved community contributions."""
+    issues = db.execute(
+        '''
+        SELECT DISTINCT 
+            i.id AS issue_id,
+            i.title,
+            i.description,
+            ind.id AS indicator_id,
+            ind.name AS indicator_name,
+            ind.unit
+        FROM issues i
+        LEFT JOIN indicators ind ON ind.issue_id = i.id
+        WHERE i.lens_id = ?
+        ORDER BY i.id
+        ''',
         (lens_id,)
     ).fetchall()
 
-    issues = {}
-    for row in rows:
-        issue_slug = row['slug']
-        if issue_slug not in issues:
-            issues[issue_slug] = {
-                'issue_id': row['id'],
-                'title': row['title'],
-                'description': row['description'],
-                'indicator_name': row['indicator_name'],
-                'unit': row['unit'],
-                'data_points': []
-            }
-        if row['country_code']:
-            issues[issue_slug]['data_points'].append({
-                'country': row['country_code'],
-                'year': row['year'],
-                'value': round(row['value'], 1) if row['value'] is not None else 0
-            })
-
-    return list(issues.values())
+    # Convert Row objects to dictionaries to add keys to them
+    issues = [dict(issue) for issue in issues]
+    
+    for issue in issues:
+        # 1. Get official seed data
+        official_data = db.execute(
+            '''
+            SELECT dp.country_code AS country, dp.year, dp.value
+            FROM data_points dp
+            WHERE dp.indicator_id = ?
+            ORDER BY dp.country_code, dp.year
+            ''',
+            (issue['indicator_id'],)
+        ).fetchall()
+        
+        # 2. Get approved community contributions
+        community_data = db.execute(
+            '''
+            SELECT 
+                c.country_code AS country,
+                strftime('%Y', c.created_at) AS year,
+                c.value,
+                c.title,
+                c.note,
+                c.source_url,
+                u.username,
+                cd.summary AS ai_summary
+            FROM contributions c
+            JOIN users u ON c.user_id = u.id
+            JOIN contribution_lens_links cll ON cll.contribution_id = c.id
+            LEFT JOIN contribution_digests cd ON cd.contribution_id = c.id
+            WHERE c.status = 'approved'
+              AND c.indicator_id = ?
+              AND cll.issue_id = ?
+            ORDER BY c.created_at DESC
+            ''',
+            (issue['indicator_id'], issue['issue_id'])
+        ).fetchall()
+        
+        # 3. Assign to separate keys for Smart Grouping
+        issue['official_data'] = list(official_data)
+        issue['community_contributions'] = list(community_data)
+    
+    return issues
 
 
 ## HEATMAP ##
