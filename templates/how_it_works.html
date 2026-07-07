@@ -1,0 +1,46 @@
+{% extends 'layout.html' %}
+
+{% block title %}How It Works{% endblock %}
+
+{% block content %}
+<div class="legal-container">
+    <h1>How It Works & AI Disclosure</h1>
+
+    <h2>The platform</h2>
+    <p>Conviction helps you trace the line between daily experiences (rising costs, poor health, environmental damage) and the systemic mechanisms that produce those outcomes. You explore three lenses — Food, Housing, and Mobility — and discover the cross-domain forces beneath them all.</p>
+
+    <h2>AI Agent disclosure</h2>
+    <p>Conviction uses an AI agent (Claude Haiku by Anthropic) to assist with peer validation. Here's exactly what it does:</p>
+
+    <h3>What the AI does</h3>
+    <ul>
+        <li><strong>Generates evidence digests:</strong> When you submit a contribution, the AI fetches data from pre-approved sources (WHO, World Bank, Our World in Data) and summarizes what the evidence shows relative to your claim</li>
+        <li><strong>Presents findings, not verdicts:</strong> The AI reports what it found — it does not approve or reject contributions</li>
+        <li><strong>Surfaces divergence:</strong> Where your source conflicts with institutional data, the AI explicitly shows that conflict rather than resolving it</li>
+        <li><strong>Runs once per contribution:</strong> The AI generates one digest shown to all validators — it does not run separately for each validator</li>
+    </ul>
+
+    <h3>What the AI does NOT do</h3>
+    <ul>
+        <li>Make moderation decisions</li>
+        <li>Name or blame individuals or organizations</li>
+        <li>Fetch data from URLs you provide (validators manually check source links)</li>
+        <li>Replace human judgment — validators make the final decision</li>
+    </ul>
+
+    <h3>Limitations</h3>
+    <ul>
+        <li><strong>Geographic coverage:</strong> WHO and World Bank data is more complete for OECD countries. Where data is absent, the AI reports "no data available"</li>
+        <li><strong>Reference sources:</strong> Institutional datasets are used as reference points for comparison, not as absolute arbiters of truth</li>
+        <li><strong>Model:</strong> We use Claude Haiku (claude-haiku-4-5-20251001) — a lightweight, fast model optimized for summarization</li>
+    </ul>
+
+    <h2>Peer validation</h2>
+    <p>All contributions go through peer review. Validators read the AI digest and the original source, then vote to approve or reject. Two approvals are needed before a contribution appears on the platform.</p>
+
+    <h2>Transparency</h2>
+    <p>Conviction has a thesis and does not pretend otherwise. What we offer instead of neutrality is full transparency: every data point sourced and cited, every editorial decision documented, every methodology open to scrutiny.</p>
+
+    <p><a href="{{ url_for('index') }}">← Back to home</a></p>
+</div>
+{% endblock %}

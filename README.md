@@ -1,6 +1,6 @@
 # Conviction
 ### CS50x Final Project — Living Project Brief
-**Last Updated:** June 27, 2026 (rev 13)
+**Last Updated:** June 30, 2026 (rev 15)
 **Status:** Planning / Pre-build
 
 ---
@@ -116,6 +116,8 @@ The only ongoing cost is the AI agent call triggered when a user submits a contr
    **Source conflict as a feature:** Where a user-submitted source conflicts with pre-approved API data, the digest surfaces the conflict explicitly rather than resolving it. Conflict between a local source and an institutional dataset is precisely the kind of information asymmetry the forces layer documents — making it visible is consistent with the platform's thesis.
 
    **Agent fallback:** If a user provides no pasted text and no URL, the agent falls back to querying pre-approved sources only. If those return nothing, the digest shows `'no data available'` and the UI tells the validator: "No external data found. Evaluate based on the claim alone."
+
+   **Display and UX:** The AI digest is displayed to all validators on validate.html with a color-coded confidence badge. Validators see the summary immediately upon page load. For contributors, the AI agent runs in a background thread after submission, allowing instant redirect to the confirmation page. The page auto-refreshes every 3 seconds until the digest appears, providing a seamless user experience without blocking.
 
 7. **Global Heatmap** — Aggregate token spend by country renders as a heatmap via Leaflet.js. Users watch their contribution shift the map. Starts as a static render; near-real-time updates (page refresh triggers new data fetch) are the target. True real-time via WebSockets is a post-submission stretch goal.
 
@@ -419,7 +421,7 @@ A weighted scoring system that classifies user responses to 5–7 questions into
 
 **2. Contribution Digest Agent (`agent.py`)**
 
-When a user submits a contribution, `agent.py` is called once. It does the following in sequence:
+When a user submits a contribution, `agent.py` is called once in a 'background thread' to prevent blocking the user interface. The user is immediately redirected to a confirmation page that displays "AI digest is being generated. Check back shortly.". The page auto-refreshes every 3 seconds until the digest is ready. The agent does the following in sequence:
 
 1. Constructs a search query from the contribution's claim, country, and indicator
 2. Fetches relevant data from pre-approved free sources (WHO API, World Bank API, Our World in Data CSVs)
@@ -434,6 +436,8 @@ The digest is then displayed to all peer validators on `validate.html`. The AI r
 
 **Cost estimate:** ~$0.002–$0.01 per contribution at current model pricing. Under $1 for the first 100 contributions.
 
+**Background threading:** The AI agent runs asynchronously using Python's 'threading' module. A new database connection is created for the background thread to avoid SQLite connection sharing issues. This keeps the user experience responsive while the API call completes.
+
 **Known limitation:** Source coverage is uneven globally. WHO and World Bank data is more complete for OECD countries. Where data is absent, the agent returns `'no data available'` and the digest says so explicitly. The UI flags this rather than hiding it.
 
 ---
@@ -444,8 +448,37 @@ The digest is then displayed to all peer validators on `validate.html`. The AI r
 |---|---|---|---|
 | 1 | June 19–25 | Schema init, Flask skeleton, auth (register/login), first dataset seeded | ✓ |
 | 2 | June 26–Jul 2 | Three lenses with real data, token spend system, diagnostic quiz | ✓ |
-| 3 | Jul 3–9 | Heatmap, contribution flow, agent.py digest, peer validation, token earning | ☐ |
-| 4 | Jul 10–16 | Polish, sharing mechanic, README finalise, video, deploy to Render, submit | ☐ |
+| 3 | Jul 3–9 | Heatmap, contribution flow, agent.py digest, peer validation, token earning | ✓ |
+| 4 | Jul 10–16 | Polish: AI digest display, background threading, legal pages (privacy/terms/how_it_works), heatmap hover, tooltips, validation UI spacing, README finalise, video, deploy to Render, submit | ☐ |
+    
+    ## Week 4 Polish Completed
+
+    The following improvements were implemented during the final polish phase:
+
+    **UX Enhancements:**
+    - AI digest now displays prominently in validation queue with color-coded confidence badges
+    - Background threading prevents UI blocking during AI processing
+    - Auto-refresh on contribution confirmation page (every 3 seconds until digest ready)
+    - Heatmap markers show country info on hover (no click required)
+    - Improved validation card spacing and visual separation
+
+    **Legal & Transparency:**
+    - Privacy policy page detailing no-email policy and data retention
+    - Terms of use page outlining contribution standards and platform limitations  
+    - How It Works page with full AI disclosure and methodology transparency
+    - Footer navigation added to all pages
+
+    **Code Quality:**
+    - Business logic extracted from `app.py` into `models.py` (`process_vote_logic` function)
+    - Country code mapping abstracted from JavaScript to Python dictionary
+    - Raw AI CONFIDENCE markers stripped from digest text
+    - All validation thresholds now configurable via `platform_config`
+
+    **Architecture:**
+    - Background threading with separate SQLite connections per thread
+    - Append-only token ledger with balance cache
+    - Collaborative force claims via `contribution_sources` and `contribution_lens_links`
+
 | Post-submission | Jul 17+ | Strava OAuth integration, real-time heatmap via WebSockets, ML quiz upgrade | ☐ |
 
 ---
@@ -476,14 +509,18 @@ The digest is then displayed to all peer validators on `validate.html`. The AI r
 - **No account recovery:** Without email, users who lose their password cannot recover their account. Disclosed explicitly at registration. Acceptable trade-off given the privacy benefit.
 - **Echo chamber risk:** Addressed — see Echo Chamber Prevention section. Key mechanisms: quiz cross-pollination, heatmap "least heard" toggle, forces cross-lens links, contribution diversity signal, dissenting data shown explicitly.
 - **Legal exposure:** Addressed — see Legal and Ethical Framework section. Key mitigations: privacy policy page, consent checkbox at registration, terms of use, AI disclosure page, data deletion mechanism.
-- **Heatmap "real-time" expectation:** True real-time requires WebSockets — outside CS50 scope. Target is near-real-time: map refreshes on page load. WebSockets are post-submission.
+- **Heatmap "real-time" expectation:** True real-time requires WebSockets — outside CS50 scope. Target is near-real-time: map refreshes on page load. WebSockets are post-submission. UPDATE 06/07/26: The heatmap now features hover tooltips showing country names and values without requiring clicks, improving UX significantly.
 - **Quiz AI credibility:** The weighted scoring classifier in `quiz.py` is rule-based logic, not machine learning. Call it a "classification system" in the README unless upgraded to scikit-learn post-submission.
 - **Agent.py data coverage bias:** WHO and World Bank data covers OECD countries more completely. Where data is absent, the UI says so explicitly: "No global data found for this region. Your contribution may be filling a real gap."
 - **Peer validation cold start:** Set `validation_threshold` to 1 in `platform_config` for MVP. Admin acts as first validator. Threshold increases as user base grows.
 - **Sharing mechanic gaming:** `shares` table tracks daily count per user. Python checks against `platform_config.max_shares_per_day` before awarding tokens.
 - **Token balance drift:** Ledger is always written first inside a database transaction. Balance derived from ledger on any discrepancy.
 - **AI agent cost at scale:** Negligible at low traffic. `platform_config.max_contributions_per_day` rate-limits submissions without a code deploy.
-- **Validator read-only limitation:** Validators can read the AI digest and the contributor's submitted evidence, but cannot add, annotate, or counter-submit evidence of their own. A validator who knows of a relevant source has no mechanism to surface it. This is a deliberate scope decision for MVP. Acknowledged explicitly in `how_it_works.html` — "validators evaluate evidence submitted with the contribution; they cannot add new evidence at this stage." A `contribution_comments` table is scoped for post-submission.
+- **Force claim form undifferentiated:** `contribute.html` does not conditionally show/hide fields based on `contribution_type` for MVP. Force claims are single-source and single-lens at submission. Full multi-source cross-lens force claim form with JavaScript conditional fields is Week 4 polish. Documented in `how_it_works.html`.
+- **Force claim elevation not yet built:** The logic to elevate approved force claims into `forces` and `force_issue_links` tables when `force_approval_threshold` is reached is post-submission. Force claims are validated through the same peer flow as data points but do not yet auto-elevate. RESOLVED 06/07/26: Force claim elevation is now fully implemented in models.py with structural quality checks (2+ sources, 2+ lenses).
+- **Reject threshold not implemented:** Auto-rejection based on a reject vote threshold is not built for MVP. Contributions can only be approved or remain pending. RESOLVED 06/07/26: Reject thresholds are now implemented via platform_config keys (rejection_threshold_data_point and rejection_threshold_force_claim)
+- **AI digest CONFIDENCE line:** Raw `CONFIDENCE:` line still visible in digest text after markdown stripping. CSS or text processing fix needed in Week 4 polish. RESOLVED 06/07/26: The raw CONFIDENCE line is now stripped from the summary text before saving to the database.
+- **Validator read-only limitation:** Validators can read the AI digest and the contributor's submitted evidence, but cannot add, annotate, or counter-submit evidence of their own. A validator who knows of a relevant source has no mechanism to surface it. This is a deliberate scope decision for MVP. Acknowledged explicitly in `how_it_works.html` — "validators evaluate evidence submitted with the contribution; they cannot add new evidence at this stage." A `contribution_comments` table is scoped for post-submission. UPDATE 06/07/26: The AI digest is now prominently displayed on validate.html with confidence badges, making the validation process transparent and evidence-based.
 - **Alpha-3 vs alpha-2 country codes:** WHO API returns ISO 3166-1 alpha-3 codes (e.g. `KEN`, `PHL`). `data_points` stores these natively. Leaflet.js requires alpha-2 (e.g. `KE`, `PH`) for map rendering. Conversion handled via a lookup dictionary in the heatmap endpoint in `app.py` during Week 3 — no schema change required.
 - **Strava OAuth complexity:** Deferred to post-submission. Schema ready; `strava.py` not built.
 
@@ -522,6 +559,9 @@ After routing a user to their primary lens, the quiz result page surfaces a seco
 
 **Heatmap "least heard" mode**
 The heatmap toggle between "highest conviction" and "least heard" actively directs attention toward underrepresented countries and issues. Amplifying the already-loud is the default failure mode of conviction platforms — this toggle is the deliberate counter.
+
+**Heatmap hover tooltips**
+Country information appears on hover rather than requiring links, reducing friction and encouraging exploration of both "highest conviction" and "least heard" modes.
 
 **Forces layer as ideological bridge**
 The cross-lens links in `force_issue_links` are the strongest echo chamber prevention in the architecture. A user deep in the food lens who sees that the same financial capture force also drives the housing crisis is pulled out of their silo by the evidence itself — not by a recommendation algorithm, but by the structure of the data.
@@ -680,6 +720,15 @@ Initial data inserted into a database when it is first set up — not user-gener
 
 **Append-Only Ledger**
 A database pattern where records are only ever added, never modified or deleted. The `token_transactions` table in this project is an append-only ledger — every token movement is a new row. The current balance is always calculated by summing the ledger. This prevents data loss from bugs and provides a complete audit trail of every token movement.
+
+**Background Threading**
+A Python technique that runs time-consuming tasks (like AI API calls) in parallel with the main application, preventing the user interface from freezing. In this project, the AI agent runs in a background thread so users see instant confirmation after submitting a contribution.
+
+**Tooltip**
+A small UI element that appears when a user hovers their cursor over an element, without requiring a click. In this project, Leaflet.js tooltips show country names and token spend on the heatmap when users hover over markers.
+
+**Auto-Refresh**
+A JavaScript technique that automatically reloads a page at set intervals. In this project, the contribution confirmation page refreshes every 3 seconds until the AI digest appears, providing real-time feedback without manual user action.
 
 ---
 

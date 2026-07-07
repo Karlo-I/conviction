@@ -1,0 +1,44 @@
+{% extends 'layout.html' %}
+
+{% block title %}Terms of Use{% endblock %}
+
+{% block content %}
+<div class="legal-container">
+    <h1>Terms of Use</h1>
+    <p><strong>Last updated:</strong> July 2026</p>
+
+    <h2>Your contributions</h2>
+    <p>By submitting content to Conviction, you confirm that:</p>
+    <ul>
+        <li>The information represents your own research or observations</li>
+        <li>You have the right to share this information</li>
+        <li>You understand that contributions go through peer validation before appearing</li>
+        <li>You understand that the AI digest is an evidence summary, not an endorsement</li>
+    </ul>
+
+    <h2>Content standards</h2>
+    <p>Conviction reserves the right to remove content that:</p>
+    <ul>
+        <li>Cannot be sourced or verified</li>
+        <li>Causes direct harm to individuals or communities</li>
+        <li>Violates universal moral and ethical standards</li>
+    </ul>
+    <p>We do not remove content simply because it challenges the platform's thesis or presents dissenting views.</p>
+
+    <h2>Forces layer</h2>
+    <p>The forces layer is community-built through peer validation. Conviction does not guarantee the accuracy of force claims. The platform's responsibility is to maintain validation standards and ensure methodology remains transparent.</p>
+
+    <h2>Platform limitations</h2>
+    <p>Conviction is provided "as is" without warranties. While we strive for accuracy, we cannot guarantee:</p>
+    <ul>
+        <li>Continuous availability</li>
+        <li>Absolute data accuracy</li>
+        <li>Freedom from errors or interruptions</li>
+    </ul>
+
+    <h2>Account responsibility</h2>
+    <p>You are responsible for maintaining the confidentiality of your username and password. Conviction cannot recover lost accounts due to our no-email policy.</p>
+
+    <p><a href="{{ url_for('index') }}">← Back to home</a></p>
+</div>
+{% endblock %}

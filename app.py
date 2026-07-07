@@ -10,6 +10,7 @@ import os
 import quiz
 import secrets
 import sqlite3
+import threading
 from dotenv import load_dotenv
 from flask import abort, current_app, flash, Flask, g, jsonify, render_template, redirect, request, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -23,6 +24,25 @@ if not app.debug and os.environ.get('SECRET_KEY') is None:
     raise ValueError('SECRET_KEY environment variable is not set in production.')
 app.config['SESSION_COOKIE_SECURE'] = not app.debug
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+
+COUNTRY_DATA = {
+    'KEN': {'name': 'Kenya', 'lat': -1.286389, 'long': 36.817223},
+    'NGA': {'name': 'Nigeria', 'lat': 9.057990, 'long': 7.495080},
+    'ZAF': {'name': 'South Africa', 'lat': -30.559482, 'long': 22.937506},
+    'EGY': {'name': 'Egypt', 'lat': 26.820553, 'long': 30.802498},
+    'PHL': {'name': 'Philippines', 'lat': 12.879721, 'long': 121.774017},
+    'IND': {'name': 'India', 'lat': 20.593684, 'long': 78.962880},
+    'BGD': {'name': 'Bangladesh', 'lat': 23.684994, 'long': 90.356331},
+    'THA': {'name': 'Thailand', 'lat': 15.870032, 'long': 100.992541},
+    'MEX': {'name': 'Mexico', 'lat': 23.634501, 'long': -102.552784},
+    'BRA': {'name': 'Brazil', 'lat': -14.235004, 'long': -51.925280},
+    'COL': {'name': 'Colombia', 'lat': 4.570868, 'long': -74.297333},
+    'CAN': {'name': 'Canada', 'lat': 56.130366, 'long': -106.346771},
+    'GBR': {'name': 'United Kingdom', 'lat': 55.378051, 'long': -3.435973},
+    'AUS': {'name': 'Australia', 'lat': -25.274398, 'long': 133.775136},
+    'NOR': {'name': 'Norway', 'lat': 60.472024, 'long': 8.468946}
+}
 
 
 # Ensure application is not vulnerable to Cross-Site Request Forgery 
@@ -169,7 +189,8 @@ def lens(slug):
         return redirect(url_for('index'))
     
     issues = models.get_issues_with_data(db, lens['id'])    
-    return render_template('lens.html', lens=lens, issues=issues)
+    forces = models.get_forces_for_lens(db, lens['id'])
+    return render_template('lens.html', lens=lens, issues=issues, forces=forces)
     
 
 # Handles token spend on an issue - checks balance, writes ledger, redirects to lens
@@ -258,7 +279,7 @@ def quiz_route():
 # Render heatmap.html - Leaflet.js fetches '/api/heatmap' separately via JavaScript
 @app.route('/heatmap')
 def heatmap():
-    return render_template('heatmap.html')
+    return render_template('heatmap.html', country_data=COUNTRY_DATA)
 
 
 # Return aggregate token spend or least-heard data as JSON for Leaflet.js
@@ -295,6 +316,8 @@ def contribute():
     if request.method == 'POST':
         user_id = session['user_id']
         country_code = request.form.get('country_code', '').strip()
+        title = request.form.get('title', '').strip() or None
+        category = request.form.get('category', '').strip() or None
         note = request.form.get('note', '').strip()
         contribution_type = request.form.get('contribution_type', 'data_point')
         indicator_id = request.form.get('indicator_id') or None
@@ -317,22 +340,35 @@ def contribute():
             return render_template('contribute.html',
                                    indicators=models.get_all_indicators(db))
 
-        models.create_contribution(
+        contribution = models.create_contribution(
             db, user_id, country_code, note,
             contribution_type=contribution_type,
             indicator_id=indicator_id,
             value=value,
             source_url=source_url,
-            source_excerpt=source_excerpt
+            source_excerpt=source_excerpt,
+            title=title,
+            category=category
         )
 
-        contribution = db.execute(
-            'SELECT id FROM contributions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
-            (user_id,)
-        ).fetchone()
         contribution_id = contribution['id']
 
-        agent.run_agent(db, contribution_id)
+        if contribution['contribution_type'] == 'force_claim' and contribution['status'] == 'approved':
+            models.elevate_force_claim(db, contribution['id'])
+
+        def run_agent_background(contrib_id):
+            import sqlite3
+            # We MUST create a new database connection for the background thread.
+            # SQLite connections cannot be safely shared across threads.
+            bg_db = sqlite3.connect(DATABASE)
+            bg_db.row_factory = sqlite3.Row
+            try:
+                agent.run_agent(bg_db, contrib_id)
+            finally:
+                bg_db.close()
+
+        thread = threading.Thread(target=run_agent_background, args=(contribution_id,))
+        thread.start()
 
         return redirect(url_for('contribute_confirm', contribution_id=contribution_id))
 
@@ -346,14 +382,20 @@ def contribute():
 def contribute_confirm(contribution_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    
+
     db = get_db()
     contribution = models.get_contribution_with_digest(db, contribution_id)
 
-    if contribution is None or contribution['user_id'] != session['user_id']:
+    if contribution is None:
         return redirect(url_for('index'))
-    
-    return render_template('contribute_confirm.html', contribution=contribution)
+
+    is_owner = contribution['user_id'] == session['user_id']
+    my_source = None if is_owner else models.get_contributor_source(db, contribution_id, session['user_id'])
+
+    if not is_owner and my_source is None:
+        return redirect(url_for('index'))
+
+    return render_template('contribute_confirm.html', contribution=contribution, is_owner=is_owner, my_source=my_source)
 
 
 # Render the peer validation queue with pending contributions and their digests
@@ -363,14 +405,17 @@ def validate():
     if 'user_id' not in session:
         flash('You need to be logged in to validate contributions.', 'error')
         return redirect(url_for('login'))
-    
+
     db = get_db()
-    contributions = models.get_pending_contributions(db)
+    contributions = [dict(c) for c in models.get_pending_contributions(db)]
+    for c in contributions:
+        if c['contribution_type'] == 'force_claim':
+            c['source_count'] = models.get_source_count(db, c['id'])
     return render_template('validate.html', contributions=contributions)
 
 
 # Handle a validator's approve/reject vote on a contribution
-# Calls models.cast_vote, models.get_vote_count, models.approve_contribution; checks threshold
+# Calls models.cast_vote, models.get_vote_count, models.process_vote_logic, models.approve_contribution; checks threshold
 @app.route('/validate/<int:contribution_id>', methods=['POST'])
 def cast_vote(contribution_id):
     if 'user_id' not in session:
@@ -406,22 +451,49 @@ def cast_vote(contribution_id):
     tokens_per_validation = int(models.get_config(db, 'tokens_per_validation') or 1)
     models.add_token_transactions(db, user_id, tokens_per_validation, 'validation')
 
-    approve_count = models.get_vote_count(db, contribution_id, 'approve')
-    threshold_key = 'force_approval_threshold' if contribution['contribution_type'] == 'force_claim' else 'validation_threshold'
-    threshold = int(models.get_config(db, threshold_key) or 2)
-    print(f'DEBUG: approve_count={approve_count}, threshold={threshold}')
-
-    if approve_count >= threshold:
-        print('DEBUG: threshold met, approving')
-        models.approve_contribution(db, contribution_id)
-        tokens_per_contribution = int(models.get_config(db, 'tokens_per_contribution') or 3)
-        models.add_token_transactions(db, contribution['user_id'], tokens_per_contribution, 'contribution')
-        flash('Contribution approved and added to the platform.', 'success')
-    else:
-        print(f'DEBUG: threshold not met - approve_count={approve_count} threshold={threshold}')
-        flash('Vote recorded.', 'success')
+    # --- NEW: Delegate all threshold logic to models.py ---
+    message = models.process_vote_logic(db, contribution, user_id, vote)
+    flash(message, 'success')
 
     return redirect(url_for('validate'))
+
+
+@app.route('/forces')
+def forces():
+    db = get_db()
+    all_forces = models.get_all_forces(db)
+
+    grouped = {}
+    for f in all_forces:
+        grouped.setdefault(f['category'], []).append(f)
+
+    return render_template('forces.html', grouped_forces=grouped)
+
+
+@app.route('/force/<slug>')
+def force_detail(slug):
+    db = get_db()
+    force = models.get_force_by_slug(db, slug)
+
+    if force is None:
+        return redirect(url_for('forces'))
+    
+    return render_template('force.html', force=force)
+
+
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+
+@app.route('/terms')
+def terms():
+    return render_template('terms.html')
+
+
+@app.route('/how_it_works')
+def how_it_works():
+    return render_template('how_it_works.html')
 
 
 # IMPORTANT: Delete these two lines when the project moves to PROD

@@ -4,17 +4,15 @@
 # AI assistance: Claude (Anthropic) assisted with query structure and error handling patterns.
 # Logic, decisions, and direction are the author's own.
 
-import sqlite3
 import json
+import re
+import sqlite3
 from datetime import datetime, timezone
 
 
 ## USER FUNCTIONS ##
 
-# Insert a new user row and log the 10-token registration transaction
-# Called by app.py register route; writes to users and token_transactions in schema.sql
 def create_user(db, username, password_hash):
-
     try:
         db.execute(
             'INSERT INTO users (username, password_hash) VALUES (?, ?)',
@@ -29,36 +27,27 @@ def create_user(db, username, password_hash):
         )
         db.commit()
         return user
-    
     except sqlite3.IntegrityError:
         db.rollback()
         return None
-    
 
-# Fetch a single user row by username, or None if not found
-# Called by create_user above and by app.py login route to verify credentials
+
 def get_user_by_username(db, username):
-    """Return a single user row or None"""
     return db.execute(
-        'SELECT * FROM users WHERE username = ?', 
+        'SELECT * FROM users WHERE username = ?',
         (username,)
     ).fetchone()
 
 
-# Fetch a single user row by id, or None if not found
-# Called by app.py on authenticated requests where session holds user_id, not username
 def get_user_by_id(db, user_id):
-    """Return a single user row or None"""
     return db.execute(
-        'SELECT * FROM users WHERE id = ?', 
+        'SELECT * FROM users WHERE id = ?',
         (user_id,)
     ).fetchone()
 
 
 ## TOKEN FUNCTIONS ##
 
-# Read the cached token balance from the users table — used for display
-# Called by app.py spend route and anywhere balance needs to be shown quickly
 def get_token_balance(db, user_id):
     result = db.execute(
         'SELECT token_balance FROM users WHERE id = ?', (user_id,)
@@ -66,8 +55,6 @@ def get_token_balance(db, user_id):
     return result['token_balance'] if result else 0
 
 
-# Recalculate balance from the ledger — used for integrity checks only
-# Call this to verify the cache is accurate; never call this for routine display
 def reconcile_token_balance(db, user_id):
     result = db.execute(
         'SELECT SUM(amount) as balance FROM token_transactions WHERE user_id = ?',
@@ -76,19 +63,16 @@ def reconcile_token_balance(db, user_id):
     return result['balance'] or 0
 
 
-# Append a row to the token_transactions table ledger and update the token_balance cache on users
-# Called by app.py whenever tokens are earned or spent; issue_id populated only when reason='spend'
 def add_token_transactions(db, user_id, amount, reason, issue_id=None):
-    """Append a token movement to the ledger and update the cached balance"""
     db.execute(
         '''
-        INSERT INTO token_transactions (user_id, amount, reason, issue_id) 
+        INSERT INTO token_transactions (user_id, amount, reason, issue_id)
         VALUES (?, ?, ?, ?)
-        ''', 
+        ''',
         (user_id, amount, reason, issue_id)
     )
     db.execute(
-        'UPDATE users SET token_balance = token_balance + ? WHERE id = ?', 
+        'UPDATE users SET token_balance = token_balance + ? WHERE id = ?',
         (amount, user_id)
     )
     db.commit()
@@ -96,41 +80,20 @@ def add_token_transactions(db, user_id, amount, reason, issue_id=None):
 
 ## CONTRIBUTIONS FUNCTIONS ##
 
-# Insert a new contribution row with status defaulting to 'pending'
-# Called by app.py contribute route; contribution_type routes approval logic in future validate flow
-def create_contribution(db, user_id, country_code, note, contribution_type='data_point',
-                        indicator_id=None, value=None, source_url=None, source_excerpt=None):
-    """Insert a new contribution with pending status"""
-    db.execute(
-        '''
-        INSERT INTO contributions 
-        (user_id, indicator_id, country_code, value, note, source_url, source_excerpt, contribution_type) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''',
-        (user_id, indicator_id, country_code, value, note, source_url, source_excerpt, contribution_type)
-    )
-    db.commit()
-
-
-# Return all pending contributions joined with submitter username, newest first
-# Called by app.py validate route to populate the peer validation queue in validate.html
 def get_pending_contributions(db):
-    """Return all contributions awaiting validation, newest first"""
     return db.execute(
         '''
-        SELECT c.*, u.username
+        SELECT c.*, u.username, cd.summary, cd.confidence
         FROM contributions c
         JOIN users u ON c.user_id = u.id
+        LEFT JOIN contribution_digests cd ON cd.contribution_id = c.id
         WHERE c.status = 'pending'
         ORDER BY c.created_at DESC
         '''
     ).fetchall()
 
 
-# Return a single contribution row joined with sumbitter username
-# Called by app.py when loading a specific contribution for validation or display
 def get_contribution_by_id(db, contribution_id):
-    """Return a single contribution with its submitter's username"""
     return db.execute(
         '''
         SELECT c.*, u.username
@@ -141,39 +104,268 @@ def get_contribution_by_id(db, contribution_id):
     ).fetchone()
 
 
-# Returns a single contribution joined with its AI digest, or None if not found.
-# Called by app.py confirm route; used to render contribute_confirm.html.
 def get_contribution_with_digest(db, contribution_id):
     return db.execute(
-        '''SELECT c.*, cd.summary, cd.confidence, cd.sources
-           FROM contributions c
-           LEFT JOIN contribution_digests cd ON cd.contribution_id = c.id
-           WHERE c.id = ?''',
+        '''
+        SELECT c.*, cd.summary, cd.confidence, cd.sources
+        FROM contributions c
+        LEFT JOIN contribution_digests cd ON cd.contribution_id = c.id
+        WHERE c.id = ?
+        ''',
         (contribution_id,)
     ).fetchone()
 
 
+def get_pending_force_claims_by_category(db, category):
+    rows = db.execute(
+        '''
+        SELECT id, note FROM contributions
+        WHERE contribution_type = 'force_claim' AND status = 'pending' AND category = ?
+        ''',
+        (category,)
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+# Append a source to an existing pending contribution instead of creating a new row
+# Called by create_contribution below when agent.check_force_claim_match finds a match
+def merge_into_contribution(db, contribution_id, note, source_url, source_excerpt, contributor_user_id, issue_id):
+    
+    db.execute(
+        '''
+        INSERT INTO contribution_sources (contribution_id, note, source_url, source_excerpt, contributor_user_id)
+        VALUES (?, ?, ?, ?, ?)
+        ''',
+        (contribution_id, note, source_url, source_excerpt, contributor_user_id)
+    )
+    if issue_id:
+        db.execute(
+            '''
+            INSERT OR IGNORE INTO contribution_lens_links (contribution_id, issue_id)
+            VALUES (?, ?)
+            ''',
+            (contribution_id, issue_id)
+        )
+    db.commit()
+    return contribution_id
+
+
+def create_contribution(db, user_id, country_code, note, contribution_type='data_point',
+                        indicator_id=None, value=None, source_url=None, source_excerpt=None,
+                        title=None, category=None):
+    """Insert a new contribution, or merge into an existing pending force_claim if matched.
+    Called by app.py contribute route. For force_claim type, checks get_pending_force_claims_by_category
+    and agent.check_force_claim_match before deciding to insert vs merge."""
+    issue_id = None
+    if indicator_id:
+        indicator = db.execute(
+            'SELECT issue_id FROM indicators WHERE id = ?', (indicator_id,)
+        ).fetchone()
+        if indicator:
+            issue_id = indicator['issue_id']
+
+    if contribution_type == 'force_claim' and category:
+        candidates = get_pending_force_claims_by_category(db, category)
+        import agent
+        match_id = agent.check_force_claim_match(note, candidates)
+        if match_id:
+            merge_into_contribution(db, match_id, note, source_url, source_excerpt, user_id, issue_id)
+            return db.execute('SELECT * FROM contributions WHERE id = ?', (match_id,)).fetchone()
+
+    db.execute(
+        '''
+        INSERT INTO contributions (user_id, indicator_id, country_code, value, note, source_url, source_excerpt, contribution_type, title, category)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+        (user_id, indicator_id, country_code, value, note, source_url, source_excerpt,
+         contribution_type, title, category)
+    )
+    db.commit()
+
+    contribution = db.execute(
+        'SELECT * FROM contributions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+        (user_id,)
+    ).fetchone()
+
+    if issue_id:
+        db.execute(
+            'INSERT OR IGNORE INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)',
+            (contribution['id'], issue_id)
+        )
+        db.commit()
+
+    return contribution
+
+
+# Check whether a user contributed a merged source to this contribution
+# Called by app.py contribute_confirm to extend view access beyond the original submitter
+def is_contribution_source(db, contribution_id, user_id):
+    result = db.execute(
+        'SELECT 1 FROM contribution_sources WHERE contribution_id = ? AND contributor_user_id = ?',
+        (contribution_id, user_id)
+    ).fetchone()
+    return result is not None
+
+
+# Return a specific user's own submitted source for a contribution they merged into
+# Called by app.py contribute_confirm when the viewer is a merged contributor, not the owner
+def get_contributor_source(db, contribution_id, user_id):
+    return db.execute(
+        'SELECT source_url, source_excerpt, added_at FROM contribution_sources WHERE contribution_id = ? AND contributor_user_id = ?',
+        (contribution_id, user_id)
+    ).fetchone()
+
+
+def slugify(text):
+    """Convert text into a URL-safe slug. Used only by elevate_force_claim below."""
+    text = text.lower().strip()
+    text = re.sub(r'[^a-z0-9]+', '-', text)
+    return text.strip('-')
+
+
+def elevate_force_claim(db, contribution_id):
+    """Insert an approved force_claim into forces and force_issue_links, if it meets
+    the structural quality bar (2+ sources, 2+ distinct lenses) and mechanism refinement succeeds.
+    Called by app.py cast_vote when a force_claim crosses force_approval_threshold."""
+    source_count = db.execute(
+        'SELECT COUNT(*) as n FROM contribution_sources WHERE contribution_id = ?',
+        (contribution_id,)
+    ).fetchone()['n'] + 1
+
+    lens_count = db.execute(
+        '''SELECT COUNT(DISTINCT i.lens_id) as n
+           FROM contribution_lens_links cll
+           JOIN issues i ON cll.issue_id = i.id
+           WHERE cll.contribution_id = ?''',
+        (contribution_id,)
+    ).fetchone()['n']
+
+    if source_count < 2 or lens_count < 2:
+        return False
+
+    contribution = db.execute(
+        'SELECT * FROM contributions WHERE id = ?', (contribution_id,)
+    ).fetchone()
+
+    additional_sources = db.execute(
+        'SELECT note, source_url, source_excerpt FROM contribution_sources WHERE contribution_id = ?',
+        (contribution_id,)
+    ).fetchall()
+
+    all_claims = [contribution['title'] or contribution['note']]
+    all_claims += [s['note'] or '' for s in additional_sources if s['note']]
+
+    import agent
+    refined_title = agent.refine_mechanism(all_claims)
+
+    if refined_title is None:
+        return False
+
+    evidence_chain = []
+    for s in additional_sources:
+        evidence_chain.append({
+            'claim': s['note'] or contribution['note'],
+            'source_url': s['source_url'],
+            'data_summary': s['source_excerpt']
+        })
+
+    category = contribution['category'] or 'information_asymmetry'
+    slug = f"{slugify(refined_title)}-{contribution_id}"
+
+    db.execute(
+        'INSERT INTO forces (slug, title, category, mechanism, evidence_chain) VALUES (?, ?, ?, ?, ?)',
+        (slug, refined_title, category, refined_title, json.dumps(evidence_chain))
+    )
+    force = db.execute('SELECT id FROM forces WHERE slug = ?', (slug,)).fetchone()
+
+    linked_issues = db.execute(
+        'SELECT DISTINCT issue_id FROM contribution_lens_links WHERE contribution_id = ?',
+        (contribution_id,)
+    ).fetchall()
+    for li in linked_issues:
+        db.execute(
+            'INSERT OR IGNORE INTO force_issue_links (force_id, issue_id, explanation) VALUES (?, ?, ?)',
+            (force['id'], li['issue_id'], refined_title)
+        )
+
+    db.commit()
+    return True
+
+
+# Return forces linked to any issue within a given lens, deduplicated by force id
+# Called by app.py lens route; feeds the 'related forces' section in lens.html
+def get_forces_for_lens(db, lens_id):
+    rows = db.execute(
+        '''
+        SELECT DISTINCT f.id, f.slug, f.title, f.category, fil.issue_id
+        FROM forces f
+        JOIN force_issue_links fil ON fil.force_id = f.id
+        JOIN issues i ON fil.issue_id = i.id
+        WHERE i.lens_id = ?
+        ''',
+        (lens_id,)
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+# Return every force, ordered by category then newest first
+# Called by app.py forces route; feeds force.html index, grouped by category in the template
+def get_all_forces(db):
+    return db.execute(
+        'SELECT * FROM forces ORDER BY category, created_at DESC'
+    ).fetchall()
+
+
+# Return a single force with its evidence_chain parsed and cross-lens issue links attached
+# Called by app.py force route; slug comes from the URL parameter
+def get_force_by_slug(db, slug):
+    force = db.execute(
+        'SELECT * FROM forces WHERE slug = ?', (slug,)
+    ).fetchone()
+
+    if force is None:
+        return None
+    
+    force = dict(force)
+    force['evidence_chain'] = json.loads(force['evidence_chain']) if force['evidence_chain'] else []
+
+    linked_issues = db.execute(
+        '''
+        SELECT i.title as issue_title, i.slug as issue_slug, l.title as lens_title, l.slug as lens_slug
+        FROM force_issue_links fil
+        JOIN issues i ON fil.issue_id = i.id
+        JOIN lenses l ON i.lens_id = l.id
+        WHERE fil.force_id = ?
+        ''',
+        (force['id'],)
+    ).fetchall()
+    force['linked_issues'] = [dict(li) for li in linked_issues]
+
+    return force
+
+
+def get_source_count(db, contribution_id):
+    result = db.execute(
+        'SELECT COUNT(*) as n FROM contribution_sources WHERE contribution_id = ?',
+        (contribution_id,)
+    ).fetchone()
+    return result['n'] + 1  # +1 for original source on the contribution row itself
+
+
 ## QUIZ FUNCTIONS ##
 
-# Serialize responses dict to JSON and store against user_id or session_id
-# Called by app.py quiz route after scoring; feeds can_retake_quiz and lens personalisation
 def save_quiz_response(db, user_id, responses, recommend_lens_id, session_id=None):
-    """Store quiz result against user or session"""
     db.execute(
         '''
         INSERT INTO quiz_responses (user_id, session_id, responses, recommended_lens_id)
         VALUES (?, ?, ?, ?)
         ''',
-        # json.dumps(responses) used since responses is a Python dict that needs to be serialized into a JSON string before storing in SQLite
         (user_id, session_id, json.dumps(responses), recommend_lens_id)
     )
     db.commit()
 
 
-# Return the most recent quiz_responses row for this user
-# Called directly by can_retake_quiz function below; result used to enforce the 90-day retake gate
 def get_last_quiz_response(db, user_id):
-    """Return the most recent quiz response for a user"""
     return db.execute(
         '''
         SELECT * FROM quiz_responses
@@ -185,10 +377,7 @@ def get_last_quiz_response(db, user_id):
     ).fetchone()
 
 
-# Compare days elapsed since last quiz against retake days threshold, return True if eligible
-# Called by app.py quiz route; retake_days should be read from platform_config via get_config function below
 def can_retake_quiz(db, user_id, retake_days=90):
-    """Return True if enough days have passed since last quiz"""
     last = get_last_quiz_response(db, user_id)
     if not last:
         return True
@@ -202,10 +391,7 @@ def can_retake_quiz(db, user_id, retake_days=90):
 
 ## PLATFORM CONFIG ##
 
-# Return a single value from platform_config by key, or None if not found
-# Called throughout app.py and models.py wherever behaviour is governed by platform_config rows as shown in schemas.sql
 def get_config(db, key):
-    """Retrieve a single config value by key"""
     result = db.execute(
         'SELECT value FROM platform_config WHERE key = ?', (key,)
     ).fetchone()
@@ -214,16 +400,12 @@ def get_config(db, key):
 
 ## LENS ##
 
-# Return the lens row matching the given slug, or None if not found.
-# Called by app.py lens route; slug comes from the URL parameter.
 def get_lens_by_slug(db, slug):
     return db.execute(
         'SELECT * FROM lenses WHERE slug = ?', (slug,)
     ).fetchone()
 
 
-# Return all issues for a lens, each joined with its indicators and latest data points.
-# Called by app.py lens route; feeds lens.html with the data structure for rendering.
 def get_issues_by_lens(db, lens_id):
     return db.execute(
         '''
@@ -239,8 +421,6 @@ def get_issues_by_lens(db, lens_id):
     ).fetchall()
 
 
-# Return issues for a lens with data points grouped into a dictionary structure
-# Called by app.py lens route
 def get_issues_with_data(db, lens_id):
     rows = db.execute(
         '''SELECT i.*, ind.name as indicator_name, ind.unit,
@@ -277,8 +457,6 @@ def get_issues_with_data(db, lens_id):
 
 ## HEATMAP ##
 
-# Return total token spend per country using DISTINCT to prevent inflation from multiple indicators
-# Called by app.py heatmap_data endpoint; COUNT(DISTINCT) ensures each transaction counts once
 def get_heatmap_data(db):
     return db.execute(
         '''SELECT dp.country_code, COUNT(DISTINCT tt.id) as total_spend
@@ -292,8 +470,6 @@ def get_heatmap_data(db):
     ).fetchall()
 
 
-# Returns countries with data but low token spend for the least-heard heatmap mode.
-# Called by app.py heatmap_data endpoint; DISTINCT prevents same inflation issue.
 def get_least_heard_data(db):
     return db.execute(
         '''SELECT dp.country_code, COUNT(dp.id) as data_coverage,
@@ -309,8 +485,6 @@ def get_least_heard_data(db):
 
 ## USER CONTRIBUTION ##
 
-# Return all indicators with their source — used to populate the contribute form dropdown
-# Called by app.py contribute route on GET; connects indicator selection to contributions table
 def get_all_indicators(db):
     return db.execute(
         'SELECT id, name, source FROM indicators ORDER BY name'
@@ -319,8 +493,6 @@ def get_all_indicators(db):
 
 ## CAST AND VALIDATE VOTE ##
 
-# Record a vote on a contribution; return False if user already voted (UNIQUE constraint)
-# Called by app.py cast_vote route; relies on UNIQUE(contribution_id, user_id) in schema.sql
 def cast_vote(db, contribution_id, user_id, vote):
     try:
         db.execute(
@@ -334,8 +506,6 @@ def cast_vote(db, contribution_id, user_id, vote):
         return False
 
 
-# Return the count of votes of a given type for a contribution
-# Called by app.py cast_vote route to check against the approval threshold
 def get_vote_count(db, contribution_id, vote_type):
     result = db.execute(
         'SELECT COUNT(*) as count FROM contribution_votes WHERE contribution_id = ? AND vote = ?',
@@ -344,11 +514,61 @@ def get_vote_count(db, contribution_id, vote_type):
     return result['count']
 
 
-# Mark a contribution as approved and set the review timestamp
-# Called by app.py cast_vote route when the approval threshold is met
+# Handle all threshold checks, approvals, rejections, and force elevations
+# Return a flash message string to be displayed to the user
+def process_vote_logic(db, contribution, user_id, vote):
+    
+    contribution_id = contribution['id']
+    approve_count = get_vote_count(db, contribution_id, 'approve')
+    reject_count = get_vote_count(db, contribution_id, 'reject')
+    total_votes = approve_count + reject_count
+
+    type_suffix = 'force_claim' if contribution['contribution_type'] == 'force_claim' else 'data_point'
+    minimum_votes = int(get_config(db, f'minimum_total_votes_{type_suffix}') or 3)
+
+    if total_votes < minimum_votes:
+        return 'Vote recorded.'
+
+    rejection_threshold = int(get_config(db, f'rejection_threshold_{type_suffix}') or 3)
+
+    if reject_count >= rejection_threshold:
+        reject_contribution(db, contribution_id)
+        return 'Contribution rejected by peer review.'
+
+    threshold_key = 'force_approval_threshold' if type_suffix == 'force_claim' else 'validation_threshold'
+    threshold = int(get_config(db, threshold_key) or 2)
+
+    if approve_count >= threshold:
+        approve_contribution(db, contribution_id)
+        tokens_per_contribution = int(get_config(db, 'tokens_per_contribution') or 3)
+        add_token_transactions(db, contribution['user_id'], tokens_per_contribution, 'contribution')
+
+        if contribution['contribution_type'] == 'force_claim':
+            elevated = elevate_force_claim(db, contribution_id)
+            if elevated:
+                outcome_note = '' if vote == 'approve' else ' Your reject vote was recorded, but the contribution reached the approval threshold from other votes, and the condition to elevate the claim to the forces layer was met.'
+                return f'Contribution approved and elevated to the forces layer.{outcome_note}'
+            else:
+                outcome_note = '' if vote == 'approve' else ' Your reject vote was recorded, but the contribution reached the approval threshold from other votes.'
+                return f'Contribution approved. Awaiting a second independent source before appearing in the forces layer.{outcome_note}'
+        else:
+            outcome_note = '' if vote == 'approve' else ' Your reject vote was recorded, but the contribution reached the approval threshold from other votes.'
+            return f'Contribution approved and added to the platform.{outcome_note}'
+    else:
+        return 'Vote recorded.'
+
+
 def approve_contribution(db, contribution_id):
     db.execute(
         "UPDATE contributions SET status = 'approved', reviewed_at = CURRENT_TIMESTAMP WHERE id = ?",
+        (contribution_id,)
+    )
+    db.commit()
+
+
+def reject_contribution(db, contribution_id):
+    db.execute(
+        "UPDATE contributions SET status = 'rejected', reviewed_at = CURRENT_TIMESTAMP WHERE id = ?",
         (contribution_id,)
     )
     db.commit()

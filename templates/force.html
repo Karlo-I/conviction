@@ -1,0 +1,33 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ force.title }} — Conviction{% endblock %}
+
+{% block content %}
+<div class="force-detail">
+    <p><a href="{{ url_for('forces') }}">← All forces</a></p>
+    <h1>{{ force.title }}</h1>
+
+    <div class="evidence-chain">
+        <h2>Corroborating sources</h2>
+        {% if force.evidence_chain %}
+            {% for entry in force.evidence_chain %}
+            <div class="evidence-entry">
+                <p>{{ entry.claim }}</p>
+                {% if entry.source_url %}
+                <p><a href="{{ entry.source_url }}" target="_blank">Source</a></p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No additional corroborating sources yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="cross-lens-links">
+        <h2>Where this appears</h2>
+        {% for li in force.linked_issues %}
+        <p><a href="{{ url_for('lens', slug=li.lens_slug) }}">{{ li.lens_title }}</a> — {{ li.issue_title }}</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'layout.html' %}
+
+{% block title %}Privacy Policy{% endblock %}
+
+{% block content %}
+<div class="legal-container">
+    <h1>Privacy Policy</h1>
+    <p><strong>Last updated:</strong> July 2026</p>
+
+    <h2>What we collect</h2>
+    <p>Conviction is built on privacy-by-design principles. We collect only the minimum data necessary for the platform to function:</p>
+    <ul>
+        <li><strong>Username:</strong> Chosen by you at registration (may or may not be your real name)</li>
+        <li><strong>Password hash:</strong> Never stored as plain text</li>
+        <li><strong>Quiz responses:</strong> To personalize your lens recommendation</li>
+        <li><strong>Contributions and votes:</strong> The content you submit to the platform</li>
+        <li><strong>Token transactions:</strong> To track your conviction spending</li>
+    </ul>
+
+    <h2>What we do NOT collect</h2>
+    <p>We deliberately do NOT collect:</p>
+    <ul>
+        <li><strong>Email addresses:</strong> We never ask for or store your email</li>
+        <li><strong>Personal identifiers:</strong> No phone number, no real name requirement</li>
+        <li><strong>Tracking data:</strong> No analytics, no third-party cookies</li>
+        <li><strong>Location data:</strong> Beyond the country codes you voluntarily submit</li>
+    </ul>
+
+    <h2>Account recovery</h2>
+    <p><strong>Important:</strong> Because we do not collect email addresses, <strong>account recovery is not possible</strong>. If you lose your password, you cannot recover your account. Please choose a username and password you will remember.</p>
+
+    <h2>Data retention</h2>
+    <p><strong>Personal data:</strong> If you request account deletion, all personal data (username, password hash, quiz responses, token balance) is deleted within 30 days.</p>
+    <p><strong>Contributions:</strong> Your contributions and votes are retained in anonymized form (username removed) to preserve the integrity of the platform's evidence base.</p>
+
+    <h2>Infrastructure</h2>
+    <p>Conviction is hosted on Render, which operates under GDPR-compliant data processing terms. No third-party email services are used.</p>
+
+    <h2>Bot prevention</h2>
+    <p>We use hCaptcha at registration — a privacy-respecting alternative to Google reCAPTCHA that does not send user behavior data to third parties.</p>
+
+    <p><a href="{{ url_for('index') }}">← Back to home</a></p>
+</div>
+{% endblock %}

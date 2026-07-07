@@ -13,19 +13,36 @@
 <body>
 
     <nav>
-        <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Conviction</a>
-        <div>
-            <a href="{{ url_for('heatmap') }}" class="{% if request.endpoint == 'heatmap' %}active{% endif %}">Map</a>
-            {% if session.user_id %}
-                <span class="username-display">{{ session.username }}</span>
-                <a href="{{ url_for('quiz_route') }}" class="{% if request.endpoint == 'quiz_route' %}active{% endif %}">Quiz</a>
-                <a href="{{ url_for('contribute') }}" class="{% if request.endpoint == 'contribute' %}active{% endif %}">Contribute</a>
-                <a href="{{ url_for('validate') }}" class="{% if request.endpoint == 'validate' %}active{% endif %}">Validate</a>
-                <a href="{{ url_for('logout') }}">Log out</a>
-            {% else %}
-                <a href="{{ url_for('register') }}" class="{% if request.endpoint == 'register' %}active{% endif %}">Register</a>
-                <a href="{{ url_for('login') }}" class="{% if request.endpoint == 'login' %}active{% endif %}">Log in</a>
-            {% endif %}
+        <!-- Left Side: Logo -->
+        <a href="{{ url_for('index') }}" class="logo">Conviction</a>
+
+        <!-- Right Side: Grouped Links -->
+        <div class="nav-right">
+            
+            <!-- Group 1: Main Navigation Links -->
+            <div class="nav-links">
+                {% if session.user_id %}
+                    <a href="{{ url_for('contribute') }}" class="{% if request.endpoint == 'contribute' %}active{% endif %}">Contribute</a>
+                    <a href="{{ url_for('validate') }}" class="{% if request.endpoint == 'validate' %}active{% endif %}">Validate</a>
+                    <a href="{{ url_for('forces') }}" class="{% if request.endpoint in ['forces', 'force_detail'] %}active{% endif %}">Forces</a>
+                    <a href="{{ url_for('heatmap') }}" class="{% if request.endpoint == 'heatmap' %}active{% endif %}">Map</a>
+                    <a href="{{ url_for('quiz_route') }}" class="{% if request.endpoint == 'quiz_route' %}active{% endif %}">Quiz</a>
+                {% else %}
+                    <a href="{{ url_for('heatmap') }}">Map</a>
+                {% endif %}
+            </div>
+
+            <!-- Group 2: User Profile / Auth -->
+            <div class="user-menu">
+                {% if session.user_id %}
+                    <span class="username-display">{{ session.username }}</span>
+                    <a href="{{ url_for('logout') }}">Log out</a>
+                {% else %}
+                    <a href="{{ url_for('register') }}" class="{% if request.endpoint == 'register' %}active{% endif %}">Register</a>
+                    <a href="{{ url_for('login') }}" class="{% if request.endpoint == 'login' %}active{% endif %}">Log in</a>
+                {% endif %}
+            </div>
+
         </div>
     </nav>
 
@@ -41,6 +58,15 @@
         {% block content %}{% endblock %}
     </main>
 
+    <footer>
+        <p>
+            <a href="{{ url_for('privacy') }}">Privacy</a>
+            <a href="{{ url_for('terms') }}">Terms</a>
+            <a href="{{ url_for('how_it_works') }}">How It Works</a>
+        </p>
+    </footer>
+
     {% block scripts %}{% endblock %}
+
 </body>
 </html>

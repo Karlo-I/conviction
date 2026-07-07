@@ -8,13 +8,13 @@
 import requests
 import json
 import os
+import re
 
 
 ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
 ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001'
 
 
-# Fetch a single indicator value from WHO GHO API for a given country
 def fetch_who_data(indicator_code, country_code):
     url = f'https://ghoapi.azureedge.net/api/{indicator_code}'
     params = {
@@ -40,7 +40,6 @@ def fetch_who_data(indicator_code, country_code):
     return None
 
 
-# Fetch a single indicator value from World Bank API for a given country
 def fetch_worldbank_data(indicator_code, country_code):
     url = f'https://api.worldbank.org/v2/country/{country_code}/indicator/{indicator_code}'
     params = {'format': 'json', 'mrv': 1, 'per_page': 1}
@@ -62,8 +61,6 @@ def fetch_worldbank_data(indicator_code, country_code):
     return None
 
 
-# Fetch reference data points from pre-approved sources for a given country
-# Return a list of found data points across WHO and World Bank indicators
 def fetch_reference_data(country_code):
     reference_data = []
 
@@ -85,7 +82,6 @@ def fetch_reference_data(country_code):
     return reference_data
 
 
-# Construct the LLM prompt from the contribution and reference data
 def build_prompt(contribution, reference_data):
     if reference_data:
         lines = []
@@ -130,7 +126,6 @@ Keep your summary under 150 words. Write in plain prose without markdown formatt
     return prompt
 
 
-# Extract the confidence signal from the LLM response
 def parse_confidence(text):
     for line in reversed(text.strip().split('\n')):
         line = line.strip()
@@ -141,8 +136,6 @@ def parse_confidence(text):
     return 'no data available'
 
 
-# Main entry point - fetch evidence, call LLM, write digest
-# Called by app.py contribute route immediately after create_contribution
 def run_agent(db, contribution_id):
     contribution = db.execute(
         'SELECT * FROM contributions WHERE id = ?', (contribution_id,)
@@ -180,6 +173,12 @@ def run_agent(db, contribution_id):
             data = response.json()
             summary = data['content'][0]['text']
             confidence = parse_confidence(summary)
+
+            # Strip the raw CONFIDENCE line from the summary text before saving
+            lines = summary.strip().split('\n')
+            clean_lines = [line for line in lines if not line.strip().startswith('CONFIDENCE:')]
+            summary = '\n'.join(clean_lines).strip()
+            
         except Exception as e:
             summary = f'AI digest failed: {str(e)}'
             confidence = 'no data available'
@@ -197,3 +196,105 @@ def run_agent(db, contribution_id):
         )
     )
     db.commit()
+
+
+def check_force_claim_match(new_note, candidates):
+    if not candidates:
+        return None
+
+    candidate_lines = '\n'.join(
+        f"ID {c['id']}: {c['note']}" for c in candidates
+    )
+
+    prompt = f"""You are comparing force claims on a platform that tracks systemic mechanisms across food, housing, and mobility.
+
+New claim: {new_note}
+
+Existing pending claims (same category):
+{candidate_lines}
+
+Task: Determine if the new claim describes the SAME underlying mechanism as any existing claim.
+
+Rule: The same mechanism appearing in a different country still counts as a match — mechanisms are not country-specific. A different mechanism, even with similar wording or the same country, is NOT a match.
+
+Answer with only the matching ID number, or NONE if there is no match. No other text."""
+
+    api_key = os.environ.get('ANTHROPIC_API_KEY')
+    if not api_key:
+        return None
+
+    try:
+        response = requests.post(
+            ANTHROPIC_API_URL,
+            headers={
+                'x-api-key': api_key,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json'
+            },
+            json={
+                'model': ANTHROPIC_MODEL,
+                'max_tokens': 20,
+                'messages': [{'role': 'user', 'content': prompt}]
+            },
+            timeout=15
+        )
+        response.raise_for_status()
+        data = response.json()
+        answer = data['content'][0]['text'].strip()
+        match = re.search(r'\d+', answer)
+        if match:
+            return int(match.group())
+        return None
+    except Exception:
+        return None
+    
+
+# Synthesize multiple contributor-submitted mechanism descriptions into one
+# country-agnostic sentence. Called by elevate_force_claim in models.py at elevation time
+# Returns None on any failure — caller must not elevate without a valid result
+def refine_mechanism(claims):
+    if not claims:
+        return None
+
+    claims_text = '\n'.join(f"- {c}" for c in claims)
+
+    prompt = f"""You are refining force claims on a platform that tracks systemic mechanisms across food, housing, and mobility.
+
+Multiple contributors independently described the same underlying mechanism, in different countries:
+{claims_text}
+
+Task: Write ONE sentence describing the shared mechanism itself, generalized across all the claims above.
+
+Rules:
+- Do not name any country, region, or specific place.
+- Do not name any individual or organisation.
+- Do not copy any single claim verbatim — synthesize the pattern they share.
+- One sentence only, maximum 25 words.
+
+Answer with only the sentence. No other text."""
+
+    api_key = os.environ.get('ANTHROPIC_API_KEY')
+    if not api_key:
+        return None
+
+    try:
+        response = requests.post(
+            ANTHROPIC_API_URL,
+            headers={
+                'x-api-key': api_key,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json'
+            },
+            json={
+                'model': ANTHROPIC_MODEL,
+                'max_tokens': 60,
+                'messages': [{'role': 'user', 'content': prompt}]
+            },
+            timeout=15
+        )
+        response.raise_for_status()
+        data = response.json()
+        result = data['content'][0]['text'].strip()
+        return result if result else None
+    except Exception:
+        return None

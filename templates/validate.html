@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 
-{% block title %}Validate — Conviction{% endblock %}
+{% block title %}Validate{% endblock %}
 
 {% block content %}
 <div class="validate-container">
@@ -21,6 +21,28 @@
         <p><strong>Claim:</strong> {{ c.note }}</p>
         {% if c.source_url %}
         <p><strong>Source:</strong> <a href="{{ c.source_url }}" target="_blank">Verify source</a></p>
+        {% endif %}
+        {% if c.contribution_type == 'force_claim' and c.source_count and c.source_count > 1 %}
+        <p><em>This claim combines {{ c.source_count }} sources from multiple contributors.</em></p>
+        {% endif %}
+
+        <!-- AI DIGEST DISPLAY -->
+        {% if c.summary %}
+        <div class="digest" style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-left: 4px solid #457b9d;">
+            <h3 style="margin-bottom: 0.5rem;">AI Evidence Digest</h3>
+            
+            {% if c.confidence == 'evidence found' %}
+                <p class="confidence confidence-found">Evidence found in reference sources</p>
+            {% elif c.confidence == 'partial evidence' %}
+                <p class="confidence confidence-partial">Partial evidence found</p>
+            {% else %}
+                <p class="confidence confidence-none">No data available in reference sources</p>
+            {% endif %}
+
+            <p style="margin-top: 0.5rem;">{{ c.summary }}</p>
+        </div>
+        {% else %}
+        <p style="margin: 1rem 0; font-style: italic; color: #666;">AI digest is still generating. Please check back shortly.</p>
         {% endif %}
 
         <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}">

@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 
-{% block title %}Contribute — Conviction{% endblock %}
+{% block title %}Contribute{% endblock %}
 
 {% block content %}
 <div class="contribute-container">
@@ -200,6 +200,22 @@
             </select>
         </div>
 
+        <div class="form-group force-claim-only" style="display:none">
+            <label for="title">Force mechanism</label>
+            <input type="text" id="title" name="title" placeholder="e.g. Agricultural subsidies distort domestic food pricing">
+        </div>
+        
+        <div class="form-group force-claim-only" style="display:none">
+            <label for="category">Category</label>
+            <select id="category" name="category">
+                <option value="">Select a category</option>
+                <option value="financial_capture">Financial capture</option>
+                <option value="regulatory_arbitrage">Regulatory arbitrage</option>
+                <option value="externalised_cost">Externalised cost</option>
+                <option value="information_asymmetry">Information asymmetry</option>
+            </select>
+        </div>
+
         <div class="form-group">
             <label for="indicator_id">Related indicator</label>
             <select id="indicator_id" name="indicator_id">
@@ -210,7 +226,7 @@
             </select>
         </div>
 
-        <div class="form-group">
+        <div class="form-group data-point-only">
             <label for="value">Value (if submitting a data point)</label>
             <input type="number" id="value" name="value" step="0.01" placeholder="e.g. 34.5">
         </div>
@@ -236,4 +252,22 @@
         <button type="submit">Submit contribution</button>
     </form>
 </div>
+<script>
+    const contributionType = document.getElementById('contribution_type');
+    const dataPointFields = document.querySelectorAll('.data-point-only');
+    const forceClaimFields = document.querySelectorAll('.force-claim-only');
+
+    function toggleFields() {
+        const isForceClaim = contributionType.value === 'force_claim';
+        dataPointFields.forEach(field => {
+            field.style.display = isForceClaim ? 'none' : 'block';
+        });
+        forceClaimFields.forEach(field => {
+            field.style.display = isForceClaim ? 'block' : 'none';
+        });
+    }
+
+    contributionType.addEventListener('change', toggleFields);
+    toggleFields();
+</script>
 {% endblock %}

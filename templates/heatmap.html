@@ -41,31 +41,10 @@
         markers = [];
     }
 
-    // Country names for popup display (#30)
-    const countryNames = {
-        'KEN': 'Kenya', 'NGA': 'Nigeria', 'ZAF': 'South Africa', 'EGY': 'Egypt',
-        'PHL': 'Philippines', 'IND': 'India', 'BGD': 'Bangladesh', 'THA': 'Thailand',
-        'MEX': 'Mexico', 'BRA': 'Brazil', 'COL': 'Colombia', 'CAN': 'Canada',
-        'GBR': 'United Kingdom', 'AUS': 'Australia', 'NOR': 'Norway'
-    };
-
-    const countryCoords = {
-        'KEN': [-1.286389, 36.817223],
-        'NGA': [9.057990, 7.495080],
-        'ZAF': [-30.559482, 22.937506],
-        'EGY': [26.820553, 30.802498],
-        'PHL': [12.879721, 121.774017],
-        'IND': [20.593684, 78.962880],
-        'BGD': [23.684994, 90.356331],
-        'THA': [15.870032, 100.992541],
-        'MEX': [23.634501, -102.552784],
-        'BRA': [-14.235004, -51.925280],
-        'COL': [4.570868, -74.297333],
-        'CAN': [56.130366, -106.346771],
-        'GBR': [55.378051, -3.435973],
-        'AUS': [-25.274398, 133.775136],
-        'NOR': [60.472024, 8.468946]
-    };
+    // Data passed from Python via Jinja
+    // Ignore the red linter. When Flask renders the template, it will replace this line with valid JSON
+    const countryData = {{ country_data | tojson }};
+    
 
     function setMode(mode) {
         currentMode = mode;
@@ -90,8 +69,11 @@
             .then(response => response.json())
             .then(json => {
                 json.data.forEach(point => {
-                    const coords = countryCoords[point.country];
-                    if (!coords) return;
+                    const data = countryData[point.country];
+                    if (!data) return;
+
+                    // Combine latitude and longitude into an array for Leaflet
+                    const coords = [data.lat, data.long];
 
                     // Square root scale capped at 40px — prevents exploding markers (#29)
                     const radius = Math.min(40, Math.max(5, Math.sqrt(point.value) * 6));
@@ -104,12 +86,15 @@
                         fillOpacity: 0.7
                     }).addTo(map);
 
-                    // Use human-readable country name in popup (#30)
-                    const displayName = countryNames[point.country] || point.country;
-                    marker.bindPopup(`
-                        <strong>${displayName}</strong><br>
+                    // Show human-readable country name on hover using tooltip (#30)
+                    marker.bindTooltip(`
+                        <strong>${data.name}</strong><br>
                         ${mode === 'conviction' ? 'Token spend: ' + point.value : 'Data coverage: ' + point.value}
-                    `);
+                    `, {
+                        permanent: false, // Only show on hover
+                        direction: 'top', // Show above the marker
+                        offset: [0, -10]  // Slight offset for better visibility
+                    });
                     markers.push(marker);
                 });
             });

@@ -5,6 +5,8 @@
 {% block content %}
 <div class="confirm-container">
     <h1>Contribution submitted</h1>
+
+    {% if is_owner %}
     <p>Your contribution is now pending peer validation. Two validators need to approve it before it appears on the platform.</p>
 
     <div class="contribution-summary">
@@ -18,6 +20,28 @@
         <p><strong>Source:</strong> <a href="{{ contribution.source_url }}" target="_blank">{{ contribution.source_url }}</a></p>
         {% endif %}
     </div>
+    {% else %}
+    <p>Your source was added to an existing pending claim describing the same mechanism. Two validators need to approve the combined claim before it appears on the platform.</p>
+
+    <div class="contribution-summary">
+        <h2>Your source</h2>
+        {% if my_source.source_url %}
+        <p><strong>Source URL:</strong> <a href="{{ my_source.source_url }}" target="_blank">{{ my_source.source_url }}</a></p>
+        {% endif %}
+        {% if my_source.source_excerpt %}
+        <p><strong>Excerpt:</strong> {{ my_source.source_excerpt }}</p>
+        {% endif %}
+    </div>
+
+    <div class="contribution-summary">
+        <h2>The claim it was added to</h2>
+        <p><strong>Country:</strong> {{ contribution.country_code }}</p>
+        <p><strong>Claim:</strong> {{ contribution.note }}</p>
+        {% if contribution.source_url %}
+        <p><strong>Original source:</strong> <a href="{{ contribution.source_url }}" target="_blank">{{ contribution.source_url }}</a></p>
+        {% endif %}
+    </div>
+    {% endif %}
 
     {% if contribution.summary %}
     <div class="digest">
@@ -39,4 +63,19 @@
 
     <a href="{{ url_for('index') }}">Back to home</a>
 </div>
+
+<script>
+    // Check every 3 seconds if the AI digest has appeared
+    const checkDigest = setInterval(() => {
+        const digestDiv = document.querySelector('.digest');
+        if (digestDiv) {
+            // Digest found! Stop checking.
+            clearInterval(checkDigest);
+        } else {
+            // Digest not ready yet, refresh the page to check again.
+            location.reload();
+        }
+    }, 3000);
+</script>
+
 {% endblock %}

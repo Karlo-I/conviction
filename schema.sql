@@ -126,6 +126,8 @@ CREATE TABLE IF NOT EXISTS contributions (
     user_id INTEGER NOT NULL REFERENCES users(id),
     indicator_id INTEGER REFERENCES indicators(id),
     country_code TEXT NOT NULL,
+    title TEXT,
+    category TEXT,
     value REAL,
     note TEXT,
     source_url TEXT,
@@ -134,6 +136,22 @@ CREATE TABLE IF NOT EXISTS contributions (
     status TEXT DEFAULT 'pending',
     reviewed_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS contribution_sources (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    contribution_id INTEGER NOT NULL REFERENCES contributions(id),
+    source_url TEXT,
+    source_excerpt TEXT,
+    contributor_user_id INTEGER NOT NULL REFERENCES users(id),
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS contribution_lens_links (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    contribution_id INTEGER NOT NULL REFERENCES contributions(id),
+    issue_id INTEGER NOT NULL REFERENCES issues(id),
+    UNIQUE(contribution_id, issue_id)
 );
 
 -- ============================================================
@@ -191,7 +209,11 @@ CREATE TABLE IF NOT EXISTS platform_config (
 -- INSERT OR IGNORE: if key exists, skips silently (moves to next row) / if key doesn't exist, inserts
 INSERT OR IGNORE INTO platform_config (key, value, description) VALUES
     ('validation_threshold', '2', 'Peer approvals needed to approve a data_point contribution'),
-    ('force_approval_threshold', '5', 'Peer approvals needed to elevate a force_claim into forces layer'),
+    ('force_approval_threshold', '3', 'Peer approvals needed to elevate a force_claim into forces layer'),
+    ('rejection_threshold_data_point', '3', 'Reject votes needed to reject a data_point contribution'),
+    ('rejection_threshold_force_claim', '5', 'Reject votes needed to reject a force_claim contribution'),
+    ('minimum_total_votes_data_point', '3', 'Minimum total votes before a data_point can resolve'),
+    ('minimum_total_votes_force_claim', '5', 'Minimum total votes before a force_claim can resolve'),
     ('tokens_per_validation', '1', 'Tokens earned for casting a validation vote'),
     ('tokens_per_contribution', '3', 'Tokens earned when contribution is approved'),
     ('agent_model', 'claude-haiku-4-5-20251001', 'AI model used for contribution digests'),

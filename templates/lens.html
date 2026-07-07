@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 
-{% block title %}{{ lens.title }} — Conviction{% endblock %}
+{% block title %}{{ lens.title }}{% endblock %}
 
 {% block content %}
 <div class="lens-container">
@@ -51,7 +51,14 @@
     </div>
     {% endfor %}
 
-
+    {% if forces %}
+    <div class="related-forces">
+        <h2>Related forces</h2>
+        {% for f in forces %}
+        <p><a href="{{ url_for('force_detail', slug=f.slug) }}">{{ f.title }}</a></p>
+        {% endfor %}
+    </div>
+    {% endif %}
 
 </div>
 {% endblock %}
