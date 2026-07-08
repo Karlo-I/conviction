@@ -165,6 +165,10 @@ def login():
         
         session['user_id'] = user['id']
         session['username'] = user['username']
+
+        # Fetch and save the token balance to the session
+        session['token_balance'] = models.get_token_balance(get_db(), user['id'])
+
         return redirect(url_for('index'))
     
     return render_template('login.html')
@@ -215,6 +219,7 @@ def spend():
         flash('Invalid request.', 'error')
         return redirect(url_for('index'))
     
+    # First check
     balance = models.get_token_balance(db, user_id)
 
     if balance < 1:
@@ -236,7 +241,17 @@ def spend():
         flash('Invalid issue.', 'error')
         return redirect(url_for('index'))
     
+    # Double-check balance right before transaction to prevent race conditions
+    current_balance = models.get_token_balance(db, user_id)
+    if current_balance < 1:
+        flash('Insufficient tokens', 'error')
+        return redirect(url_for('lens', slug=lens_slug))
+    
     models.add_token_transactions(db, user_id, -1, 'spend', issue_id=issue_id)
+    
+    # Re-sync the session with the actual database ledger
+    session['token_balance'] = models.reconcile_token_balance(db, user_id)
+    
     flash('Token spent.', 'success')
     return redirect(url_for('lens', slug=lens_slug))
 
@@ -412,10 +427,15 @@ def validate():
         return redirect(url_for('login'))
 
     db = get_db()
-    contributions = [dict(c) for c in models.get_pending_contributions(db)]
+    user_id = session['user_id']
+    
+    # Only get contributions the user hasn't voted on yet
+    contributions = models.get_pending_contributions_for_user(db, user_id)
+    
     for c in contributions:
         if c['contribution_type'] == 'force_claim':
             c['source_count'] = models.get_source_count(db, c['id'])
+    
     return render_template('validate.html', contributions=contributions)
 
 
@@ -452,11 +472,14 @@ def cast_vote(contribution_id):
     if not success:
         flash('You have already voted on this contribution.', 'error')
         return redirect(url_for('validate'))
-    
+
     tokens_per_validation = int(models.get_config(db, 'tokens_per_validation') or 1)
     models.add_token_transactions(db, user_id, tokens_per_validation, 'validation')
+    
+    # Immediately update the session so the UI doesn't lag!
+    session['token_balance'] = models.reconcile_token_balance(db, user_id)
 
-    # --- NEW: Delegate all threshold logic to models.py ---
+    # Delegate all threshold logic to models.py ---
     message = models.process_vote_logic(db, contribution, user_id, vote)
     flash(message, 'success')
 

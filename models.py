@@ -626,3 +626,39 @@ def reject_contribution(db, contribution_id):
         (contribution_id,)
     )
     db.commit()
+
+
+# Check if user has already voted on a contribution
+def has_user_voted(db, contribution_id, user_id):
+    result = db.execute(
+        '''
+        SELECT id FROM contribution_votes 
+        WHERE contribution_id = ? AND user_id = ?
+        ''',
+        (contribution_id, user_id)
+    ).fetchone()
+    return result is not None
+
+
+# Get pending contributions that the user hasn't voted on yet
+def get_pending_contributions_for_user(db, user_id):
+    contributions = db.execute(
+        '''
+        SELECT DISTINCT c.*, u.username, cd.summary, cd.confidence
+        FROM contributions c
+        JOIN users u ON c.user_id = u.id
+        LEFT JOIN contribution_digests cd ON cd.contribution_id = c.id
+        WHERE c.status = 'pending'
+          AND c.user_id != ?
+          AND c.id NOT IN (
+              SELECT contribution_id 
+              FROM contribution_votes 
+              WHERE user_id = ?
+          )
+        ORDER BY c.created_at DESC
+        ''',
+        (user_id, user_id)
+    ).fetchall()
+    
+    # Convert Row objects to dictionaries
+    return [dict(c) for c in contributions]
