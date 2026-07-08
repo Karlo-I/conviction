@@ -1,70 +1,56 @@
 # Conviction
-### CS50x Final Project — Living Project Brief
-**Last Updated:** June 30, 2026 (rev 15)
-**Status:** Planning / Pre-build
+**CS50x Final Project — Living Project Brief**  
+**Last Updated: July 08, 2026 (rev 16)**  
+**Status: Testing Complete / Ready for Deployment**
 
----
-
-#### Video Demo
+## Video Demo
 `<URL to be added after recording>`
 
----
-
 ## Description
-
 Conviction is a web application that helps people trace the line between what they experience daily — rising costs, poor health, environmental damage, financial precarity — and the systemic mechanisms that produce those outcomes.
 
 Most people see symptoms. This app surfaces the machinery — and the forces operating that machinery.
 
-Users explore three systemic lenses — **Food**, **Housing**, and **Mobility** — through real global data drawn from sources including the WHO, World Bank, FAO, and Our World in Data. But the data alone is incomplete. Behind each lens sits a fourth layer: the **underlying forces** — financial capture, regulatory arbitrage, externalised cost, information asymmetry — that operate across all three domains simultaneously. The same mechanism that keeps ultra-processed food dominant in dietary policy also keeps housing treated as an investment asset and car dependency entrenched in urban planning. The platform makes that cross-domain pattern visible.
+Users explore three systemic lenses — Food, Housing, and Mobility — through real global data drawn from sources including the WHO, World Bank, FAO, and Our World in Data. But the data alone is incomplete. Behind each lens sits a fourth layer: the underlying forces — financial capture, regulatory arbitrage, externalised cost, information asymmetry — that operate across all three domains simultaneously. The same mechanism that keeps ultra-processed food dominant in dietary policy also keeps housing treated as an investment asset and car dependency entrenched in urban planning. The platform makes that cross-domain pattern visible.
 
 Users take a short diagnostic quiz that personalises which lens they see first, then move through the evidence at their own depth. They register, receive tokens, and spend them on the issues they believe matter most. Their conviction aggregates into a global heatmap showing where collective concern is concentrating.
 
 The platform is designed for people who already sense something is wrong and want to understand the mechanism — and made accessible enough that people who don't yet see the problem can be brought in through the quiz. It names no individual actors. It presents mechanisms, evidence chains, and sourced data and lets users draw their own conclusions.
 
----
-
 ## The Thesis
-
 The systems that govern how people eat, live, and move are optimised for extraction, not human flourishing. The data is global, the pattern is consistent, and most people never see the mechanism — only its consequences.
 
 The root problem is not individual greed or moral failure. It is that certain systems select for and reward short-term extraction, externalised harm, and regulatory capture — and will continue to do so regardless of who occupies positions of power within them. Change the people; the system produces new versions of the same behaviour. Change the rules; the behaviour changes. This platform is about the rules.
 
 The platform classifies mechanisms — financial capture, regulatory arbitrage, externalised cost, information asymmetry — and presents the evidence chains that demonstrate those mechanisms operating. The evidence speaks. Users conclude.
 
----
-
 ## Guiding Principles
-
 These principles are the moral foundation of the platform. They govern every decision — technical, editorial, and strategic — now and as the platform grows. They are not implementation rules; they are commitments that remain true regardless of how the technology changes.
 
-**1. Truth is non-negotiable**
-The platform pursues what the evidence actually shows, not what confirms its thesis. If the data leads somewhere uncomfortable, that is the data. The standard is universal truth — meaning truth that does not belong to any one culture, ideology, or interest group. No pressure, incentive, or reputational consideration overrides this commitment.
+1. **Truth is non-negotiable**  
+   The platform pursues what the evidence actually shows, not what confirms its thesis. If the data leads somewhere uncomfortable, that is the data. The standard is universal truth — meaning truth that does not belong to any one culture, ideology, or interest group. No pressure, incentive, or reputational consideration overrides this commitment.
 
-**2. Epistemic humility**
-The platform acknowledges it can be wrong. When it is, it corrects itself publicly, transparently, and without delay. Certainty is the enemy of honest inquiry. Every methodology is visible and auditable precisely because the platform does not claim infallibility.
+2. **Epistemic humility**  
+   The platform acknowledges it can be wrong. When it is, it corrects itself publicly, transparently, and without delay. Certainty is the enemy of honest inquiry. Every methodology is visible and auditable precisely because the platform does not claim infallibility.
 
-**3. No discrimination, no ideological gatekeeping**
-Disagreement with the platform's thesis is not grounds for exclusion. The platform holds its argument openly and allows it to be challenged. Moderation exists only where content causes harm by universal moral and ethical standards — not where it challenges the platform's worldview. All voices, all geographies, all perspectives are welcome as long as they engage in good faith.
+3. **No discrimination, no ideological gatekeeping**  
+   Disagreement with the platform's thesis is not grounds for exclusion. The platform holds its argument openly and allows it to be challenged. Moderation exists only where content causes harm by universal moral and ethical standards — not where it challenges the platform's worldview. All voices, all geographies, all perspectives are welcome as long as they engage in good faith.
 
-**4. Do no harm**
-The platform will not surface or publish information in a way that causes direct harm to individuals or communities, even in the service of truth. How truth is told matters as much as what is told. The pursuit of systemic accountability must never become an instrument of personal destruction.
+4. **Do no harm**  
+   The platform will not surface or publish information in a way that causes direct harm to individuals or communities, even in the service of truth. How truth is told matters as much as what is told. The pursuit of systemic accountability must never become an instrument of personal destruction.
 
-**5. The platform serves the user, not the other way around**
-Every feature — the token economy, the heatmap, the quiz, the peer validation system — exists to help users understand and act. None of these mechanisms will ever be designed to manipulate user behaviour for the platform's benefit, to inflate engagement metrics, or to serve undisclosed interests. Users are participants, not products.
+5. **The platform serves the user, not the other way around**  
+   Every feature — the token economy, the heatmap, the quiz, the peer validation system — exists to help users understand and act. None of these mechanisms will ever be designed to manipulate user behaviour for the platform's benefit, to inflate engagement metrics, or to serve undisclosed interests. Users are participants, not products.
 
-**6. Stewardship, not ownership**
-The data contributed by communities around the world belongs to those communities in spirit. The platform is a custodian of that knowledge, not a proprietor. This means data is never sold, never used for purposes beyond the platform's stated mission, and communities always retain the right to withdraw their contributions.
+6. **Stewardship, not ownership**  
+   The data contributed by communities around the world belongs to those communities in spirit. The platform is a custodian of that knowledge, not a proprietor. This means data is never sold, never used for purposes beyond the platform's stated mission, and communities always retain the right to withdraw their contributions.
 
-**7. Transparency over neutrality**
-The platform has a thesis and does not pretend otherwise. What it offers instead of neutrality is full transparency: every data point sourced and cited, every editorial decision documented, every methodology open to scrutiny. A platform that hides its assumptions is less honest than one that states them clearly and shows its working.
-
----
+7. **Transparency over neutrality**  
+   The platform has a thesis and does not pretend otherwise. What it offers instead of neutrality is full transparency: every data point sourced and cited, every editorial decision documented, every methodology open to scrutiny. A platform that hides its assumptions is less honest than one that states them clearly and shows its working.
 
 ## Stack
-
 | Layer | Technology | Notes |
-|---|---|---|
+|-------|------------|-------|
 | Backend | Python / Flask | Routing, business logic, API endpoints |
 | Database | SQLite (dev) → PostgreSQL (prod) | Hosted free on Render |
 | Frontend | Vanilla JavaScript | No framework — keeps scope tight |
@@ -75,58 +61,61 @@ The platform has a thesis and does not pretend otherwise. What it offers instead
 | Hosting | Render (free tier) | Zero cost deployment |
 | Data Sources | WHO, World Bank, FAO, Our World in Data | Free APIs and downloadable datasets |
 
-**Cost target: Near-zero**
+**Cost target:** Near-zero  
 The only ongoing cost is the AI agent call triggered when a user submits a contribution. Using a lightweight model (claude-haiku or gpt-4o-mini), each call costs approximately $0.002–$0.01. At low traffic — say 100 contributions in the first few months — total cost is under $1. Cost scales with contributions submitted, not with page views or users. This is the right scaling relationship. All other components remain free.
-
----
 
 ## Core Features (MVP)
 
-1. **Diagnostic Quiz** — 5–7 questions classifying the user's lived experience into system impact categories. Designed for people who already sense something is wrong; accessible enough to bring in those who don't yet see it.
+### Diagnostic Quiz
+5–7 questions classifying the user's lived experience into system impact categories. Designed for people who already sense something is wrong; accessible enough to bring in those who don't yet see it.
 
-   **Onboarding flow:** The quiz is the final step of registration, not a separate visit. Sequence: register (username, password) → complete quiz → land on personalised lens. No email address is collected at any point. This ensures every user has a `quiz_response` stored against their `user_id` from the first interaction and personalisation feels immediate.
+**Onboarding flow:** The quiz is the final step of registration, not a separate visit. Sequence: register (username, password) → complete quiz → land on personalised lens. No email address is collected at any point. This ensures every user has a `quiz_response` stored against their `user_id` from the first interaction and personalisation feels immediate.
 
-   **After the quiz:** The result page shows the user's primary lens and a cross-pollination hook — "people who care about food systems often find the housing lens surprising" with a specific data point as the entry. This is the first echo chamber prevention mechanism: exposure to a secondary lens is built into the onboarding result, not left to chance.
+**After the quiz:** The result page shows the user's primary lens and a cross-pollination hook — "people who care about food systems often find the housing lens surprising" with a specific data point as the entry. This is the first echo chamber prevention mechanism: exposure to a secondary lens is built into the onboarding result, not left to chance.
 
-   **Retake policy:** Retakeable once every 90 days, enforced by a Python check on the most recent `quiz_responses` entry for that `user_id`. People's circumstances and concerns change — locking the result permanently is wrong. But unlimited retakes allow gaming the lens routing. The 90-day gate is stored in `platform_config` as `quiz_retake_days` and is adjustable without code changes. When a user retakes and gets a different result, the UI surfaces the shift: "your primary lens has moved from Food to Housing since you joined" — the platform reflecting personal change back to the user.
+**Retake policy:** Retakeable once every 90 days, enforced by a Python check on the most recent `quiz_responses` entry for that `user_id`. People's circumstances and concerns change — locking the result permanently is wrong. But unlimited retakes allow gaming the lens routing. The 90-day gate is stored in `platform_config` as `quiz_retake_days` and is adjustable without code changes. When a user retakes and gets a different result, the UI surfaces the shift: "your primary lens has moved from Food to Housing since you joined" — the platform reflecting personal change back to the user.
 
-2. **Three Lenses** — Food, Housing, Mobility. Each lens presents real global data for that systemic domain, with country-level filtering. Data is pre-processed by Python at build time and stored in SQL — no per-query AI cost.
+### Three Lenses
+Food, Housing, Mobility. Each lens presents real global data for that systemic domain, with country-level filtering. Data is pre-processed by Python at build time and stored in SQL — no per-query AI cost.
 
-   *Why three lenses:* Scope and timeline — one person, one month, tight and polished over broad and shallow. Three lenses is sufficient to demonstrate the cross-domain pattern the platform argues. Expanding to a fourth lens (Finance, Health, Environment, or others) requires only an INSERT into the `lenses` table — no code changes. This is an explicit design goal, not a limitation.
+**Why three lenses:** Scope and timeline — one person, one month, tight and polished over broad and shallow. Three lenses is sufficient to demonstrate the cross-domain pattern the platform argues. Expanding to a fourth lens (Finance, Health, Environment, or others) requires only an INSERT into the `lenses` table — no code changes. This is an explicit design goal, not a limitation.
 
-3. **Forces Layer** — The fourth layer beneath all three lenses. Each force is a cross-domain mechanism that appears in food, housing, and mobility simultaneously. Forces are classified into four categories:
-   - **Financial capture** — when financial interests shape policy outcomes in their favour
-   - **Regulatory arbitrage** — exploiting gaps between jurisdictions or regulatory frameworks
-   - **Externalised cost** — when the real cost of an activity is borne by those who didn't choose it
-   - **Information asymmetry** — when one party in a system has access to knowledge the other doesn't
+### Forces Layer
+The fourth layer beneath all three lenses. Each force is a cross-domain mechanism that appears in food, housing, and mobility simultaneously. Forces are classified into four categories:
 
-   Each force entry contains: a plain-language mechanism description, sourced evidence chain, and cross-lens links showing where the same force appears across domains. No verdicts. No named actors. Mechanisms and receipts.
+- **Financial capture** — when financial interests shape policy outcomes in their favour
+- **Regulatory arbitrage** — exploiting gaps between jurisdictions or regulatory frameworks
+- **Externalised cost** — when the real cost of an activity is borne by those who didn't choose it
+- **Information asymmetry** — when one party in a system has access to knowledge the other doesn't
 
-4. **Token System** — Users register and immediately receive an opening balance of 10 tokens. This is deliberate — a new user who cannot act immediately will leave immediately. Ten tokens is enough to spend meaningfully across two or three issues and experience the platform's core mechanic, but not so large that scarcity loses its meaning. Tokens are spent on issues within lenses to signal conviction — a deliberate act that forces genuine prioritisation, unlike a like button.
+Each force entry contains: a plain-language mechanism description, sourced evidence chain, and cross-lens links showing where the same force appears across domains. No verdicts. No named actors. Mechanisms and receipts.
 
-5. **Token Earning** — Users earn additional tokens through three mechanisms:
-   - Contributing local data points (pending peer validation and AI digest)
-   - Validating other users' contributions (one token per validation cast)
-   - Sharing content (rate-limited to prevent gaming — once per unique share per day)
+### Token System
+Users register and immediately receive an opening balance of 10 tokens. This is deliberate — a new user who cannot act immediately will leave immediately. Ten tokens is enough to spend meaningfully across two or three issues and experience the platform's core mechanic, but not so large that scarcity loses its meaning. Tokens are spent on issues within lenses to signal conviction — a deliberate act that forces genuine prioritisation, unlike a like button.
 
-6. **Peer Validation with AI Digest** — When a user submits a contribution, an AI agent (running in `agent.py`) generates a plain-language summary comparing the claim against pre-approved data sources. This digest is stored once and shown to all validators — the AI runs once per contribution, not once per validator. Validators read the digest and cast an approve or reject vote. The AI presents evidence only; it does not make a verdict.
+### Token Earning
+Users earn additional tokens through three mechanisms:
+- Contributing local data points (pending peer validation and AI digest)
+- Validating other users' contributions (one token per validation cast)
+- Sharing content (rate-limited to prevent gaming — once per unique share per day)
 
-   **User-submitted sources:** Contributors can optionally include their own evidence via two fields: a pasted text excerpt (primary) and a source URL (citation). The pasted text is the reliable input — the agent processes it directly. The URL is a citation for validators to verify manually, not a resource the agent fetches. A "verify source" link on `validate.html` opens the URL in a new tab. This approach is more robust than URL fetching, which can fail on PDFs, paywalled content, and JavaScript-rendered pages.
+### Peer Validation with AI Digest
+When a user submits a contribution, an AI agent (running in `agent.py`) generates a plain-language summary comparing the claim against pre-approved data sources. This digest is stored once and shown to all validators — the AI runs once per contribution, not once per validator. Validators read the digest and cast an approve or reject vote. The AI presents evidence only; it does not make a verdict.
 
-   **Source conflict as a feature:** Where a user-submitted source conflicts with pre-approved API data, the digest surfaces the conflict explicitly rather than resolving it. Conflict between a local source and an institutional dataset is precisely the kind of information asymmetry the forces layer documents — making it visible is consistent with the platform's thesis.
+**User-submitted sources:** Contributors can optionally include their own evidence via two fields: a pasted text excerpt (primary) and a source URL (citation). The pasted text is the reliable input — the agent processes it directly. The URL is a citation for validators to verify manually, not a resource the agent fetches. A "verify source" link on `validate.html` opens the URL in a new tab. This approach is more robust than URL fetching, which can fail on PDFs, paywalled content, and JavaScript-rendered pages.
 
-   **Agent fallback:** If a user provides no pasted text and no URL, the agent falls back to querying pre-approved sources only. If those return nothing, the digest shows `'no data available'` and the UI tells the validator: "No external data found. Evaluate based on the claim alone."
+**Source conflict as a feature:** Where a user-submitted source conflicts with pre-approved API data, the digest surfaces the conflict explicitly rather than resolving it. Conflict between a local source and an institutional dataset is precisely the kind of information asymmetry the forces layer documents — making it visible is consistent with the platform's thesis.
 
-   **Display and UX:** The AI digest is displayed to all validators on validate.html with a color-coded confidence badge. Validators see the summary immediately upon page load. For contributors, the AI agent runs in a background thread after submission, allowing instant redirect to the confirmation page. The page auto-refreshes every 3 seconds until the digest appears, providing a seamless user experience without blocking.
+**Agent fallback:** If a user provides no pasted text and no URL, the agent falls back to querying pre-approved sources only. If those return nothing, the digest shows `'no data available'` and the UI tells the validator: "No external data found. Evaluate based on the claim alone."
 
-7. **Global Heatmap** — Aggregate token spend by country renders as a heatmap via Leaflet.js. Users watch their contribution shift the map. Starts as a static render; near-real-time updates (page refresh triggers new data fetch) are the target. True real-time via WebSockets is a post-submission stretch goal.
+**Display and UX:** The AI digest is displayed to all validators on validate.html with a color-coded confidence badge. Validators see the summary immediately upon page load. For contributors, the AI agent runs in a background thread after submission, allowing instant redirect to the confirmation page. The page auto-refreshes every 3 seconds until the digest appears, providing a seamless user experience without blocking.
 
-   **Echo chamber prevention toggle:** The heatmap has two modes — "highest conviction" (where token spend is densest) and "least heard" (countries and issues with real data but low token spend). The second mode actively directs attention toward underrepresented voices rather than amplifying already-loud ones. This is a JavaScript toggle on the frontend, backed by two different query parameters to the heatmap endpoint in `app.py`.
+### Global Heatmap
+Aggregate token spend by country renders as a heatmap via Leaflet.js. Users watch their contribution shift the map. Starts as a static render; near-real-time updates (page refresh triggers new data fetch) are the target. True real-time via WebSockets is a post-submission stretch goal.
 
----
+**Echo chamber prevention toggle:** The heatmap has two modes — "highest conviction" (where token spend is densest) and "least heard" (countries and issues with real data but low token spend). The second mode actively directs attention toward underrepresented voices rather than amplifying already-loud ones. This is a JavaScript toggle on the frontend, backed by two different query parameters to the heatmap endpoint in `app.py`.
 
 ## SQL Schema
-
 This is the most important architectural decision. The schema is designed to be flexible — new lenses, new issues, and new indicators are added as data rows, not as new code.
 
 ```sql
@@ -329,7 +318,6 @@ CREATE TABLE shares (
     shared_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
-
 **Key design decisions:**
 - `lenses`, `issues`, `indicators`, `data_points` form a clean hierarchy. Adding a fourth lens (e.g. Finance) is an INSERT, not a schema change.
 - `sources` is a registry of reference data sources — not arbiters of truth, but documented reference points with known limitations and institutional context recorded explicitly.
@@ -415,12 +403,10 @@ project/
 
 There are two distinct AI components in this project, each doing a different job.
 
-**1. Diagnostic Quiz Classifier (`quiz.py`)**
-
+### 1. Diagnostic Quiz Classifier (`quiz.py`)
 A weighted scoring system that classifies user responses to 5–7 questions into lens affinity scores. The lens with the highest score becomes the user's entry point. This runs locally in Python with no API cost. Honest note: this is rule-based classification, not machine learning. It qualifies as AI in the CS50 sense but is closer to a decision tree than a neural network. If time allows post-submission, quiz responses stored in `quiz_responses` could train a simple scikit-learn classifier as a genuine ML upgrade.
 
-**2. Contribution Digest Agent (`agent.py`)**
-
+### 2. Contribution Digest Agent (`agent.py`)
 When a user submits a contribution, `agent.py` is called once in a 'background thread' to prevent blocking the user interface. The user is immediately redirected to a confirmation page that displays "AI digest is being generated. Check back shortly.". The page auto-refreshes every 3 seconds until the digest is ready. The agent does the following in sequence:
 
 1. Constructs a search query from the contribution's claim, country, and indicator
@@ -440,57 +426,89 @@ The digest is then displayed to all peer validators on `validate.html`. The AI r
 
 **Known limitation:** Source coverage is uneven globally. WHO and World Bank data is more complete for OECD countries. Where data is absent, the agent returns `'no data available'` and the digest says so explicitly. The UI flags this rather than hiding it.
 
----
+
 
 ## Action Plan
 
 | Week | Dates | Goal | Done? |
-|---|---|---|---|
+|------|-------|------|-------|
 | 1 | June 19–25 | Schema init, Flask skeleton, auth (register/login), first dataset seeded | ✓ |
 | 2 | June 26–Jul 2 | Three lenses with real data, token spend system, diagnostic quiz | ✓ |
 | 3 | Jul 3–9 | Heatmap, contribution flow, agent.py digest, peer validation, token earning | ✓ |
-| 4 | Jul 10–16 | Polish: AI digest display, background threading, legal pages (privacy/terms/how_it_works), heatmap hover, tooltips, validation UI spacing, README finalise, video, deploy to Render, submit | ☐ |
-    
-    ## Week 4 Polish Completed
+| 4 | Jul 10–16 | Polish: AI digest display, background threading, legal pages (privacy/terms/how_it_works), heatmap hover, tooltips, validation UI spacing, README finalise, video, deploy to Render, submit | ✓ |
 
-    The following improvements were implemented during the final polish phase:
+## Week 4 Polish Completed
+The following improvements were implemented during the final polish phase:
 
-    **UX Enhancements:**
-    - AI digest now displays prominently in validation queue with color-coded confidence badges
-    - Background threading prevents UI blocking during AI processing
-    - Auto-refresh on contribution confirmation page (every 3 seconds until digest ready)
-    - Heatmap markers show country info on hover (no click required)
-    - Improved validation card spacing and visual separation
+### UX Enhancements:
+- AI digest now displays prominently in validation queue with color-coded confidence badges
+- Background threading prevents UI blocking during AI processing
+- Auto-refresh on contribution confirmation page (every 3 seconds until digest ready)
+- Heatmap markers show country info on hover (no click required)
+- Improved validation card spacing and visual separation
+- Smart grouping in lens pages (official data in tables, community evidence in cards)
+- Forces grid layout with responsive 4-column design
+- Force detail page with evidence cards and lens tags
+- Token balance display in navbar with coin icon
+- Instant token balance updates after spend/earn actions
+- "Back to top" and "Back to Lenses" navigation buttons
+- Rounded percentage displays (1 decimal place) for readability
+- Improved font typography (Inter + Lora) for professional appearance
 
-    **Legal & Transparency:**
-    - Privacy policy page detailing no-email policy and data retention
-    - Terms of use page outlining contribution standards and platform limitations  
-    - How It Works page with full AI disclosure and methodology transparency
-    - Footer navigation added to all pages
+### Bug Fixes (Critical):
+- **Flash message accuracy**: Resolved issue where flash messages incorrectly displayed "reject vote" language when user clicked "approve". Implemented `is_triggering_vote` logic to accurately distinguish between the user whose vote triggered approval vs. late voters.
+- **Validate queue duplicates**: Fixed "ghost duplicate" entries in validate queue caused by multiple AI digests per contribution. Implemented single-digest fetch with `ORDER BY rowid DESC LIMIT 1` to ensure only one entry per contribution appears.
+- **Multi-contributor token rewards**: Resolved issue where only original submitters received token rewards. Implemented reward distribution to ALL contributors (original submitter + merged source contributors) when a contribution is elevated.
+- **Token balance sync**: Fixed session/database sync issues causing delayed balance updates. Implemented `reconcile_token_balance()` after all token transactions for instant UI updates.
+- **Force claim elevation**: Completed dual-threshold elevation logic requiring both peer consensus (3 approvals, 5 minimum votes) AND structural quality (2+ sources, 2+ lenses) before elevation to forces layer.
 
-    **Code Quality:**
-    - Business logic extracted from `app.py` into `models.py` (`process_vote_logic` function)
-    - Country code mapping abstracted from JavaScript to Python dictionary
-    - Raw AI CONFIDENCE markers stripped from digest text
-    - All validation thresholds now configurable via `platform_config`
+### Legal & Transparency:
+- Privacy policy page detailing no-email policy and data retention
+- Terms of use page outlining contribution standards and platform limitations  
+- How It Works page with full AI disclosure and methodology transparency
+- Footer navigation added to all pages
 
-    **Architecture:**
-    - Background threading with separate SQLite connections per thread
-    - Append-only token ledger with balance cache
-    - Collaborative force claims via `contribution_sources` and `contribution_lens_links`
+### Code Quality:
+- Business logic extracted from `app.py` into `models.py` (`process_vote_logic` function)
+- Country code mapping abstracted from JavaScript to Python dictionary
+- Raw AI CONFIDENCE markers stripped from digest text
+- All validation thresholds now configurable via `platform_config`
 
-| Post-submission | Jul 17+ | Strava OAuth integration, real-time heatmap via WebSockets, ML quiz upgrade | ☐ |
+### Architecture:
+- Background threading with separate SQLite connections per thread
+- Append-only token ledger with balance cache
+- Collaborative force claims via `contribution_sources` and `contribution_lens_links`
+- Dual-threshold force elevation (peer consensus + AI source corroboration + cross-lens validation)
 
----
+## Known Risks — RESOLVED
+
+✅ **Force claim elevation logic** — RESOLVED 08/07/26: Force claim elevation is now fully implemented in models.py with dual-threshold requirements (3 approvals + 5 minimum votes) and structural quality checks (2+ sources + 2+ lenses).
+
+✅ **Reject threshold implementation** — RESOLVED 08/07/26: Reject thresholds are now implemented via platform_config keys (`rejection_threshold_data_point` and `rejection_threshold_force_claim`).
+
+✅ **Flash message accuracy** — RESOLVED 08/07/26: Flash messages now accurately reflect user actions and contribution status using `is_triggering_vote` logic.
+
+✅ **Validate queue duplicates** — RESOLVED 08/07/26: Ghost duplicate entries eliminated via single-digest fetch logic.
+
+✅ **Multi-contributor rewards** — RESOLVED 08/07/26: All contributors (original + merged sources) now receive token rewards upon elevation.
+
+✅ **Token balance sync** — RESOLVED 08/07/26: Session balance now syncs instantly with database via `reconcile_token_balance()`.
+
+### Remaining Known Risks (Accepted):
+- **Multiple accounts**: No email address is collected, making duplicate account detection impossible by design. Mitigation: the token economy limits the damage — opening balance of 10 tokens requires genuine participation to grow, and peer validation requires coordination across fake accounts to manipulate. Acknowledged as a known limitation in `privacy.html`.
+- **No account recovery**: Without email, users who lose their password cannot recover their account. Disclosed explicitly at registration. Acceptable trade-off given the privacy benefit.
+- **Quiz AI credibility**: The weighted scoring classifier in `quiz.py` is rule-based logic, not machine learning. Call it a "classification system" in the README unless upgraded to scikit-learn post-submission.
+- **Agent.py data coverage bias**: WHO and World Bank data covers OECD countries more completely. Where data is absent, the UI says so explicitly: "No global data found for this region. Your contribution may be filling a real gap."
+- **Validator read-only limitation**: Validators can read the AI digest and the contributor's submitted evidence, but cannot add, annotate, or counter-submit evidence of their own. A validator who knows of a relevant source has no mechanism to surface it. This is a deliberate scope decision for MVP. Acknowledged explicitly in `how_it_works.html` — "validators evaluate evidence submitted with the contribution; they cannot add new evidence at this stage." A `contribution_comments` table is scoped for post-submission.
 
 ## Data Sources
 
 | Layer | Dataset | Source | Format |
-|---|---|---|---|
+|-------|---------|--------|--------|
 | Food lens | Global dietary data, obesity rates, food security index | WHO / FAO | API / CSV |
 | Housing lens | Housing cost-to-income ratio, homelessness rates | World Bank | API |
 | Mobility lens | Car dependency index, cycling infrastructure, transit access | Our World in Data | CSV |
-| Forces layer | Lobbying expenditure, regulatory change timelines, industry funding of research | investigative journalism databases, academic papers, government disclosure records | Manual curation → JSON seed data |
+| Forces layer | Lobbying expenditure, regulatory change timelines, industry funding of research | Investigative journalism databases, academic papers, government disclosure records | Manual curation → JSON seed data |
 
 **Note on reference sources:** WHO, World Bank, FAO, and Our World in Data are used as reference points for comparison — not as golden sources or arbiters of truth. Each has documented institutional context, funding relationships, and coverage limitations recorded in the `sources` table. Where user-contributed evidence diverges from these sources, the divergence is surfaced explicitly in the AI digest rather than resolved in favour of the institutional source.
 
@@ -499,32 +517,6 @@ The digest is then displayed to all peer validators on `validate.html`. The AI r
 **Mobility lens thesis:** Car dependency is not a natural outcome of human preference. It is an engineered outcome produced by decades of infrastructure investment decisions, zoning laws, suburban planning models, and the systematic defunding of public transit — many of which were actively shaped by automotive and oil industry interests. The person driving two hours a day in traffic is not expressing a preference; they are trapped in a system that left them no viable alternative. The measurable consequences include cardiovascular disease from sedentary commuting, respiratory illness from vehicle emissions, financial stress from car ownership costs, urban heat islands, pedestrian death rates, and social isolation from built environments designed around vehicles rather than people. Counter-evidence is built into the lens: cycling infrastructure investment in Amsterdam, Copenhagen, Bogotá, and Nairobi demonstrates that modal shift happens when the infrastructure exists. The data shows both the damage and the proof that alternatives work.
 
 **Note on forces data:** The forces layer is community-built, not editor-curated. Users submit force claims via the contribution flow — these go through an elevated peer validation threshold (`force_approval_threshold` in `platform_config`) before being elevated into the `forces` and `force_issue_links` tables. The platform founder seeds two or three initial force entries during user testing to establish the quality bar. After that, the community builds the layer. `seed_forces.py` handles the initial seed only.
-
----
-
-## Known Risks
-
-- **Forces layer editorial burden:** Addressed — forces layer is community-built via elevated peer validation threshold, not manually curated by the platform founder. Initial seed entries establish the quality bar during user testing. See Data Sources section.
-- **Multiple accounts:** No email address is collected, making duplicate account detection impossible by design. Mitigation: the token economy limits the damage — opening balance of 10 tokens requires genuine participation to grow, and peer validation requires coordination across fake accounts to manipulate. Acknowledged as a known limitation in `privacy.html`.
-- **No account recovery:** Without email, users who lose their password cannot recover their account. Disclosed explicitly at registration. Acceptable trade-off given the privacy benefit.
-- **Echo chamber risk:** Addressed — see Echo Chamber Prevention section. Key mechanisms: quiz cross-pollination, heatmap "least heard" toggle, forces cross-lens links, contribution diversity signal, dissenting data shown explicitly.
-- **Legal exposure:** Addressed — see Legal and Ethical Framework section. Key mitigations: privacy policy page, consent checkbox at registration, terms of use, AI disclosure page, data deletion mechanism.
-- **Heatmap "real-time" expectation:** True real-time requires WebSockets — outside CS50 scope. Target is near-real-time: map refreshes on page load. WebSockets are post-submission. UPDATE 06/07/26: The heatmap now features hover tooltips showing country names and values without requiring clicks, improving UX significantly.
-- **Quiz AI credibility:** The weighted scoring classifier in `quiz.py` is rule-based logic, not machine learning. Call it a "classification system" in the README unless upgraded to scikit-learn post-submission.
-- **Agent.py data coverage bias:** WHO and World Bank data covers OECD countries more completely. Where data is absent, the UI says so explicitly: "No global data found for this region. Your contribution may be filling a real gap."
-- **Peer validation cold start:** Set `validation_threshold` to 1 in `platform_config` for MVP. Admin acts as first validator. Threshold increases as user base grows.
-- **Sharing mechanic gaming:** `shares` table tracks daily count per user. Python checks against `platform_config.max_shares_per_day` before awarding tokens.
-- **Token balance drift:** Ledger is always written first inside a database transaction. Balance derived from ledger on any discrepancy.
-- **AI agent cost at scale:** Negligible at low traffic. `platform_config.max_contributions_per_day` rate-limits submissions without a code deploy.
-- **Force claim form undifferentiated:** `contribute.html` does not conditionally show/hide fields based on `contribution_type` for MVP. Force claims are single-source and single-lens at submission. Full multi-source cross-lens force claim form with JavaScript conditional fields is Week 4 polish. Documented in `how_it_works.html`.
-- **Force claim elevation not yet built:** The logic to elevate approved force claims into `forces` and `force_issue_links` tables when `force_approval_threshold` is reached is post-submission. Force claims are validated through the same peer flow as data points but do not yet auto-elevate. RESOLVED 06/07/26: Force claim elevation is now fully implemented in models.py with structural quality checks (2+ sources, 2+ lenses).
-- **Reject threshold not implemented:** Auto-rejection based on a reject vote threshold is not built for MVP. Contributions can only be approved or remain pending. RESOLVED 06/07/26: Reject thresholds are now implemented via platform_config keys (rejection_threshold_data_point and rejection_threshold_force_claim)
-- **AI digest CONFIDENCE line:** Raw `CONFIDENCE:` line still visible in digest text after markdown stripping. CSS or text processing fix needed in Week 4 polish. RESOLVED 06/07/26: The raw CONFIDENCE line is now stripped from the summary text before saving to the database.
-- **Validator read-only limitation:** Validators can read the AI digest and the contributor's submitted evidence, but cannot add, annotate, or counter-submit evidence of their own. A validator who knows of a relevant source has no mechanism to surface it. This is a deliberate scope decision for MVP. Acknowledged explicitly in `how_it_works.html` — "validators evaluate evidence submitted with the contribution; they cannot add new evidence at this stage." A `contribution_comments` table is scoped for post-submission. UPDATE 06/07/26: The AI digest is now prominently displayed on validate.html with confidence badges, making the validation process transparent and evidence-based.
-- **Alpha-3 vs alpha-2 country codes:** WHO API returns ISO 3166-1 alpha-3 codes (e.g. `KEN`, `PHL`). `data_points` stores these natively. Leaflet.js requires alpha-2 (e.g. `KE`, `PH`) for map rendering. Conversion handled via a lookup dictionary in the heatmap endpoint in `app.py` during Week 3 — no schema change required.
-- **Strava OAuth complexity:** Deferred to post-submission. Schema ready; `strava.py` not built.
-
----
 
 ## Legal and Ethical Framework
 
@@ -581,8 +573,6 @@ The forces layer is built by the community through an elevated validation thresh
 
 - **Forces content disputes** — what happens when a user challenges a force entry's evidence chain. Needs a flagging mechanism and a documented review process. Deferred to post-submission.
 
----
-
 ## Post-Submission Pipeline
 
 Features deferred to after CS50 submission. Schema already supports all of these — they require Python and template work only.
@@ -593,10 +583,16 @@ Features deferred to after CS50 submission. Schema already supports all of these
 - **Reputation-weighted validation** — Validator votes weighted by account age and token history. Reduces gaming risk as user base grows.
 - **Admin moderation interface** — Simple dashboard for reviewing flagged contributions, adjusting `platform_config` values, and monitoring token economy health.
 - **Forces content dispute mechanism** — Flagging flow for challenging a force entry's evidence chain, with a documented review process.
+- **Contribution comments** — Allow validators to annotate or counter-submit evidence. Requires `contribution_comments` table.
 
-**AI Attribution:** Every Python and JavaScript file in this project includes a header comment attributing Claude (Anthropic) as a development aid, describing what it assisted with in that specific file, and confirming that logic, decisions, and direction were the author's own. This satisfies CS50's AI citation requirement and documents the collaboration honestly.
+## AI Attribution
+Every Python and JavaScript file in this project includes a header comment attributing Claude (Anthropic) as a development aid, describing what it assisted with in that specific file, and confirming that logic, decisions, and direction were the author's own. This satisfies CS50's AI citation requirement and documents the collaboration honestly.
 
----
+## Conversation Context (for new Claude sessions)
+
+Paste this section at the start of any new conversation:
+
+> I am building a CS50x final project called Conviction — a Flask/Python/JS/SQLite web app where users explore global systemic issues through three lenses (food, housing, mobility) and a fourth forces layer surfacing cross-domain mechanisms. Users spend tokens to signal conviction, earn tokens by contributing and validating data, and watch a global heatmap with a "least heard" toggle. The quiz is the final onboarding step, retakeable every 90 days. User contributions include pasted source text and a citation URL — the AI agent processes the text, validators check the URL manually. Pre-approved data sources (WHO, World Bank, FAO) are reference points not arbiters of truth — divergence between user sources and institutional data is surfaced as insight. The forces layer is community-built via elevated peer validation threshold, not editor-curated. No email address is collected — privacy by design, hCaptcha for bot prevention, no account recovery. Registration grants 10 opening tokens immediately. The platform has seven guiding principles, documented legal/ethical framework, and echo chamber prevention architecture. Strava is post-submission; schema is ready. All code files will include AI attribution comments. Full schema, stack, file structure, and action plan are in README.md. I am a technical PM with mid-level engineering knowledge — explain concepts clearly, don't oversimplify, flag syntax connecting to other functions or files. We are currently on: **[INSERT CURRENT WEEK/TASK]**.
 
 ## Glossary
 
@@ -732,6 +728,7 @@ A JavaScript technique that automatically reloads a page at set intervals. In th
 
 ---
 
+## Submission Checklist
 - [ ] Step 1: Record 3-minute video (title, name, GitHub username, edX username, city/country, date) → upload to YouTube unlisted
 - [ ] Step 2: Finalise README.md (750+ words) → run `submit50 cs50/problems/2026/x/project`
 - [ ] Step 3: Visit cs50.me/cs50x to trigger certificate generation
@@ -739,4 +736,4 @@ A JavaScript technique that automatically reloads a page at set intervals. In th
 
 ---
 
-*This README is a living document. Update it at each major milestone and at the start of each new Claude conversation.*
+**This README is a living document. Update it at each major milestone and at the start of each new Claude conversation.**

@@ -3,44 +3,165 @@
 {% block title %}How It Works{% endblock %}
 
 {% block content %}
-<div class="legal-container">
-    <h1>How It Works & AI Disclosure</h1>
+<div class="how-it-works">
+    <h1>How It Works</h1>
+    <p>Transparency about the technology, AI, and methodology behind Conviction.</p>
 
-    <h2>The platform</h2>
-    <p>Conviction helps you trace the line between daily experiences (rising costs, poor health, environmental damage) and the systemic mechanisms that produce those outcomes. You explore three lenses — Food, Housing, and Mobility — and discover the cross-domain forces beneath them all.</p>
+    <div class="section">
+        <h2>The Diagnostic Quiz</h2>
+        <p>The quiz classifies your lived experience into one of three systemic lenses: Food, Housing, or Mobility. It uses a weighted scoring system to determine which domain you feel most directly. This is not machine learning — it's a rule-based classification that matches your responses to pre-defined patterns.</p>
+        <p><strong>Retake policy:</strong> You can retake the quiz once every 90 days. Your circumstances change; your lens might too.</p>
+    </div>
 
-    <h2>AI Agent disclosure</h2>
-    <p>Conviction uses an AI agent (Claude Haiku by Anthropic) to assist with peer validation. Here's exactly what it does:</p>
+    <div class="section">
+        <h2>Token Economy</h2>
+        <p>When you register, you receive 10 tokens. These are spent on issues within each lens to signal conviction — a deliberate act that forces genuine prioritisation, unlike a passive "like" button.</p>
+        <p><strong>Earning tokens:</strong></p>
+        <ul>
+            <li>Contributing local data points (pending peer validation)</li>
+            <li>Validating other users' contributions (1 token per validation)</li>
+            <li>Sharing content (rate-limited to prevent gaming)</li>
+        </ul>
+    </div>
 
-    <h3>What the AI does</h3>
-    <ul>
-        <li><strong>Generates evidence digests:</strong> When you submit a contribution, the AI fetches data from pre-approved sources (WHO, World Bank, Our World in Data) and summarizes what the evidence shows relative to your claim</li>
-        <li><strong>Presents findings, not verdicts:</strong> The AI reports what it found — it does not approve or reject contributions</li>
-        <li><strong>Surfaces divergence:</strong> Where your source conflicts with institutional data, the AI explicitly shows that conflict rather than resolving it</li>
-        <li><strong>Runs once per contribution:</strong> The AI generates one digest shown to all validators — it does not run separately for each validator</li>
-    </ul>
+    <div class="section">
+        <h2>AI Contribution Digest</h2>
+        <p>When you submit a contribution, an AI agent generates a plain-language summary comparing your claim against pre-approved data sources. This digest is shown to all peer validators.</p>
+        
+        <h3>How the AI works:</h3>
+        <ol>
+            <li><strong>Constructs a search query</strong> from your claim, country, and indicator</li>
+            <li><strong>Fetches data</strong> from pre-approved sources (WHO, World Bank, FAO, Our World in Data)</li>
+            <li><strong>Sends the data + your claim</strong> to a lightweight language model (Claude Haiku or GPT-4o Mini)</li>
+            <li><strong>Generates a summary</strong> of what the evidence says relative to your claim — <em>not a verdict</em></li>
+            <li><strong>Returns a confidence signal:</strong> "Evidence found", "Partial evidence", or "No data available"</li>
+        </ol>
 
-    <h3>What the AI does NOT do</h3>
-    <ul>
-        <li>Make moderation decisions</li>
-        <li>Name or blame individuals or organizations</li>
-        <li>Fetch data from URLs you provide (validators manually check source links)</li>
-        <li>Replace human judgment — validators make the final decision</li>
-    </ul>
+        <h3>Important principles:</h3>
+        <ul>
+            <li><strong>The AI presents evidence. Humans decide.</strong> The AI never approves or rejects contributions — that power remains with peer validators.</li>
+            <li><strong>Pre-approved sources are reference points, not arbiters of truth.</strong> Where your submitted source diverges from institutional data, the digest surfaces that divergence explicitly. The conflict is the insight.</li>
+            <li><strong>The AI runs once per contribution.</strong> All validators see the same output. This keeps costs proportional to contributions submitted, not user count.</li>
+            <li><strong>Cost per contribution:</strong> Approximately $0.002–$0.01 using lightweight models.</li>
+        </ul>
 
-    <h3>Limitations</h3>
-    <ul>
-        <li><strong>Geographic coverage:</strong> WHO and World Bank data is more complete for OECD countries. Where data is absent, the AI reports "no data available"</li>
-        <li><strong>Reference sources:</strong> Institutional datasets are used as reference points for comparison, not as absolute arbiters of truth</li>
-        <li><strong>Model:</strong> We use Claude Haiku (claude-haiku-4-5-20251001) — a lightweight, fast model optimized for summarization</li>
-    </ul>
+        <h3>Limitations:</h3>
+        <ul>
+            <li><strong>Coverage is uneven globally.</strong> WHO and World Bank data is more complete for OECD countries. Where data is absent, the digest says "No data available" explicitly — we flag this rather than hide it.</li>
+            <li><strong>The AI cannot fetch URLs.</strong> You must paste source text for the AI to process. The URL you provide is for validators to verify manually.</li>
+            <li><strong>The AI is not infallible.</strong> It can misinterpret context or miss nuance. Validators are expected to read both the digest and your original source.</li>
+        </ul>
+    </div>
 
-    <h2>Peer validation</h2>
-    <p>All contributions go through peer review. Validators read the AI digest and the original source, then vote to approve or reject. Two approvals are needed before a contribution appears on the platform.</p>
+    <div class="section">
+        <h2>Peer Validation</h2>
+        <p>Contributions enter a validation queue where other users review the AI digest and your submitted evidence. A contribution requires multiple approvals before being added to the platform.</p>
+        <p><strong>Validators cannot add new evidence</strong> — they can only approve or reject based on what you submitted. This is a deliberate scope decision. If you know of a relevant source, submit it as your own contribution.</p>
+    </div>
 
-    <h2>Transparency</h2>
-    <p>Conviction has a thesis and does not pretend otherwise. What we offer instead of neutrality is full transparency: every data point sourced and cited, every editorial decision documented, every methodology open to scrutiny.</p>
+    <div class="section">
+        <h2>The Forces Layer</h2>
+        <p>The forces layer surfaces cross-domain mechanisms — financial capture, regulatory arbitrage, externalised cost, information asymmetry — that operate across Food, Housing, and Mobility simultaneously.</p>
+        <p><strong>Community-built, not editor-curated.</strong> Users submit force claims through the same contribution flow. These require an elevated validation threshold (more approvals than regular contributions) before being elevated to the forces layer.</p>
+        <p><strong>Cross-lens validation:</strong> For a force claim to be elevated, it must be linked to at least two different lenses. A mechanism that only operates in one domain is an issue, not a force.</p>
+    </div>
 
-    <p><a href="{{ url_for('index') }}" style="font-size: 0.9rem; color: #457b9d; text-decoration: none;">← Back to home</a></p>
+    <div class="section">
+        <h2>Privacy by Design</h2>
+        <p><strong>We do not collect email addresses.</strong> This is a deliberate privacy-by-design decision. You register with a username and password only.</p>
+        <p><strong>Account recovery is not possible.</strong> If you lose your password, we cannot recover your account. Choose credentials you will remember.</p>
+        <p><strong>Data deletion:</strong> You can request full account deletion at any time. Your contributions and votes are retained in anonymised form to preserve evidence integrity; all other personal data is deleted within 30 days.</p>
+    </div>
+
+    <div class="section">
+        <h2>Technology Stack</h2>
+        <ul>
+            <li><strong>Backend:</strong> Python / Flask</li>
+            <li><strong>Database:</strong> SQLite (development) → PostgreSQL (production)</li>
+            <li><strong>Frontend:</strong> HTML, CSS, Vanilla JavaScript (no framework)</li>
+            <li><strong>Mapping:</strong> Leaflet.js</li>
+            <li><strong>Charts:</strong> Chart.js</li>
+            <li><strong>AI Models:</strong> Claude Haiku (Anthropic) / GPT-4o Mini (OpenAI)</li>
+            <li><strong>Hosting:</strong> Render (free tier)</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Echo Chamber Prevention</h2>
+        <p>A platform built around systemic critique will attract users who already agree. We actively counter confirmation bias through architectural choices:</p>
+        <ul>
+            <li><strong>Quiz cross-pollination:</strong> After routing you to your primary lens, we surface a secondary lens with a specific data point as the hook.</li>
+            <li><strong>Heatmap "least heard" mode:</strong> Toggle between "highest conviction" (where token spend is densest) and "least heard" (countries and issues with real data but low token spend).</li>
+            <li><strong>Cross-lens force links:</strong> Seeing that the same force operates across domains pulls you out of silos by evidence structure, not algorithmic recommendation.</li>
+            <li><strong>Dissenting data shown explicitly:</strong> Where pre-approved API data complicates or contradicts the platform's thesis, that data is displayed — not hidden.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Open Methodology</h2>
+        <p>Every aspect of this platform is documented and auditable:</p>
+        <ul>
+            <li>All data sources are cited with methodology links</li>
+            <li>AI prompts and model choices are documented</li>
+            <li>Validation thresholds are configurable without code changes</li>
+            <li>The entire codebase is open source</li>
+        </ul>
+        <p>We have a thesis. What we offer instead of neutrality is full transparency.</p>
+    </div>
+
+    <div class="section">
+        <h2>Questions or Concerns?</h2>
+        <p>This is a CS50x final project. For questions about the platform, methodology, or AI implementation, please reach out via the project repository on GitHub.</p>
+    </div>
 </div>
+
+<style>
+.how-it-works {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.how-it-works .section {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.how-it-works .section:last-child {
+    border-bottom: none;
+}
+
+.how-it-works h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #1d3557;
+}
+
+.how-it-works h3 {
+    font-size: 1.2rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #457b9d;
+}
+
+.how-it-works p {
+    margin-bottom: 1rem;
+    line-height: 1.7;
+}
+
+.how-it-works ul, .how-it-works ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
+.how-it-works li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+.how-it-works em {
+    font-style: italic;
+    color: #457b9d;
+}
+</style>
 {% endblock %}

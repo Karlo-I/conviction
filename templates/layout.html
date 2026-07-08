@@ -16,30 +16,38 @@
 <body>
 
     <nav>
-        <!-- Left Side: Logo -->
-        <a href="{{ url_for('index') }}" class="logo">Conviction</a>
-
-        <!-- Right Side: Grouped Links -->
-        <div class="nav-right">
-            
-            <!-- Group 1: Main Navigation Links -->
-            <div class="nav-links">
-                {% if session.user_id %}
-                <a href="{{ url_for('forces') }}" class="{% if request.endpoint in ['forces', 'force_detail'] %}active{% endif %}">Forces</a>
-                    <a href="{{ url_for('contribute') }}" class="{% if request.endpoint == 'contribute' %}active{% endif %}">Contribute</a>
-                    <a href="{{ url_for('validate') }}" class="{% if request.endpoint == 'validate' %}active{% endif %}">Validate</a>
-                    <a href="{{ url_for('heatmap') }}" class="{% if request.endpoint == 'heatmap' %}active{% endif %}">Heatmap</a>
-                    <a href="{{ url_for('quiz_route') }}" class="{% if request.endpoint == 'quiz_route' %}active{% endif %}">Quiz</a>
-                {% else %}
-                    <a href="{{ url_for('heatmap') }}">Map</a>
-                {% endif %}
+        <div class="nav-container">
+            <div class="nav-left-group">
+                <a href="{{ url_for('index') }}" class="logo">Conviction</a>
+                
+                <!-- Hamburger Menu Button -->
+                <button class="hamburger" onclick="toggleMenu()" aria-label="Toggle navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                
+                <!-- Navigation Links -->
+                <div class="nav-links" id="navLinks">
+                    <a href="{{ url_for('forces') }}">Forces</a>
+                    
+                    {% if session.user_id %}
+                        <a href="{{ url_for('contribute') }}">Contribute</a>
+                        <a href="{{ url_for('validate') }}">Validate</a>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('heatmap') }}">Heatmap</a>
+                    
+                    {% if session.user_id %}
+                        <a href="{{ url_for('quiz_route') }}">Quiz</a>
+                    {% endif %}
+                </div>
             </div>
-
-            <!-- Group 2: User Profile / Auth -->
+            
+            <!-- User Menu -->
             <div class="user-menu">
                 {% if session.user_id %}
-                    <!-- Token Balance Badge with Coin Icon -->
-                    <span style="display: flex; align-items: center; gap: 0.4rem; background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #1d3557;">
+                    <span class="token-badge" style="display: flex; align-items: center; gap: 0.4rem; background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #1d3557;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#457b9d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <path d="M12 6v12"></path>
@@ -47,16 +55,18 @@
                             <path d="M9 14.5a3 3 0 0 0 3 1.5 3 3 0 0 0 3-1.5"></path>
                         </svg>
                         {{ session.get('token_balance', 0) }}
+                        
+                        <!-- Tooltip -->
+                        <span class="tooltip-text">Spend tokens to signal conviction on lens issues you care about</span>
                     </span>
-
+                    
                     <span class="username-display">{{ session.username }}</span>
                     <a href="{{ url_for('logout') }}">Log out</a>
                 {% else %}
-                    <a href="{{ url_for('register') }}" class="{% if request.endpoint == 'register' %}active{% endif %}">Register</a>
-                    <a href="{{ url_for('login') }}" class="{% if request.endpoint == 'login' %}active{% endif %}">Log in</a>
+                    <a href="{{ url_for('login') }}">Log in</a>
+                    <a href="{{ url_for('register') }}">Register</a>
                 {% endif %}
             </div>
-
         </div>
     </nav>
 
@@ -81,6 +91,25 @@
     </footer>
 
     {% block scripts %}{% endblock %}
+
+    <!-- Mobile-friendly Hamburger Menu -->
+    <script>
+    function toggleMenu() {
+        const navLinks = document.getElementById('navLinks');
+        navLinks.classList.toggle('active');
+    }
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const nav = document.querySelector('nav');
+        const navLinks = document.getElementById('navLinks');
+        const hamburger = document.querySelector('.hamburger');
+        
+        if (!nav.contains(event.target) && navLinks.classList.contains('active')) {
+            navLinks.classList.remove('active');
+        }
+    });
+    </script>
 
 </body>
 </html>

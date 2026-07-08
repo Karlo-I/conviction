@@ -109,6 +109,10 @@ def index():
 # Calls models.create_user and get_db; on success writes to session and redirects to index
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    # If already logged in, kick them to the home page
+    if 'user_id' in session:
+        return redirect(url_for('index'))
+    
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
@@ -153,6 +157,10 @@ def register():
 # Calls models.get_user_by_username and get_db; on success writes to session and redirects to index
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # If already logged in, kick them to the home page
+    if 'user_id' in session:
+        return redirect(url_for('index'))
+    
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
@@ -527,6 +535,16 @@ def terms():
 def how_it_works():
     return render_template('how_it_works.html')
 
+
+# Prevent browser caching to ensure back button always shows current auth state
+# Critical for security after logout
+@app.after_request
+def add_security_headers(response):
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    response.headers['Surrogate-Control'] = 'no-store'
+    return response
 
 # IMPORTANT: Delete these two lines when the project moves to PROD
 if __name__ == '__main__':

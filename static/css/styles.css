@@ -401,3 +401,172 @@ main {
     background: #d9e2ec;
     text-decoration: none;
 }
+
+/* ============================================================
+   8. RESPONSIVE NAVIGATION
+   ============================================================ */
+
+   .nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 25px;
+    height: 25px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1001;
+}
+
+.hamburger span {
+    width: 25px;
+    height: 3px;
+    background: #1d3557;
+    border-radius: 3px;
+    transition: all 0.3s linear;
+}
+
+/* Mobile Styles */
+@media screen and (max-width: 900px) {
+    .hamburger {
+        display: flex;
+    }
+    
+    .nav-links {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 70%;
+        max-width: 300px;
+        height: 100vh;
+        background: #f8f9fa;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding-top: 80px;
+        padding-left: 2rem;
+        gap: 1.5rem;
+        transition: right 0.3s ease-in-out;
+        box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+        z-index: 1000;
+    }
+    
+    .nav-links.active {
+        right: 0;
+    }
+    
+    .nav-links a {
+        font-size: 1.1rem;
+    }
+    
+    .user-menu {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+    
+    .username-display {
+        display: none; /* Hide username on very small screens */
+    }
+}
+
+/* Also make the main content responsive */
+@media screen and (max-width: 768px) {
+    main {
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    h2 {
+        font-size: 1.2rem;
+    }
+}
+
+/* Add this to your Responsive Navigation section */
+.nav-left-group {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem; /* <-- Change this number to adjust the distance. 
+                    2.5rem is a good starting point. 
+                    Make it smaller (e.g., 1.5rem) to bring them closer. */
+}
+
+/* Ensure the main container pushes the Left Group and User Menu apart */
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1400px; /* Optional: keeps it from stretching too far on huge screens */
+    margin: 0 auto;
+}
+
+/* ============================================================
+   9. TOKEN BADGE TOOLTIP
+   ============================================================ */
+
+   /* 1. Force the navbar containers to allow content to spill out */
+nav, .nav-container, .user-menu {
+    overflow: visible !important;
+}
+
+/* 2. The Badge */
+.token-badge {
+    position: relative;
+    cursor: help;
+    z-index: 1001;
+}
+
+/* 3. The Tooltip Box */
+.token-badge .tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    width: 260px;
+    background-color: #1d3557;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 400;
+    position: absolute;
+    z-index: 9999;
+    top: 130%; /* Pushes it below the badge */
+    left: 50%;
+    transform: translateX(-50%); /* Perfectly centers it regardless of width */
+    transition: opacity 0.3s, visibility 0.3s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    line-height: 1.4;
+    pointer-events: none; /* Crucial: prevents the tooltip from stealing the hover focus */
+}
+
+/* 4. The little arrow pointing UP */
+.token-badge .tooltip-text::after {
+    content: "";
+    position: absolute;
+    bottom: 100%; /* Sits at the very top edge of the tooltip */
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #1d3557 transparent;
+}
+
+/* 5. The Hover Trigger */
+.token-badge:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
