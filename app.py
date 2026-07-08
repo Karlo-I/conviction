@@ -140,6 +140,10 @@ def register():
         
         session['user_id'] = user['id']
         session['username'] = user['username']
+
+        # Fetch the starting balance so the navbar updates instantly
+        session['token_balance'] = models.get_token_balance(get_db(), user['id'])
+
         return redirect(url_for('index'))
 
     return render_template('register.html')

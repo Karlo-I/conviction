@@ -594,20 +594,41 @@ def process_vote_logic(db, contribution, user_id, vote):
 
     if approve_count >= threshold:
         approve_contribution(db, contribution_id)
+        
+        # --- BUG 3 FIX: Reward ALL contributors (original + merged sources) ---
         tokens_per_contribution = int(get_config(db, 'tokens_per_contribution') or 3)
+        
+        # 1. Reward the original submitter
         add_token_transactions(db, contribution['user_id'], tokens_per_contribution, 'contribution')
+        
+        # 2. Reward all users who contributed merged sources
+        merged_sources = db.execute(
+            'SELECT DISTINCT contributor_user_id FROM contribution_sources WHERE contribution_id = ?',
+            (contribution_id,)
+        ).fetchall()
+        
+        for source in merged_sources:
+            add_token_transactions(db, source['contributor_user_id'], tokens_per_contribution, 'contribution')
+        # -----------------------------------------------------------------------
 
+        # --- BUG 1 FIX: Accurate Flash Messages ---
         if contribution['contribution_type'] == 'force_claim':
             elevated = elevate_force_claim(db, contribution_id)
             if elevated:
-                outcome_note = '' if vote == 'approve' else ' Your reject vote was recorded, but the contribution reached the approval threshold from other votes, and the condition to elevate the claim to the forces layer was met.'
-                return f'Contribution approved and elevated to the forces layer.{outcome_note}'
+                if vote == 'approve':
+                    return 'Contribution elevated to the Forces layer.'
+                else:
+                    return 'Contribution elevated to the Forces layer. Your reject vote, combined with a number of approvals, allowed the contribution to reach the minimum voting threshold for elevation.'
             else:
-                outcome_note = '' if vote == 'approve' else ' Your reject vote was recorded, but the contribution reached the approval threshold from other votes.'
-                return f'Contribution approved. Awaiting a second independent source before appearing in the forces layer.{outcome_note}'
+                if vote == 'approve':
+                    return 'Contribution reached the minimum voting threshold but requires corroboration from another sector (e.g., Housing or Mobility) before appearing in the Forces layer.'
+                else:
+                    return 'Your reject vote, together with a number of approvals, allowed the contribution to reach the minimum voting threshold. However, it requires corroboration from another sector before it is elevated to the Forces layer.'
         else:
-            outcome_note = '' if vote == 'approve' else ' Your reject vote was recorded, but the contribution reached the approval threshold from other votes.'
-            return f'Contribution approved and added to the platform.{outcome_note}'
+            if vote == 'approve':
+                return 'Contribution approved and added as lens evidence.'
+            else:
+                return 'Your reject vote, together with a number of approvals, allowed the contribution to reach the minimum voting threshold to be added as lens evidence.'
     else:
         return 'Vote recorded.'
 
@@ -642,12 +663,12 @@ def has_user_voted(db, contribution_id, user_id):
 
 # Get pending contributions that the user hasn't voted on yet
 def get_pending_contributions_for_user(db, user_id):
+    # 1. Fetch base contributions WITHOUT joining the digest table
     contributions = db.execute(
         '''
-        SELECT DISTINCT c.*, u.username, cd.summary, cd.confidence
+        SELECT c.*, u.username
         FROM contributions c
         JOIN users u ON c.user_id = u.id
-        LEFT JOIN contribution_digests cd ON cd.contribution_id = c.id
         WHERE c.status = 'pending'
           AND c.user_id != ?
           AND c.id NOT IN (
@@ -660,5 +681,28 @@ def get_pending_contributions_for_user(db, user_id):
         (user_id, user_id)
     ).fetchall()
     
-    # Convert Row objects to dictionaries
-    return [dict(c) for c in contributions]
+    result = []
+    for c in contributions:
+        c_dict = dict(c)
+        
+        # 2. Fetch only the LATEST digest for this specific contribution
+        # (ORDER BY rowid DESC LIMIT 1 ensures we get the most recent AI summary)
+        digest = db.execute(
+            '''
+            SELECT summary, confidence FROM contribution_digests 
+            WHERE contribution_id = ? 
+            ORDER BY rowid DESC LIMIT 1
+            ''',
+            (c_dict['id'],)
+        ).fetchone()
+        
+        if digest:
+            c_dict['summary'] = digest['summary']
+            c_dict['confidence'] = digest['confidence']
+        else:
+            c_dict['summary'] = None
+            c_dict['confidence'] = None
+            
+        result.append(c_dict)
+        
+    return result
