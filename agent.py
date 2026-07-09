@@ -123,6 +123,20 @@ Use 'no data available' if no reference data was found for this country and indi
 Keep your summary under 150 words. Write in plain prose without markdown formatting, headers, or bullet points.
 """
 
+    # --- CONDITIONAL PROMPT FOR LENS PROPOSALS ---
+    if contribution.get('contribution_type') == 'lens_proposal':
+        prompt += """
+        
+        ADDITIONAL TASK:
+        You are a database librarian. Based on the user's proposal above, extract the following into a strict JSON object:
+        - "lens_title": A short, single-word or two-word title for this lens (e.g., "Food", "Housing", "Environment"). Maximum 2 words. Keep it simple and broad.
+        - "lens_description": A one-sentence, plain-language description of what this lens tracks.
+        - "core_issue": A short, punchy title for the primary systemic issue (e.g., "Planetary Boundaries", "Healthcare Access"). Maximum 3 words.
+        
+        Return ONLY the JSON object at the very end of your response, wrapped in ```json ... ``` tags. Do not add any conversational text outside the tags.
+        """
+    # -----------------------------------------------
+
     return prompt
 
 
@@ -164,7 +178,7 @@ def run_agent(db, contribution_id):
                 },
                 json={
                     'model': ANTHROPIC_MODEL,
-                    'max_tokens': 300,
+                    'max_tokens': 400, # Increased to allow for JSON output
                     'messages': [{'role': 'user', 'content': prompt}]
                 },
                 timeout=30
@@ -183,16 +197,37 @@ def run_agent(db, contribution_id):
             summary = f'AI digest failed: {str(e)}'
             confidence = 'no data available'
 
+    # --- PARSE THE JSON IF IT'S A LENS PROPOSAL ---
+    extracted_json = None
+    if contribution['contribution_type'] == 'lens_proposal':
+        # Use regex to find the JSON block wrapped in ```json ... ```
+        match = re.search(r'```json\s*(.*?)\s*```', summary, re.DOTALL)
+        if match:
+            try:
+                extracted_json = match.group(1)
+
+                # Validate it's actual JSON
+                json.loads(extracted_json) 
+
+                # Remove the JSON block from the summary text 
+                # so validators only see the plain English summary
+                summary = summary.replace(match.group(0), '').strip()
+            
+            except json.JSONDecodeError:
+                extracted_json = None
+    # -----------------------------------------------
+
     db.execute(
         '''
-        INSERT INTO contribution_digests (contribution_id, summary, sources, confidence)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO contribution_digests (contribution_id, summary, sources, confidence, extracted_json)
+        VALUES (?, ?, ?, ?, ?)
         ''',
         (
             contribution_id,
             summary,
             json.dumps(reference_data),
-            confidence
+            confidence,
+            extracted_json # <-- NEW: Passing the extracted JSON to the database
         )
     )
     db.commit()

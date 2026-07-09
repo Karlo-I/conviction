@@ -98,11 +98,57 @@ def init_db():
 
 ## ROUTES ##
 
-# Renders the landing page
+# Renders the landing page and quiz during a certain timeframe
 # Passes no data to the template - index.html extends layout.html directly
 @app.route('/')
 def index():
-    return render_template('index.html')
+    db = get_db()
+
+    # Fetch all lenses dynamically
+    lenses = models.get_all_lenses(db)
+    
+    show_quiz_prompt = False
+    quiz_button_text = "Take the Diagnostic Quiz"
+    
+    if 'user_id' in session:
+        user_id = session['user_id']
+        last_quiz = models.get_last_quiz_response(db, user_id)
+        
+        if last_quiz is None:
+            show_quiz_prompt = True
+            quiz_button_text = "Take the Diagnostic Quiz"
+        else:
+            if models.can_retake_quiz(db, user_id):
+                show_quiz_prompt = True
+                quiz_button_text = "Retake the Diagnostic Quiz"
+
+    return render_template('index.html', 
+                           lenses=lenses,  # Pass lenses to template
+                           show_quiz_prompt=show_quiz_prompt, 
+                           quiz_button_text=quiz_button_text)
+    
+    # Default values for guests
+    show_quiz_prompt = False
+    quiz_button_text = "Take the Diagnostic Quiz"
+    
+    if 'user_id' in session:
+        user_id = session['user_id']
+        last_quiz = models.get_last_quiz_response(db, user_id)
+        
+        if last_quiz is None:
+            # User is logged in but has never taken the quiz
+            show_quiz_prompt = True
+            quiz_button_text = "Take the Diagnostic Quiz"
+        else:
+            # User has taken the quiz before; check if 90 days have passed
+            if models.can_retake_quiz(db, user_id):
+                show_quiz_prompt = True
+                quiz_button_text = "Retake the Diagnostic Quiz"
+            # If can_retake_quiz is False, show_quiz_prompt remains False (hidden)
+
+    return render_template('index.html', 
+                           show_quiz_prompt=show_quiz_prompt, 
+                           quiz_button_text=quiz_button_text)
 
 
 # Registers a new user: validates from input, hashes password, creates user and session
@@ -357,10 +403,22 @@ def contribute():
         source_url = request.form.get('source_url', '').strip() or None
         source_excerpt = request.form.get('source_excerpt', '').strip() or None
 
-        if not country_code or not note:
-            flash('Country and claim are required.', 'error')
+        # Country is only required if it's NOT a lens proposal
+        if contribution_type != 'lens_proposal' and not country_code:
+            flash('Country is required.', 'error')
             return render_template('contribute.html',
                                    indicators=models.get_all_indicators(db))
+            
+        # The claim/observation is always required
+        if not note:
+            flash('Claim or observation is required.', 'error')
+            return render_template('contribute.html',
+                                   indicators=models.get_all_indicators(db))
+
+        # If it's a lens proposal, we don't have a country code. 
+        # The database schema requires a string, so we pass 'GLOBAL'.
+        if contribution_type == 'lens_proposal':
+            country_code = 'GLOBAL'
 
         try:
             if indicator_id:

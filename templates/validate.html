@@ -5,57 +5,184 @@
 {% block content %}
 <div class="validate-container">
     <h1>Peer validation queue</h1>
-    <p>Review the entries below and cast your vote. You will only see unvoted contributions from other users here. Two approvals are required for a contribution to appear as lens evidence.</p>
+    <p>Review the entries below and cast your vote. You will only see unvoted contributions from other users here.</p>
 
     {% if not contributions %}
-    <p>No pending contributions right now.</p>
+    <div style="text-align: center; padding: 3rem; background: #f8f9fa; border-radius: 8px; margin-top: 2rem;">
+        <p style="font-size: 1.1rem; color: #1d3557; margin-bottom: 0.5rem;">
+            ✓ All caught up!
+        </p>
+        <p style="color: #6c757d;">
+            There are no pending contributions waiting for your review right now.
+        </p>
+        <p style="color: #6c757d; margin-top: 1rem; font-size: 0.9rem;">
+            Check back later, or 
+            <a href="{{ url_for('contribute') }}" style="color: #457b9d;">submit your own contribution</a>.
+        </p>
+    </div>
     {% endif %}
 
-    {% for c in contributions %}
-    <div class="validate-card">
-        <p><strong>Submitted by:</strong> {{ c.username }}</p>
-        <p><strong>Country:</strong> {{ c.country_code }}</p>
-        {% if c.value %}
-        <p><strong>Value:</strong> {{ c.value }}</p>
-        {% endif %}
-        <p><strong>Claim:</strong> {{ c.note }}</p>
-        {% if c.source_url %}
-        <p><strong>Source:</strong> <a href="{{ c.source_url }}" target="_blank">Verify source</a></p>
-        {% endif %}
-        {% if c.contribution_type == 'force_claim' and c.source_count and c.source_count > 1 %}
-        <p><em>This claim combines {{ c.source_count }} sources from multiple contributors.</em></p>
-        {% endif %}
-
-        <!-- AI DIGEST DISPLAY -->
-        {% if c.summary %}
-        <div class="digest" style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-left: 4px solid #457b9d;">
-            <h3 style="margin-bottom: 0.5rem;">AI Evidence Digest</h3>
-            
-            {% if c.confidence == 'evidence found' %}
-                <p class="confidence confidence-found">Evidence found in reference sources</p>
-            {% elif c.confidence == 'partial evidence' %}
-                <p class="confidence confidence-partial">Partial evidence found</p>
-            {% else %}
-                <p class="confidence confidence-none">No data available in reference sources</p>
+    <!-- Group 1: Lens Proposals -->
+    {% set lens_proposals = contributions | selectattr('contribution_type', 'equalto', 'lens_proposal') | list %}
+    {% if lens_proposals %}
+    <div class="validation-group" style="margin-bottom: 3rem;">
+        <h2 style="color: #1d3557; border-bottom: 2px solid #457b9d; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">
+             Lens Proposals 
+            <span style="font-size: 0.7rem; color: #6c757d; font-weight: normal;">(suggest a new systemic domain)</span>
+        </h2>
+        
+        {% for c in lens_proposals %}
+        <div class="validate-card">
+            <p><strong>Proposed Lens Name:</strong> {{ c.title or 'Untitled' }}</p>
+            <p><strong>Submitted by:</strong> {{ c.username }}</p> 
+            <p><strong>Claim:</strong> {{ c.note }}</p>
+            {% if c.source_url %}
+            <p><strong>Source:</strong> <a href="{{ c.source_url }}" target="_blank">Verify source</a></p>
             {% endif %}
 
-            <p style="margin-top: 0.5rem;">{{ c.summary }}</p>
-        </div>
-        {% else %}
-        <p style="margin: 1rem 0; font-style: italic; color: #666;">AI digest is still generating. Please check back shortly.</p>
-        {% endif %}
+            <!-- AI DIGEST DISPLAY -->
+            {% if c.summary %}
+            <div class="digest" style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-left: 4px solid #457b9d;">
+                <h3 style="margin-bottom: 0.5rem;">AI Evidence Digest</h3>
+                
+                {% if c.confidence == 'evidence found' %}
+                    <p class="confidence confidence-found">Evidence found in reference sources</p>
+                {% elif c.confidence == 'partial evidence' %}
+                    <p class="confidence confidence-partial">Partial evidence found</p>
+                {% else %}
+                    <p class="confidence confidence-none">No data available in reference sources</p>
+                {% endif %}
 
-        <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}">
-            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" name="vote" value="approve" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                Approve
-            </button>
-            <button type="submit" name="vote" value="reject" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                Reject
-            </button>
-        </form>
+                <p style="margin-top: 0.5rem;">{{ c.summary }}</p>
+            </div>
+            {% else %}
+            <p style="margin: 1rem 0; font-style: italic; color: #666;">AI digest is still generating. Please check back shortly.</p>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" name="vote" value="approve" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                    Approve
+                </button>
+                <button type="submit" name="vote" value="reject" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                    Reject
+                </button>
+            </form>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
+    {% endif %}
+
+    <!-- Group 2: Force Claims -->
+    {% set force_claims = contributions | selectattr('contribution_type', 'equalto', 'force_claim') | list %}
+    {% if force_claims %}
+    <div class="validation-group" style="margin-bottom: 3rem;">
+        <h2 style="color: #1d3557; border-bottom: 2px solid #457b9d; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">
+            📂 Force Claims 
+            <span style="font-size: 0.7rem; color: #6c757d; font-weight: normal;">(evidence of a systemic mechanism)</span>
+        </h2>
+        
+        {% for c in force_claims %}
+        <div class="validate-card">
+            <p><strong>Claim:</strong> {{ c.note }}</p>
+            <p><strong>Submitted by:</strong> {{ c.username }}</p>
+            <p><strong>Country:</strong> {{ c.country_code }}</p>
+            {% if c.title %}
+            <p><strong>Mechanism:</strong> {{ c.title }}</p>
+            {% endif %}
+            {% if c.source_url %}
+            <p><strong>Source:</strong> <a href="{{ c.source_url }}" target="_blank">Verify source</a></p>
+            {% endif %}
+            {% if c.source_count and c.source_count > 1 %}
+            <p><em>This claim combines {{ c.source_count }} sources from multiple contributors.</em></p>
+            {% endif %}
+
+            <!-- AI DIGEST DISPLAY -->
+            {% if c.summary %}
+            <div class="digest" style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-left: 4px solid #457b9d;">
+                <h3 style="margin-bottom: 0.5rem;">AI Evidence Digest</h3>
+                
+                {% if c.confidence == 'evidence found' %}
+                    <p class="confidence confidence-found">Evidence found in reference sources</p>
+                {% elif c.confidence == 'partial evidence' %}
+                    <p class="confidence confidence-partial">Partial evidence found</p>
+                {% else %}
+                    <p class="confidence confidence-none">No data available in reference sources</p>
+                {% endif %}
+
+                <p style="margin-top: 0.5rem;">{{ c.summary }}</p>
+            </div>
+            {% else %}
+            <p style="margin: 1rem 0; font-style: italic; color: #666;">AI digest is still generating. Please check back shortly.</p>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" name="vote" value="approve" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                    Approve
+                </button>
+                <button type="submit" name="vote" value="reject" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                    Reject
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Group 3: Data Points -->
+    {% set data_points = contributions | selectattr('contribution_type', 'equalto', 'data_point') | list %}
+    {% if data_points %}
+    <div class="validation-group" style="margin-bottom: 3rem;">
+        <h2 style="color: #1d3557; border-bottom: 2px solid #457b9d; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">
+             Data Points 
+            <span style="font-size: 0.7rem; color: #6c757d; font-weight: normal;">(specific measurements or statistics)</span>
+        </h2>
+        
+        {% for c in data_points %}
+        <div class="validate-card">
+            <p><strong>Claim:</strong> {{ c.note }}</p>
+            <p><strong>Submitted by:</strong> {{ c.username }}</p>
+            <p><strong>Country:</strong> {{ c.country_code }}</p>
+            {% if c.value %}
+            <p><strong>Value:</strong> {{ c.value }}</p>
+            {% endif %}
+            {% if c.source_url %}
+            <p><strong>Source:</strong> <a href="{{ c.source_url }}" target="_blank">Verify source</a></p>
+            {% endif %}
+
+            <!-- AI DIGEST DISPLAY -->
+            {% if c.summary %}
+            <div class="digest" style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-left: 4px solid #457b9d;">
+                <h3 style="margin-bottom: 0.5rem;">AI Evidence Digest</h3>
+                
+                {% if c.confidence == 'evidence found' %}
+                    <p class="confidence confidence-found">Evidence found in reference sources</p>
+                {% elif c.confidence == 'partial evidence' %}
+                    <p class="confidence confidence-partial">Partial evidence found</p>
+                {% else %}
+                    <p class="confidence confidence-none">No data available in reference sources</p>
+                {% endif %}
+
+                <p style="margin-top: 0.5rem;">{{ c.summary }}</p>
+            </div>
+            {% else %}
+            <p style="margin: 1rem 0; font-style: italic; color: #666;">AI digest is still generating. Please check back shortly.</p>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" name="vote" value="approve" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                    Approve
+                </button>
+                <button type="submit" name="vote" value="reject" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                    Reject
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <!-- Back to Top Button -->
     <div style="margin-top: 3rem; text-align: center;">

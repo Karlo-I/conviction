@@ -118,7 +118,31 @@
 
         {# Fallback if absolutely no data exists #}
         {% if not issue.official_data and not issue.community_contributions %}
-            <p style="margin-top: 2rem; color: #666; font-style: italic;">No data or community evidence available for this issue yet.</p>
+        <div style="margin-top: 3rem; padding: 2.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border: 2px dashed #adb5bd; text-align: center;">
+            <div style="margin-bottom: 1rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#457b9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+            </div>
+            <h3 style="color: #1d3557; margin-bottom: 0.5rem; font-size: 1.2rem;">
+                No evidence yet
+            </h3>
+            <p style="color: #6c757d; margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+                This issue has been identified by the community but no data has been contributed yet.
+            </p>
+            <a href="{{ url_for('contribute') }}" 
+               style="display: inline-block; background-color: #457b9d; color: white; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; transition: all 0.2s;">
+                Be the first to contribute
+            </a>
+            <p style="color: #adb5bd; margin-top: 1rem; font-size: 0.85rem;">
+                Your evidence will help illuminate this systemic issue.
+            </p>
+        </div>
+        {% else %}
+        <!-- Existing data tables and cards -->
         {% endif %}
 
     </div>

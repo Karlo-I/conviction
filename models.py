@@ -315,6 +315,65 @@ def elevate_force_claim(db, contribution_id):
     return True
 
 
+# Automatically creates a new Lens, Issue, and Catch-All Indicator when a lens proposal is approved
+# Called by process_vote_logic in app.py
+def elevate_lens_proposal(db, contribution_id):
+
+    # 1. Get the AI-extracted JSON from the digest
+    digest = db.execute(
+        'SELECT extracted_json FROM contribution_digests WHERE contribution_id = ?',
+        (contribution_id,)
+    ).fetchone()
+
+    if not digest or not digest['extracted_json']:
+        return False # Cannot elevate without AI data
+
+    try:
+        data = json.loads(digest['extracted_json'])
+    except json.JSONDecodeError:
+        return False
+
+    lens_title = data.get('lens_title')
+    lens_desc = data.get('lens_description')
+    core_issue = data.get('core_issue')
+
+    if not lens_title or not core_issue:
+        return False
+
+    # 2. Create the Lens
+    lens_slug = slugify(lens_title)
+    db.execute(
+        'INSERT INTO lenses (slug, title, description) VALUES (?, ?, ?)',
+        (lens_slug, lens_title, lens_desc)
+    )
+    new_lens_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
+
+    # 3. Create the Core Issue
+    issue_slug = slugify(core_issue)
+    db.execute(
+        'INSERT INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
+        (new_lens_id, issue_slug, core_issue, f'Primary systemic issue tracked under the {lens_title} lens.')
+    )
+    new_issue_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
+
+    # 4. Create the "Catch-All" Indicator with contextual name
+    # This ensures the contribution dropdown isn't empty for the new lens
+    indicator_name = f"General {lens_title.lower()} evidence"
+    db.execute(
+        'INSERT INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
+        (new_issue_id, indicator_name, 'User Contributed', 'N/A')
+    )
+
+    db.commit()
+    return True
+
+
+# Function required to make the index page dynamic i.e. elevated lens are fetched and shown in the index page
+# Called by the index route in app.py
+def get_all_lenses(db):
+    return db.execute('SELECT * FROM lenses ORDER BY title').fetchall()
+
+
 # Return forces linked to any issue within a given lens, deduplicated by force id
 # Called by app.py lens route; feeds the 'related forces' section in lens.html
 def get_forces_for_lens(db, lens_id):
@@ -611,7 +670,7 @@ def process_vote_logic(db, contribution, user_id, vote):
             add_token_transactions(db, source['contributor_user_id'], tokens_per_contribution, 'contribution')
         # -----------------------------------------------------------------------
 
-        # --- BUG 1 FIX: Accurate Flash Messages ---
+        # --- ACCURATE FLASH MESSAGES & ELEVATION LOGIC ---
         if contribution['contribution_type'] == 'force_claim':
             elevated = elevate_force_claim(db, contribution_id)
             if elevated:
@@ -624,11 +683,37 @@ def process_vote_logic(db, contribution, user_id, vote):
                     return 'Contribution reached the minimum voting threshold but requires corroboration from another sector (e.g., Housing or Mobility) before appearing in the Forces layer.'
                 else:
                     return 'Your reject vote, together with a number of approvals, allowed the contribution to reach the minimum voting threshold. However, it requires corroboration from another sector before it is elevated to the Forces layer.'
+        
+        elif contribution['contribution_type'] == 'lens_proposal':
+            # Fetch the AI-extracted data for the flash message
+            digest = db.execute(
+                'SELECT extracted_json FROM contribution_digests WHERE contribution_id = ?',
+                (contribution_id,)
+            ).fetchone()
+            
+            lens_title = "Lens"
+            if digest and digest['extracted_json']:
+                try:
+                    extracted_data = json.loads(digest['extracted_json'])
+                    lens_title = extracted_data.get('lens_title', 'Lens')
+                except json.JSONDecodeError:
+                    pass
+            
+            elevated = elevate_lens_proposal(db, contribution_id)
+            if elevated:
+                if vote == 'approve':
+                    return f'Lens proposal approved! A new "{lens_title}" has been created and added to the platform.'
+                else:
+                    return f'Lens proposal approved and elevated to the platform despite your reject vote.'
+            else:
+                return 'Lens proposal approved, but failed to generate the lens structure automatically.'
+        
         else:
             if vote == 'approve':
                 return 'Contribution approved and added as lens evidence.'
             else:
                 return 'Your reject vote, together with a number of approvals, allowed the contribution to reach the minimum voting threshold to be added as lens evidence.'
+    
     else:
         return 'Vote recorded.'
 

@@ -6,16 +6,36 @@
 <div class="landing">
     <h1>Lenses</h1>
     <p>You already know something is wrong.</p>
-    <p>The systems that govern how people eat, live, and move are optimised for extraction, not human flourishing. The data is global, the pattern is consistent.</p>
+    <p>The systems that shape our daily lives and our planet are optimised for extraction, not human flourishing. The data is global, the pattern is consistent.</p>
 
     <div class="lens-links">
-        <a href="{{ url_for('lens', slug='food') }}">Food</a>
-        <a href="{{ url_for('lens', slug='housing') }}">Housing</a>
-        <a href="{{ url_for('lens', slug='mobility') }}">Mobility</a>
+        {% for lens in lenses %}
+            <a href="{{ url_for('lens', slug=lens.slug) }}">{{ lens.title }}</a>
+        {% endfor %}
     </div>
 
+    <!-- NEW: Dynamic Quiz Prompt (Only shows if user is eligible) -->
+    {% if show_quiz_prompt %}
+    <div style="margin-top: 3rem; padding: 2rem; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; text-align: center;">
+        <h3 style="color: #1d3557; margin-bottom: 0.5rem;">Want a personalised entry point?</h3>
+        <p style="color: #6c757d; margin-bottom: 1.5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+            Our diagnostic quiz analyses your lived experience to recommend which systemic lens you should explore first.
+        </p>
+        <a href="{{ url_for('quiz_route') }}" 
+           style="display: inline-block; background-color: #457b9d; color: white; padding: 0.8rem 2rem; border-radius: 6px; text-decoration: none; font-weight: 600; transition: background-color 0.2s;">
+            {{ quiz_button_text }}
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Existing "Get started" button for guests -->
     {% if not session.user_id %}
-    <a href="{{ url_for('register') }}">Get started</a>
+    <div style="margin-top: 3rem; text-align: center;">
+        <a href="{{ url_for('register') }}" 
+           style="display: inline-block; background-color: #1d3557; color: white; padding: 0.8rem 2rem; border-radius: 6px; text-decoration: none; font-weight: 600; transition: background-color 0.2s;">
+            Get started
+        </a>
+    </div>
     {% endif %}
 </div>
 {% endblock %}
