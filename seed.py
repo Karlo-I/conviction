@@ -19,9 +19,24 @@ def get_db():
     return db
 
 
+# Create the "Data Archive" system user for all seeded contributions
+def create_system_user(db):
+    """Create the Data Archive system user if it doesn't exist."""
+    user = db.execute("SELECT id FROM users WHERE username = 'Data Archive'").fetchone()
+    
+    if not user:
+        db.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", 
+                   ('Data Archive', 'dummy_hash_for_system_user'))
+        db.commit()
+        user = db.execute("SELECT id FROM users WHERE username = 'Data Archive'").fetchone()
+        print(f'Created Data Archive user with ID: {user["id"]}')
+    
+    return user['id']
+
+
 # Seed the food lens, issues, and indicators into the database, then triggers the data fetch
 # Calls fetch_who_obesity; writes to lenses, issues, and indicators in schema.sql
-def seed_food_lens(db):
+def seed_food_lens(db, system_user_id):
     """Seed the food lens, its issues, indicators and WHO data points"""
 
     # --- LENS ---
@@ -48,12 +63,6 @@ def seed_food_lens(db):
             'ultra-processed-food',
             'Ultra-Processed-food',
             'Industrial food products engineered for overconsumption, dominant in supply global chains.'
-        ),
-        (
-            lens_id,
-            'food-insecurity',
-            'Food Insecurity',
-            'Systemic lack of reliable access to sufficient, safe, and nutritious food.'
         ),
     ]
 
@@ -91,23 +100,17 @@ def seed_food_lens(db):
     indicator_id = obesity_indicator['id']
 
     # --- DATA POINTS FROM WHO API ---
-    fetch_who_obesity(db, indicator_id)
+    fetch_who_obesity(db, indicator_id, upf_issue_id, system_user_id)
 
 
-# Fetch adult obesity rates from the WHO GHO API and inserts data points for target countries
-# Called by seed_food_lenses(); writes to data_points table in schema.sql using indicator_id as foreign key
-def fetch_who_obesity(db, indicator_id):
-    """Fetch adult obesity rates from WHO GHO API and insert as data points."""
+# Fetch adult obesity rates from the WHO GHO API and inserts as community contributions
+# Called by seed_food_lenses(); writes to contributions table and contribution_lens_links
+def fetch_who_obesity(db, indicator_id, issue_id, system_user_id):
+    """Fetch adult obesity rates from WHO GHO API and insert as contributions."""
 
     # Countries selected for geographic diversity - not OECD-only
     # WHO API uses ISO 3166-1 alpha-3 codes — conversion to alpha-2 handled in heatmap layer (Week 3)
-    target_countries = [
-        'KEN', 'NGA', 'ZAF', 'EGY',         # Africa
-        'PHL', 'IND', 'BGD', 'THA',         # Asia
-        'MEX', 'BRA', 'COL',               # Latin America
-        'CAN', 'GBR', 'AUS',               # Western
-        'NOR',                           # Nordic
-    ]
+    target_countries = ['CAN', 'BRA']
 
     # WHO GHO API source info: https://www.who.int/data/gho/info/gho-odata-api
     url = 'https://ghoapi.azureedge.net/api/NCD_BMI_30C'
@@ -146,22 +149,42 @@ def fetch_who_obesity(db, indicator_id):
 
     inserted = 0
     for country_code, point in latest.items():
-        cursor = db.execute(
+        # Create standardized note for the contribution card
+        note_text = f"Official record: {point['value']}% in {country_code} for {point['year']}."
+        source_url = "https://www.who.int/data"
+        
+        # Insert into contributions table
+        db.execute(
             '''
-            INSERT OR IGNORE INTO data_points (indicator_id, country_code, year, value)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO contributions 
+            (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id)
+            VALUES (?, 'data_point', ?, ?, ?, ?, 'approved', datetime('now'), ?)
             ''',
-            (indicator_id, country_code, point['year'], point['value'])
+            (system_user_id, country_code, point['value'], note_text, source_url, indicator_id)
         )
-        inserted += cursor.rowcount
+        
+        # Get the newly created contribution ID
+        contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
+        contribution_id = contribution['id']
+        
+        # Link to the issue
+        db.execute(
+            '''
+            INSERT INTO contribution_lens_links (contribution_id, issue_id)
+            VALUES (?, ?)
+            ''',
+            (contribution_id, issue_id)
+        )
+        
+        inserted += 1
 
     db.commit()
-    print(f'  {inserted} new data points inserted.')
+    print(f'  {inserted} new contributions inserted.')
 
 
 # Seeds the housing lens, its issues, indicators, and World Bank slum population data
-# Calls fetch_worldbank_housing; writes to lenses, issues, indicators, and data_points in schema.sql
-def seed_housing_lens(db):
+# Calls fetch_worldbank_housing; writes to lenses, issues, indicators, and contributions in schema.sql
+def seed_housing_lens(db, system_user_id):
     """Seed the housing lens with World Bank urban slum population data."""
 
     db.execute(
@@ -218,16 +241,16 @@ def seed_housing_lens(db):
     ).fetchone()
     indicator_id = indicator['id']
 
-    fetch_worldbank_housing(db, indicator_id)
+    fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id)
 
 
-# Fetches urban slum population data from World Bank API and inserts as data points
-# Called by seed_housing_lens; writes to data_points using indicator_id as foreign key
-def fetch_worldbank_housing(db, indicator_id):
+# Fetches urban slum population data from World Bank API and inserts as contributions
+# Called by seed_housing_lens; writes to contributions and contribution_lens_links
+def fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id):
     """Fetch urban slum population rates from World Bank API."""
 
     # ISO alpha-3 codes — World Bank uses alpha-3, consistent with WHO food lens data
-    target_countries = 'KEN;NGA;ZAF;EGY;PHL;IND;BGD;THA;MEX;BRA;COL;CAN;GBR;AUS;NOR'
+    target_countries = 'ZAF;PHL'
 
     url = f'https://api.worldbank.org/v2/country/{target_countries}/indicator/EN.POP.SLUM.UR.ZS'
     params = {
@@ -261,20 +284,46 @@ def fetch_worldbank_housing(db, indicator_id):
     for record in records:
         if record['value'] is None:
             continue
-        cursor = db.execute(
-            '''INSERT OR IGNORE INTO data_points (indicator_id, country_code, year, value)
-            VALUES (?, ?, ?, ?)''',
-            (indicator_id, record['countryiso3code'], int(record['date']), record['value'])
+        
+        country_code = record['countryiso3code']
+        year = int(record['date'])
+        value = record['value']
+        
+        # Create standardized note
+        note_text = f"Official record: {value}% of urban population in {country_code} for {year}."
+        source_url = "https://data.worldbank.org"
+        
+        # Insert into contributions
+        db.execute(
+            '''
+            INSERT INTO contributions 
+            (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id)
+            VALUES (?, 'data_point', ?, ?, ?, ?, 'approved', datetime('now'), ?)
+            ''',
+            (system_user_id, country_code, value, note_text, source_url, indicator_id)
         )
-        inserted += cursor.rowcount
+        
+        # Get contribution ID and link to issue
+        contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
+        contribution_id = contribution['id']
+        
+        db.execute(
+            '''
+            INSERT INTO contribution_lens_links (contribution_id, issue_id)
+            VALUES (?, ?)
+            ''',
+            (contribution_id, issue_id)
+        )
+        
+        inserted += 1
 
     db.commit()
-    print(f'  {inserted} new data points inserted.')
+    print(f'  {inserted} new contributions inserted.')
 
 
 # Seeds the mobility lens, its issues, indicators, and World Bank road mortality data
-# Calls fetch_worldbank_mobility; writes to lenses, issues, indicators, and data_points in schema.sql
-def seed_mobility_lens(db):
+# Calls fetch_worldbank_mobility; writes to lenses, issues, indicators, and contributions in schema.sql
+def seed_mobility_lens(db, system_user_id):
     """Seed the mobility lens with World Bank road traffic mortality data."""
 
     db.execute(
@@ -331,15 +380,15 @@ def seed_mobility_lens(db):
     ).fetchone()
     indicator_id = indicator['id']
 
-    fetch_worldbank_mobility(db, indicator_id)
+    fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id)
 
 
-# Fetches road traffic mortality data from World Bank API and inserts as data points.
-# Called by seed_mobility_lens; writes to data_points using indicator_id as foreign key.
-def fetch_worldbank_mobility(db, indicator_id):
+# Fetches road traffic mortality data from World Bank API and inserts as contributions
+# Called by seed_mobility_lens; writes to contributions and contribution_lens_links
+def fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id):
     """Fetch road traffic mortality rates from World Bank API."""
 
-    target_countries = 'KEN;NGA;ZAF;EGY;PHL;IND;BGD;THA;MEX;BRA;COL;CAN;GBR;AUS;NOR'
+    target_countries = 'AUS;NOR'
 
     url = f'https://api.worldbank.org/v2/country/{target_countries}/indicator/SH.STA.TRAF.P5'
     params = {
@@ -373,23 +422,48 @@ def fetch_worldbank_mobility(db, indicator_id):
     for record in records:
         if record['value'] is None:
             continue
-        cursor = db.execute(
+        
+        country_code = record['countryiso3code']
+        year = int(record['date'])
+        value = record['value']
+        
+        # Create standardized note
+        note_text = f"Official record: {value} deaths per 100,000 in {country_code} for {year}."
+        source_url = "https://data.worldbank.org"
+        
+        # Insert into contributions
+        db.execute(
             '''
-            INSERT OR IGNORE INTO data_points (indicator_id, country_code, year, value)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO contributions 
+            (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id)
+            VALUES (?, 'data_point', ?, ?, ?, ?, 'approved', datetime('now'), ?)
             ''',
-            (indicator_id, record['countryiso3code'], int(record['date']), record['value'])
+            (system_user_id, country_code, value, note_text, source_url, indicator_id)
         )
-        inserted += cursor.rowcount
+        
+        # Get contribution ID and link to issue
+        contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
+        contribution_id = contribution['id']
+        
+        db.execute(
+            '''
+            INSERT INTO contribution_lens_links (contribution_id, issue_id)
+            VALUES (?, ?)
+            ''',
+            (contribution_id, issue_id)
+        )
+        
+        inserted += 1
 
     db.commit()
-    print(f'  {inserted} new data points inserted.')
+    print(f'  {inserted} new contributions inserted.')
 
 
 if __name__ == '__main__':
     db = get_db()
-    seed_food_lens(db)
-    seed_housing_lens(db)
-    seed_mobility_lens(db)
+    system_user_id = create_system_user(db)
+    seed_food_lens(db, system_user_id)
+    seed_housing_lens(db, system_user_id)
+    seed_mobility_lens(db, system_user_id)
     db.close()
     print('Seeding complete.')

@@ -495,7 +495,6 @@ def get_issues_by_lens(db, lens_id):
             dp.country_code, dp.year, dp.value
         FROM issues i
         LEFT JOIN indicators ind ON ind.issue_id = i.id
-        LEFT JOIN data_points dp ON dp.indicator_id = ind.id
         WHERE i.lens_id = ?
         ORDER BY i.id, dp.value DESC
         ''',

@@ -37,17 +37,6 @@ CREATE TABLE IF NOT EXISTS indicators (
     UNIQUE(issue_id, name)
 );
 
-CREATE TABLE IF NOT EXISTS data_points (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    indicator_id INTEGER NOT NULL REFERENCES indicators(id),
-    country_code TEXT NOT NULL,
-    year INTEGER NOT NULL,
-    -- REAL is a floating point number, a value type in SQLite
-    value REAL NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(indicator_id, country_code, year)
-);
-
 -- ============================================================
 -- FORCES LAYER
 -- ============================================================
@@ -232,39 +221,3 @@ CREATE TABLE IF NOT EXISTS shares (
     content_id INTEGER,
     shared_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- ============================================================
--- STRAVA (post-submission — schema ready, strava.py not built)
--- ============================================================
-
-CREATE TABLE IF NOT EXISTS strava_connections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    strava_athlete_id INTEGER UNIQUE NOT NULL,
-    access_token TEXT NOT NULL,
-    refresh_token TEXT NOT NULL,
-    token_expires_at TIMESTAMP NOT NULL,
-    connected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS strava_activities_rewarded (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    strava_activity_id INTEGER UNIQUE NOT NULL,
-    activity_type TEXT NOT NULL,
-    distance_meters REAL NOT NULL,
-    tokens_awarded INTEGER NOT NULL,
-    awarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS strava_milestones (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    activity_type TEXT NOT NULL,
-    threshold_meters REAL NOT NULL,
-    tokens_awarded INTEGER NOT NULL
-);
-
-INSERT OR IGNORE INTO strava_milestones (activity_type, threshold_meters, tokens_awarded) VALUES
-    ('ride', 100000, 5),
-    ('run', 8000, 1),
-    ('walk', 8000, 1);
