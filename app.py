@@ -5,6 +5,7 @@
 
 import agent
 import click
+import json
 import models
 import os
 import quiz
@@ -26,23 +27,9 @@ app.config['SESSION_COOKIE_SECURE'] = not app.debug
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 
-COUNTRY_DATA = {
-    'KEN': {'name': 'Kenya', 'lat': -1.286389, 'long': 36.817223},
-    'NGA': {'name': 'Nigeria', 'lat': 9.057990, 'long': 7.495080},
-    'ZAF': {'name': 'South Africa', 'lat': -30.559482, 'long': 22.937506},
-    'EGY': {'name': 'Egypt', 'lat': 26.820553, 'long': 30.802498},
-    'PHL': {'name': 'Philippines', 'lat': 12.879721, 'long': 121.774017},
-    'IND': {'name': 'India', 'lat': 20.593684, 'long': 78.962880},
-    'BGD': {'name': 'Bangladesh', 'lat': 23.684994, 'long': 90.356331},
-    'THA': {'name': 'Thailand', 'lat': 15.870032, 'long': 100.992541},
-    'MEX': {'name': 'Mexico', 'lat': 23.634501, 'long': -102.552784},
-    'BRA': {'name': 'Brazil', 'lat': -14.235004, 'long': -51.925280},
-    'COL': {'name': 'Colombia', 'lat': 4.570868, 'long': -74.297333},
-    'CAN': {'name': 'Canada', 'lat': 56.130366, 'long': -106.346771},
-    'GBR': {'name': 'United Kingdom', 'lat': 55.378051, 'long': -3.435973},
-    'AUS': {'name': 'Australia', 'lat': -25.274398, 'long': 133.775136},
-    'NOR': {'name': 'Norway', 'lat': 60.472024, 'long': 8.468946}
-}
+# Load comprehensive country data from JSON file
+with open('countries.json', 'r') as f:
+    COUNTRY_DATA = json.load(f)
 
 
 # Ensure application is not vulnerable to Cross-Site Request Forgery 
@@ -376,7 +363,10 @@ def heatmap_data():
     else:
         rows = models.get_heatmap_data(db)
         data = [{'country': r['country_code'],
-                 'value': r['total_spend']} for r in rows]
+                 'value': r['total_spend'],
+                 'spend': r['total_spend']} for r in rows] 
+        
+        print("DEBUG CONVICTION DATA:", data)
         
     return jsonify({'mode': mode, 'data': data})
 

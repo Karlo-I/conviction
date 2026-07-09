@@ -4,18 +4,66 @@
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
 
 # Database — runtime artifact, never commit
 conviction.db
+conviction_backup*.db
+*.db-journal
+*.db-wal
+*.db-shm
 
 # Environment variables — contains secrets
 .env
+.env.local
+.env.*.local
 
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
 
-# VS Code
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.Trash-*
+
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Virtual environment
 venv/
+env/
+.venv/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# Logs
+*.log
+
+# Personal files
 notes/
 readme_old/

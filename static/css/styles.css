@@ -200,6 +200,17 @@ nav a.active {
     margin-bottom: 0.5rem;
 }
 
+/* Fix for ordered list numbers overflowing */
+.legal-container ol {
+    padding-left: 2rem;
+    margin-left: 0;
+}
+
+.legal-container ol li {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+}
+
 .lens-links {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

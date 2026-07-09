@@ -503,8 +503,8 @@ def get_issues_by_lens(db, lens_id):
     ).fetchall()
 
 
+# Get issues with their indicators and all approved contributions (unified)
 def get_issues_with_data(db, lens_id):
-    """Get issues with their indicators and data points, PLUS approved community contributions."""
     issues = db.execute(
         '''
         SELECT DISTINCT 
@@ -526,21 +526,11 @@ def get_issues_with_data(db, lens_id):
     issues = [dict(issue) for issue in issues]
     
     for issue in issues:
-        # 1. Get official seed data
-        official_data = db.execute(
+        # Get all approved contributions (formerly community + seed data, now unified)
+        contributions = db.execute(
             '''
-            SELECT dp.country_code AS country, dp.year, dp.value
-            FROM data_points dp
-            WHERE dp.indicator_id = ?
-            ORDER BY dp.country_code, dp.year
-            ''',
-            (issue['indicator_id'],)
-        ).fetchall()
-        
-        # 2. Get approved community contributions
-        community_data = db.execute(
-            '''
-            SELECT 
+            SELECT DISTINCT
+                c.id,
                 c.country_code AS country,
                 strftime('%Y', c.created_at) AS year,
                 c.value,
@@ -548,11 +538,12 @@ def get_issues_with_data(db, lens_id):
                 c.note,
                 c.source_url,
                 u.username,
-                cd.summary AS ai_summary
+                (SELECT cd.summary FROM contribution_digests cd 
+                 WHERE cd.contribution_id = c.id 
+                 ORDER BY cd.rowid DESC LIMIT 1) AS ai_summary
             FROM contributions c
             JOIN users u ON c.user_id = u.id
             JOIN contribution_lens_links cll ON cll.contribution_id = c.id
-            LEFT JOIN contribution_digests cd ON cd.contribution_id = c.id
             WHERE c.status = 'approved'
               AND c.indicator_id = ?
               AND cll.issue_id = ?
@@ -561,39 +552,47 @@ def get_issues_with_data(db, lens_id):
             (issue['indicator_id'], issue['issue_id'])
         ).fetchall()
         
-        # 3. Assign to separate keys for Smart Grouping
-        issue['official_data'] = list(official_data)
-        issue['community_contributions'] = list(community_data)
+        # Assign to the key used in the template
+        issue['community_contributions'] = list(contributions)
     
     return issues
 
 
 ## HEATMAP ##
 
+# Fetch total token spend per country for the 'conviction' heatmap mode
 def get_heatmap_data(db):
-    return db.execute(
-        '''SELECT dp.country_code, COUNT(DISTINCT tt.id) as total_spend
-           FROM token_transactions tt
-           JOIN issues i ON tt.issue_id = i.id
-           JOIN indicators ind ON ind.issue_id = i.id
-           JOIN data_points dp ON dp.indicator_id = ind.id
-           WHERE tt.reason = 'spend'
-           GROUP BY dp.country_code
-           ORDER BY total_spend DESC'''
-    ).fetchall()
+    return db.execute('''
+        SELECT 
+            c.country_code, 
+            SUM(ABS(tt.amount)) as total_spend
+        FROM contributions c
+        JOIN contribution_lens_links cll ON c.id = cll.contribution_id
+        JOIN token_transactions tt ON cll.issue_id = tt.issue_id
+        WHERE c.status = 'approved'
+        GROUP BY c.country_code
+        ORDER BY total_spend DESC
+    ''').fetchall()
 
 
+# Fetch data coverage vs token spend for the 'least_heard' heatmap mode
 def get_least_heard_data(db):
-    return db.execute(
-        '''SELECT dp.country_code, COUNT(dp.id) as data_coverage,
-                  COUNT(DISTINCT CASE WHEN tt.reason = 'spend' THEN tt.id ELSE NULL END) as total_spend
-           FROM data_points dp
-           LEFT JOIN indicators ind ON dp.indicator_id = ind.id
-           LEFT JOIN issues i ON ind.issue_id = i.id
-           LEFT JOIN token_transactions tt ON tt.issue_id = i.id
-           GROUP BY dp.country_code
-           ORDER BY total_spend ASC, data_coverage DESC'''
-    ).fetchall()
+    return db.execute('''
+        SELECT 
+            c.country_code,
+            COUNT(DISTINCT c.id) AS data_coverage,
+            COALESCE(SUM(issue_spend.spend), 0) AS total_spend
+        FROM contributions c
+        JOIN contribution_lens_links cll ON c.id = cll.contribution_id
+        LEFT JOIN (
+            SELECT issue_id, SUM(amount) as spend 
+            FROM token_transactions 
+            GROUP BY issue_id
+        ) issue_spend ON cll.issue_id = issue_spend.issue_id
+        WHERE c.status = 'approved'
+        GROUP BY c.country_code
+        ORDER BY data_coverage ASC, total_spend ASC
+    ''').fetchall()
 
 
 ## USER CONTRIBUTION ##

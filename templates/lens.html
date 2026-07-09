@@ -29,34 +29,9 @@
         </form>
         {% else %}
         <a href="{{ url_for('login') }}">Log in to spend tokens</a>
-        {% endif %}
+        {% endif %}       
 
-        {# SMART GROUPING: Official Data as Table #}
-        {% if issue.official_data %}
-        <div class="data-table-section" style="margin-top: 2rem; padding-top: 1rem; border-left: 4px solid #457b9d;">
-            <h3 style="margin-bottom: 1rem; padding-left: 2rem; color: #2d3436;">{{ issue.indicator_name }} ({{ issue.unit }})</h3>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 2rem;">
-                <thead>
-                    <tr style="border-bottom: 2px solid #e9ecef; text-align: left;">
-                        <th style="padding-left: 2rem;">Country</th>
-                        <th style="padding: 0.75rem;">Year</th>
-                        <th style="padding: 0.75rem;">{{ issue.indicator_name }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for point in issue.official_data %}
-                    <tr style="border-bottom: 1px solid #f1f3f5;">
-                        <td style="padding-left: 2rem; font-weight: bold;">{{ point.country }}</td>
-                        <td style="padding: 0.75rem; color: #666;">{{ point.year }}</td>
-                        <td style="padding: 0.75rem;">{{ point.value|round(1) }}{{ issue.unit }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
-
-        {# SMART GROUPING: Community Evidence as Cards #}
+        {# Community Evidence as Cards #}
         {% if issue.community_contributions %}
         <div class="community-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e9ecef;">
             <h3 style="margin-bottom: 1rem; color: #2d3436;">Community Evidence for {{ issue.title }}</h3>
@@ -65,7 +40,7 @@
             </p>
 
             {% for c in issue.community_contributions %}
-            <div class="validate-card" style="margin-bottom: 1.5rem; border-left: 4px solid #457b9d;">
+            <div class="validate-card" style="margin-bottom: 1.5rem; border-left: 4px solid #457b9d; padding-left: 2rem;">
                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                     <div>
                         <strong style="font-size: 1.1rem; color: #1d3557;">{{ c.country }}</strong>

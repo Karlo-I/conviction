@@ -72,15 +72,20 @@
         fetch(`/api/heatmap?mode=${mode}`)
             .then(response => response.json())
             .then(json => {
+                console.log("HEATMAP API RESPONSE:", json); // Debug log
                 json.data.forEach(point => {
                     const data = countryData[point.country];
-                    if (!data) return;
+                    if (!data) {
+                        console.log('MISSING COUNTRY DATA: ${point.country} with value ${point.value}') // Debug log
+                        return;
+                    }
 
-                    // Combine latitude and longitude into an array for Leaflet
                     const coords = [data.lat, data.long];
 
-                    // Square root scale capped at 40px — prevents exploding markers (#29)
-                    const radius = Math.min(40, Math.max(5, Math.sqrt(point.value) * 6));
+                    // Different scaling for each mode using ternary operator
+                    const radius = mode === 'conviction' 
+                        ? Math.min(80, Math.max(8, Math.sqrt(point.value) * 4))
+                        : Math.min(40, Math.max(8, point.value * 3));
 
                     const marker = L.circleMarker(coords, {
                         radius: radius,
@@ -90,14 +95,13 @@
                         fillOpacity: 0.7
                     }).addTo(map);
 
-                    // Show human-readable country name on hover using tooltip (#30)
                     marker.bindTooltip(`
                         <strong>${data.name}</strong><br>
-                        ${mode === 'conviction' ? 'Token spend: ' + point.value : 'Data coverage: ' + point.value}
+                        ${mode === 'conviction' ? 'Token spend: ' + point.value : 'Data points: ' + point.value}
                     `, {
-                        permanent: false, // Only show on hover
-                        direction: 'top', // Show above the marker
-                        offset: [0, -10]  // Slight offset for better visibility
+                        permanent: false,
+                        direction: 'top',
+                        offset: [0, -10]
                     });
                     markers.push(marker);
                 });
