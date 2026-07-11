@@ -21,8 +21,13 @@
         {% endif %}
     </div>
     {% else %}
-    <p>Your source was added to an existing pending claim describing the same mechanism. Two validators need to approve the combined claim before it appears on the platform.</p>
 
+    {% if contribution.status == 'approved' %}
+        <p>Your source was added to an existing <strong>approved</strong> claim describing the same mechanism. Because the claim had already met the voting threshold, your contribution helped instantly elevate it to the Forces layer.</p>
+    {% else %}
+        <p>Your source was added to an existing <strong>pending</strong> claim describing the same mechanism. Two validators need to approve the combined claim before it appears on the platform.</p>
+    {% endif %}
+    
     <div class="contribution-summary">
         <h2>Your source</h2>
         {% if my_source.source_url %}

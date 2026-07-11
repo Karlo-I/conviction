@@ -57,7 +57,8 @@ def get_db():
         g.db = sqlite3.connect(
             DATABASE,
             # TIMESTAMP values come back as Python datetime object rather than raw string
-            detect_types=sqlite3.PARSE_DECLTYPES
+            detect_types=sqlite3.PARSE_DECLTYPES,
+            timeout=10  # Wait up 10 seconds if locked, to avoid crashes when two or more users tries to write at the exact same millisecond
         )
         # without this line, SQLite simply returns rows as plain tuples: row[0], row[1], instead of dictinaries: row['username'], row['token_balance']
         g.db.row_factory = sqlite3.Row
@@ -433,9 +434,6 @@ def contribute():
 
         contribution_id = contribution['id']
 
-        if contribution['contribution_type'] == 'force_claim' and contribution['status'] == 'approved':
-            models.elevate_force_claim(db, contribution['id'])
-
         def run_agent_background(contrib_id):
             import sqlite3
             # We MUST create a new database connection for the background thread.
@@ -443,7 +441,9 @@ def contribute():
             bg_db = sqlite3.connect(DATABASE)
             bg_db.row_factory = sqlite3.Row
             try:
-                agent.run_agent(bg_db, contrib_id)
+                # Fetch existing lenses to pass to the AI agent
+                existing_lenses = bg_db.execute('SELECT title FROM lenses').fetchall()
+                agent.run_agent(bg_db, contrib_id, existing_lenses)
             finally:
                 bg_db.close()
 

@@ -372,8 +372,6 @@ project/
                             # app.py calls these functions; it never writes SQL directly.
 ├── quiz.py                 # Quiz classification logic (the AI component)
 ├── agent.py                # AI agent — fetches sources, generates contribution digests
-├── forces.py               # Forces layer logic — cross-lens mechanism queries
-├── strava.py               # Strava OAuth flow and activity reward logic (post-submission)
 ├── schema.sql              # SQL schema (run once to initialise DB)
 ├── seed.py                 # Seeds the database with real global data. Creates a "Data Archive"
                             # system user, then seeds the food, housing, and mobility lenses with
@@ -381,7 +379,6 @@ project/
                             # unified contributions table — no separate data_points table. This
                             # reflects the platform's philosophical commitment: all knowledge is
                             # community-built through peer validation.
-├── seed_forces.py          # Script to seed forces and force_issue_links data
 ├── countries.json          # Comprehensive country data (180+ countries) with coordinates and
                             # names for heatmap rendering. Loaded dynamically by app.py.
 ├── requirements.txt        # Python dependencies
@@ -538,7 +535,7 @@ The following improvements were implemented during the final polish phase:
 
 **Mobility lens thesis:** Car dependency is not a natural outcome of human preference. It is an engineered outcome produced by decades of infrastructure investment decisions, zoning laws, suburban planning models, and the systematic defunding of public transit — many of which were actively shaped by automotive and oil industry interests. The person driving two hours a day in traffic is not expressing a preference; they are trapped in a system that left them no viable alternative. The measurable consequences include cardiovascular disease from sedentary commuting, respiratory illness from vehicle emissions, financial stress from car ownership costs, urban heat islands, pedestrian death rates, and social isolation from built environments designed around vehicles rather than people. Counter-evidence is built into the lens: cycling infrastructure investment in Amsterdam, Copenhagen, Bogotá, and Nairobi demonstrates that modal shift happens when the infrastructure exists. The data shows both the damage and the proof that alternatives work.
 
-**Note on forces data:** The forces layer is community-built, not editor-curated. Users submit force claims via the contribution flow — these go through an elevated peer validation threshold (`force_approval_threshold` in `platform_config`) before being elevated into the `forces` and `force_issue_links` tables. The platform founder seeds two or three initial force entries during user testing to establish the quality bar. After that, the community builds the layer. `seed_forces.py` handles the initial seed only.
+**Note on forces data:** The forces layer is community-built, not editor-curated. Users submit force claims via the contribution flow — these go through an elevated peer validation threshold (`force_approval_threshold` in `platform_config`) before being elevated into the `forces` and `force_issue_links` tables. The platform founder seeds two or three initial force entries using multiple admin users (for contributions and approvals) during testing to establish the quality bar. After that, the community builds the layer. 
 
 ## Legal and Ethical Framework
 
@@ -732,7 +729,7 @@ Any data that can be used to identify a specific individual — name, email addr
 A legal contract between a data controller (you) and a data processor (a third-party service handling data on your behalf) required under GDPR. Render's standard terms of service function as a DPA. No additional DPA is required because no email delivery service is used.
 
 **Seed Data**
-Initial data inserted into a database when it is first set up — not user-generated data, but the baseline content the application needs to function. In this project, `seed.py` loads real global data from WHO, World Bank, and Our World in Data APIs into `lenses`, `issues`, `indicators`, and `data_points`. `seed_forces.py` inserts the initial force entries. `platform_config` and `strava_milestones` are seeded with INSERT statements documented in `schema.sql`.
+Initial data inserted into a database when it is first set up — not user-generated data, but the baseline content the application needs to function. In this project, `seed.py` loads real global data from WHO, World Bank, and Our World in Data APIs into `lenses`, `issues`, `indicators`, and `contributions`. `platform_config` and `strava_milestones` are seeded with INSERT statements documented in `schema.sql`.
 
 **Append-Only Ledger**
 A database pattern where records are only ever added, never modified or deleted. The `token_transactions` table in this project is an append-only ledger — every token movement is a new row. The current balance is always calculated by summing the ledger. This prevents data loss from bugs and provides a complete audit trail of every token movement.

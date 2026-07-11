@@ -4,6 +4,7 @@
 # AI assistance: Claude (Anthropic) assisted with query structure and error handling patterns.
 # Logic, decisions, and direction are the author's own.
 
+import agent
 import json
 import re
 import sqlite3
@@ -154,6 +155,9 @@ def get_pending_force_claims_by_category(db, category):
 # Called by create_contribution below when agent.check_force_claim_match finds a match
 def merge_into_contribution(db, contribution_id, note, source_url, source_excerpt, contributor_user_id, issue_id):
     
+    # The 'note' passed into this function is ALREADY cleaned by check_force_claim_match_and_clean 
+    # inside the create_contribution function. No further cleaning is needed here.
+
     db.execute(
         '''
         INSERT INTO contribution_sources (contribution_id, note, source_url, source_excerpt, contributor_user_id)
@@ -170,15 +174,27 @@ def merge_into_contribution(db, contribution_id, note, source_url, source_excerp
             (contribution_id, issue_id)
         )
     db.commit()
+
+    # Check if the target contribution is already approved
+    target_status = db.execute(
+        'SELECT status FROM contributions WHERE id = ?', 
+        (contribution_id,)
+    ).fetchone()['status']
+
+    # Reward the contributor immediately if the target claim is already approved
+    if target_status == 'approved':
+        tokens_per_contribution = int(get_config(db, 'tokens_per_contribution') or 3)
+        add_token_transactions(db, contributor_user_id, tokens_per_contribution, 'contribution')
+
     return contribution_id
 
 
+# Insert a new contribution, or merge into an existing pending force_claim if matched
+# Called by app.py contribute route. For force_claim type, checks get_pending_force_claims_by_category
+# and agent.check_force_claim_match before deciding to insert vs merge.
 def create_contribution(db, user_id, country_code, note, contribution_type='data_point',
                         indicator_id=None, value=None, source_url=None, source_excerpt=None,
                         title=None, category=None):
-    """Insert a new contribution, or merge into an existing pending force_claim if matched.
-    Called by app.py contribute route. For force_claim type, checks get_pending_force_claims_by_category
-    and agent.check_force_claim_match before deciding to insert vs merge."""
     issue_id = None
     if indicator_id:
         indicator = db.execute(
@@ -188,12 +204,31 @@ def create_contribution(db, user_id, country_code, note, contribution_type='data
             issue_id = indicator['issue_id']
 
     if contribution_type == 'force_claim' and category:
-        candidates = get_pending_force_claims_by_category(db, category)
-        import agent
-        match_id = agent.check_force_claim_match(note, candidates)
+        candidates = db.execute(
+            '''SELECT id, note FROM contributions 
+               WHERE contribution_type = 'force_claim' 
+               AND category = ? 
+               AND status IN ('pending', 'approved')''', 
+            (category,)
+        ).fetchall()
+        
+        # Pass source_excerpt to the agent function
+        match_id, cleaned_note, cleaned_excerpt = agent.check_force_claim_match_and_clean(note, source_excerpt, candidates)
+        
         if match_id:
-            merge_into_contribution(db, match_id, note, source_url, source_excerpt, user_id, issue_id)
+            # Use cleaned_excerpt if it exists, otherwise fallback to original
+            final_excerpt = cleaned_excerpt if cleaned_excerpt else source_excerpt
+            merge_into_contribution(db, match_id, cleaned_note, source_url, final_excerpt, user_id, issue_id)
+            
+            target_status = db.execute('SELECT status FROM contributions WHERE id = ?', (match_id,)).fetchone()['status']
+            if target_status == 'approved':
+                elevate_force_claim(db, match_id)
+                
             return db.execute('SELECT * FROM contributions WHERE id = ?', (match_id,)).fetchone()
+
+    # Clean the text before saving (for non-merged claims)
+    note = agent.clean_submission_text(note)
+    source_excerpt = agent.clean_submission_text(source_excerpt) # Clean excerpt here too!
 
     db.execute(
         '''
@@ -246,10 +281,35 @@ def slugify(text):
     return text.strip('-')
 
 
-def elevate_force_claim(db, contribution_id):
-    """Insert an approved force_claim into forces and force_issue_links, if it meets
-    the structural quality bar (2+ sources, 2+ distinct lenses) and mechanism refinement succeeds.
-    Called by app.py cast_vote when a force_claim crosses force_approval_threshold."""
+# Checks if a force with a similar title already exists in the same category.
+# Returns the existing force ID if a duplicate is found, otherwise None.
+def find_duplicate_force(db, category, new_title):
+    existing_forces = db.execute(
+        'SELECT id, title FROM forces WHERE category = ?', 
+        (category,)
+    ).fetchall()
+    
+    if not existing_forces:
+        return None
+        
+    new_words = set(new_title.lower().split())
+    
+    for force in existing_forces:
+        existing_words = set(force['title'].lower().split())
+        # Calculate word overlap (Jaccard similarity simplified)
+        overlap = len(new_words.intersection(existing_words))
+        
+        # If more than 50% of the words match, it's a duplicate
+        if overlap > len(new_words) * 0.5:
+            return force['id']
+            
+    return None
+
+
+# Insert an approved force_claim into forces and force_issue_links, if it meets
+# the structural quality bar (2+ sources, 2+ distinct lenses) and mechanism refinement succeeds
+# Called by app.py cast_vote when a force_claim crosses force_approval_threshold
+def elevate_force_claim(db, contribution_id):    
     source_count = db.execute(
         'SELECT COUNT(*) as n FROM contribution_sources WHERE contribution_id = ?',
         (contribution_id,)
@@ -278,7 +338,6 @@ def elevate_force_claim(db, contribution_id):
     all_claims = [contribution['title'] or contribution['note']]
     all_claims += [s['note'] or '' for s in additional_sources if s['note']]
 
-    import agent
     refined_title = agent.refine_mechanism(all_claims)
 
     if refined_title is None:
@@ -293,22 +352,52 @@ def elevate_force_claim(db, contribution_id):
         })
 
     category = contribution['category'] or 'information_asymmetry'
-    slug = f"{slugify(refined_title)}-{contribution_id}"
+    
+    # --- FIX: Robust Duplicate Prevention ---
+    existing_force_id = find_duplicate_force(db, category, refined_title)
+    
+    if existing_force_id:
+        # Duplicate found! Update the existing force's evidence chain and link issues.
+        force_id = existing_force_id
+        
+        # Fetch existing evidence chain
+        existing_chain_json = db.execute(
+            'SELECT evidence_chain FROM forces WHERE id = ?', (force_id,)
+        ).fetchone()['evidence_chain']
+        
+        existing_chain = json.loads(existing_chain_json) if existing_chain_json else []
+        
+        # Append new evidence (avoiding exact duplicates)
+        for new_evidence in evidence_chain:
+            if new_evidence not in existing_chain:
+                existing_chain.append(new_evidence)
+                
+        # Update the force with the merged evidence chain
+        db.execute(
+            'UPDATE forces SET evidence_chain = ? WHERE id = ?',
+            (json.dumps(existing_chain), force_id)
+        )
+    else:
+        # No duplicate, create new force
+        slug = f"{slugify(refined_title)}-{contribution_id}"
+        db.execute(
+            'INSERT INTO forces (slug, title, category, mechanism, evidence_chain) VALUES (?, ?, ?, ?, ?)',
+            (slug, refined_title, category, refined_title, json.dumps(evidence_chain))
+        )
+        force = db.execute('SELECT id FROM forces WHERE slug = ?', (slug,)).fetchone()
+        force_id = force['id']
+    # ----------------------------------------
 
-    db.execute(
-        'INSERT INTO forces (slug, title, category, mechanism, evidence_chain) VALUES (?, ?, ?, ?, ?)',
-        (slug, refined_title, category, refined_title, json.dumps(evidence_chain))
-    )
-    force = db.execute('SELECT id FROM forces WHERE slug = ?', (slug,)).fetchone()
-
+    # Link issues to the force (works for both new and existing forces)
     linked_issues = db.execute(
         'SELECT DISTINCT issue_id FROM contribution_lens_links WHERE contribution_id = ?',
         (contribution_id,)
     ).fetchall()
+    
     for li in linked_issues:
         db.execute(
             'INSERT OR IGNORE INTO force_issue_links (force_id, issue_id, explanation) VALUES (?, ?, ?)',
-            (force['id'], li['issue_id'], refined_title)
+            (force_id, li['issue_id'], refined_title)
         )
 
     db.commit()
@@ -321,34 +410,84 @@ def elevate_lens_proposal(db, contribution_id):
 
     # 1. Get the AI-extracted JSON from the digest
     digest = db.execute(
-        'SELECT extracted_json FROM contribution_digests WHERE contribution_id = ?',
+        'SELECT sources FROM contribution_digests WHERE contribution_id = ?',
         (contribution_id,)
     ).fetchone()
 
-    if not digest or not digest['extracted_json']:
+    if not digest or not digest['sources']:
         return False # Cannot elevate without AI data
 
     try:
-        data = json.loads(digest['extracted_json'])
+        data = json.loads(digest['sources'])
     except json.JSONDecodeError:
         return False
+    
+    proposal_data = data.get('lens_proposal')
 
-    lens_title = data.get('lens_title')
-    lens_desc = data.get('lens_description')
-    core_issue = data.get('core_issue')
+    if not proposal_data:
+        return False
+
+    lens_title = proposal_data.get('lens_title')
+    lens_desc = proposal_data.get('lens_description')
+    core_issue = proposal_data.get('core_issue')
 
     if not lens_title or not core_issue:
         return False
 
-    # 2. Create the Lens
+    # 2. Check if the Lens already exists (prevents duplicates)
     lens_slug = slugify(lens_title)
+    existing_lens = db.execute(
+        'SELECT * FROM lenses WHERE slug = ?', (lens_slug,)
+    ).fetchone()
+
+    if existing_lens:
+        existing_lens_id = existing_lens['id']
+        existing_lens_slug = existing_lens['slug']
+
+        # Fetch title safely to avoid IndexError
+        title_row = db.execute('SELECT title FROM lenses WHERE id = ?', (existing_lens_id,)).fetchone()
+        existing_lens_title = title_row[0] if title_row else lens_title
+
+        # 1. Try to find the specific issue proposed by the AI
+        proposed_issue_slug = slugify(core_issue)
+        issue = db.execute(
+            'SELECT id FROM issues WHERE lens_id = ? AND slug = ?',
+            (existing_lens_id, proposed_issue_slug)
+        ).fetchone()
+
+        # 2. If not found, find ANY existing issue for this lens to attach the contribution to
+        if not issue:
+            issue = db.execute(
+                'SELECT id FROM issues WHERE lens_id = ? LIMIT 1',
+                (existing_lens_id,)
+            ).fetchone()
+
+        # 3. If the lens somehow has NO issues, create a fallback with a UNIQUE slug
+        if not issue:
+            fallback_slug = f"general-{existing_lens_slug}"
+            db.execute(
+                'INSERT INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
+                (existing_lens_id, fallback_slug, 'General Evidence', f'Community evidence for the {existing_lens_title} lens')
+            )
+            issue = db.execute('SELECT last_insert_rowid() as id').fetchone()
+
+        # Link contribution to the existing lens/issue
+        db.execute(
+            'INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)',
+            (contribution_id, issue['id'])
+        )
+
+        db.commit()
+        return "merged"
+
+    # 3. Create the Lens (only if it doesn't exist)
     db.execute(
         'INSERT INTO lenses (slug, title, description) VALUES (?, ?, ?)',
         (lens_slug, lens_title, lens_desc)
     )
     new_lens_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
 
-    # 3. Create the Core Issue
+    # 4. Create the Core Issue
     issue_slug = slugify(core_issue)
     db.execute(
         'INSERT INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
@@ -356,16 +495,21 @@ def elevate_lens_proposal(db, contribution_id):
     )
     new_issue_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
 
-    # 4. Create the "Catch-All" Indicator with contextual name
-    # This ensures the contribution dropdown isn't empty for the new lens
+    # 5. Create the "Catch-All" Indicator with contextual name
     indicator_name = f"General {lens_title.lower()} evidence"
     db.execute(
         'INSERT INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
         (new_issue_id, indicator_name, 'User Contributed', 'N/A')
     )
 
+    # 6. Link the contribution to the newly created lens/issue
+    db.execute(
+        'INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)',
+        (contribution_id, new_issue_id)
+    )
+
     db.commit()
-    return True
+    return "created"
 
 
 # Function required to make the index page dynamic i.e. elevated lens are fetched and shown in the index page
@@ -652,7 +796,7 @@ def process_vote_logic(db, contribution, user_id, vote):
     if approve_count >= threshold:
         approve_contribution(db, contribution_id)
         
-        # --- BUG 3 FIX: Reward ALL contributors (original + merged sources) ---
+        # --- Reward ALL contributors (original + merged sources) ---
         tokens_per_contribution = int(get_config(db, 'tokens_per_contribution') or 3)
         
         # 1. Reward the original submitter
@@ -684,25 +828,33 @@ def process_vote_logic(db, contribution, user_id, vote):
         
         elif contribution['contribution_type'] == 'lens_proposal':
             # Fetch the AI-extracted data for the flash message
+            # FIX: We must query 'sources' now, as 'extracted_json' was removed from the schema
             digest = db.execute(
-                'SELECT extracted_json FROM contribution_digests WHERE contribution_id = ?',
+                'SELECT sources FROM contribution_digests WHERE contribution_id = ?',
                 (contribution_id,)
             ).fetchone()
             
             lens_title = "Lens"
-            if digest and digest['extracted_json']:
+            if digest and digest['sources']:
                 try:
-                    extracted_data = json.loads(digest['extracted_json'])
-                    lens_title = extracted_data.get('lens_title', 'Lens')
+                    sources_data = json.loads(digest['sources'])
+                    proposal_data = sources_data.get('lens_proposal', {})
+                    lens_title = proposal_data.get('lens_title', 'Lens')
                 except json.JSONDecodeError:
                     pass
             
             elevated = elevate_lens_proposal(db, contribution_id)
-            if elevated:
+            
+            if elevated == "merged":
+                if vote == 'approve':
+                    return f'Lens proposal approved! This contribution has been merged into the existing "{lens_title}" lens.'
+                else:
+                    return f'Lens proposal merged into the existing "{lens_title}" lens, despite your reject vote.'
+            elif elevated == "created":
                 if vote == 'approve':
                     return f'Lens proposal approved! A new "{lens_title}" has been created and added to the platform.'
                 else:
-                    return f'Lens proposal approved and elevated to the platform despite your reject vote.'
+                    return f'Lens proposal approved and a new "{lens_title}" lens created, despite your reject vote.'
             else:
                 return 'Lens proposal approved, but failed to generate the lens structure automatically.'
         

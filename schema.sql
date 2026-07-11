@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS contributions (
 CREATE TABLE IF NOT EXISTS contribution_sources (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     contribution_id INTEGER NOT NULL REFERENCES contributions(id),
+    note TEXT,
     source_url TEXT,
     source_excerpt TEXT,
     contributor_user_id INTEGER NOT NULL REFERENCES users(id),
@@ -157,16 +158,18 @@ CREATE TABLE IF NOT EXISTS quiz_responses (
 );
 
 -- ============================================================
--- AI DIGEST (generated once per contribution)
+-- AI DIGEST 
+-- generated once per contribution, so a lens rejected and then resubmitted and got approved will have 2 separate rows in this table, they trigger at the point of submission, and not when they are elevated
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS contribution_digests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     contribution_id INTEGER NOT NULL REFERENCES contributions(id),
     summary TEXT NOT NULL,
-    sources JSON,
+    sources JSON, -- a package that includes both the referenced data and the AI proposed lens data
     confidence TEXT NOT NULL,
-    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    extracted_json TEXT
 );
 
 -- ============================================================

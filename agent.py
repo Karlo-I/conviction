@@ -62,6 +62,10 @@ def fetch_worldbank_data(indicator_code, country_code):
 
 
 def fetch_reference_data(country_code):
+    # Lens proposals are global/systemic - no country-specific reference data needed
+    if country_code == 'GLOBAL' or not country_code:
+        return []
+    
     reference_data = []
 
     who_obesity = fetch_who_data('NCD_BMI_30C', country_code)
@@ -82,7 +86,7 @@ def fetch_reference_data(country_code):
     return reference_data
 
 
-def build_prompt(contribution, reference_data):
+def build_prompt(contribution, reference_data, existing_lenses):
     if reference_data:
         lines = []
         for d in reference_data:
@@ -95,7 +99,13 @@ def build_prompt(contribution, reference_data):
 
     source_text = contribution.get('source_excerpt') or 'No source text provided'
 
-    prompt = f"""You are an evidence analyst for a platform that surfaces systemic issues in food, housing, and mobility.
+    # Format the existing lenses list for the AI
+    if existing_lenses:
+        existing_lenses_text = ", ".join([l['title'] for l in existing_lenses])
+    else:
+        existing_lenses_text = "None"
+
+    prompt = f"""You are an evidence analyst for a platform that surfaces systemic issues.
 
 A user has submitted the following contribution:
 Country: {contribution['country_code']}
@@ -104,6 +114,9 @@ User-submitted source excerpt: {source_text}
 
 Reference data from pre-approved institutional sources:
 {reference_text}
+
+EXISTING LENSES IN DATABASE:
+{existing_lenses_text}
 
 Your task:
 1. Summarise what the reference data shows in relation to the user's claim.
@@ -133,6 +146,15 @@ Keep your summary under 150 words. Write in plain prose without markdown formatt
         - "lens_description": A one-sentence, plain-language description of what this lens tracks.
         - "core_issue": A short, punchy title for the primary systemic issue (e.g., "Planetary Boundaries", "Healthcare Access"). Maximum 3 words.
         
+        CRITICAL INSTRUCTION FOR LENS PROPOSALS: 
+        Look at the "EXISTING LENSES IN DATABASE" list above. If the user's proposal is a subset, duplicate, or highly overlapping with one of those existing lenses, you MUST set "lens_title" to the EXACT name of that existing lens. Do not create a new title. Only create a new title if it is a completely distinct systemic domain not covered by the existing list.
+
+        EXAMPLE OF MERGING:
+        If Existing Lenses are: "Food, Housing, Mobility"
+        And User Proposes: "Agriculture" or "Commuting"
+        You MUST output: "lens_title": "Food" (for Agriculture) or "lens_title": "Mobility" (for Commuting).
+        Do not output "Agriculture" or "Commuting" as the title. Use the exact existing title.
+        
         Return ONLY the JSON object at the very end of your response, wrapped in ```json ... ``` tags. Do not add any conversational text outside the tags.
         """
     # -----------------------------------------------
@@ -150,7 +172,7 @@ def parse_confidence(text):
     return 'no data available'
 
 
-def run_agent(db, contribution_id):
+def run_agent(db, contribution_id, existing_lenses):
     contribution = db.execute(
         'SELECT * FROM contributions WHERE id = ?', (contribution_id,)
     ).fetchone()
@@ -161,7 +183,8 @@ def run_agent(db, contribution_id):
     country_code = contribution['country_code']
     reference_data = fetch_reference_data(country_code)
 
-    prompt = build_prompt(dict(contribution), reference_data)
+    # Pass the existing lenses to the prompt builder
+    prompt = build_prompt(dict(contribution), reference_data, existing_lenses)
 
     api_key = os.environ.get('ANTHROPIC_API_KEY')
     if not api_key:
@@ -178,7 +201,7 @@ def run_agent(db, contribution_id):
                 },
                 json={
                     'model': ANTHROPIC_MODEL,
-                    'max_tokens': 400, # Increased to allow for JSON output
+                    'max_tokens': 400, 
                     'messages': [{'role': 'user', 'content': prompt}]
                 },
                 timeout=30
@@ -200,63 +223,74 @@ def run_agent(db, contribution_id):
     # --- PARSE THE JSON IF IT'S A LENS PROPOSAL ---
     extracted_json = None
     if contribution['contribution_type'] == 'lens_proposal':
-        # Use regex to find the JSON block wrapped in ```json ... ```
         match = re.search(r'```json\s*(.*?)\s*```', summary, re.DOTALL)
         if match:
             try:
                 extracted_json = match.group(1)
-
-                # Validate it's actual JSON
                 json.loads(extracted_json) 
-
-                # Remove the JSON block from the summary text 
-                # so validators only see the plain English summary
                 summary = summary.replace(match.group(0), '').strip()
-            
             except json.JSONDecodeError:
                 extracted_json = None
     # -----------------------------------------------
 
+    # --- PREPARE THE SOURCES PAYLOAD ---
+    sources_payload = {"reference_data": reference_data}
+    if extracted_json:
+        try:
+            sources_payload["lens_proposal"] = json.loads(extracted_json)
+        except json.JSONDecodeError:
+            pass
+    # -----------------------------------
+
+    # --- INSERT INTO DATABASE ---
     db.execute(
         '''
-        INSERT INTO contribution_digests (contribution_id, summary, sources, confidence, extracted_json)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO contribution_digests (contribution_id, summary, sources, confidence)
+        VALUES (?, ?, ?, ?)
         ''',
         (
             contribution_id,
             summary,
-            json.dumps(reference_data),
-            confidence,
-            extracted_json # <-- NEW: Passing the extracted JSON to the database
+            json.dumps(sources_payload), # saves reference data and JSON
+            confidence
         )
     )
     db.commit()
 
 
-def check_force_claim_match(new_note, candidates):
+def check_force_claim_match_and_clean(new_note, new_excerpt, candidates):
     if not candidates:
-        return None
+        return None, None, None
 
     candidate_lines = '\n'.join(
         f"ID {c['id']}: {c['note']}" for c in candidates
     )
 
-    prompt = f"""You are comparing force claims on a platform that tracks systemic mechanisms across food, housing, and mobility.
+    prompt = f"""You are a data quality controller.
 
 New claim: {new_note}
+New source excerpt: {new_excerpt}
 
-Existing pending claims (same category):
+Existing claims (same category):
 {candidate_lines}
 
-Task: Determine if the new claim describes the SAME underlying mechanism as any existing claim.
+Task 1: Does the new claim describe the EXACT SAME underlying mechanism as any existing claim?
+- Rule: Same mechanism in a different country = MATCH. Different mechanism = NO MATCH.
 
-Rule: The same mechanism appearing in a different country still counts as a match — mechanisms are not country-specific. A different mechanism, even with similar wording or the same country, is NOT a match.
+Task 2: If there is a MATCH, you MUST fix ALL typos and erratic capitalization in BOTH the new claim and the source excerpt. 
+- Example: Change "ecONnoMy" to "economy", "ALGORIthmic" to "algorithmic".
+- Do NOT change the meaning. Only fix errors.
 
-Answer with only the matching ID number, or NONE if there is no match. No other text."""
+Respond in JSON format ONLY:
+{{
+    "match_id": <number or null>,
+    "cleaned_note": "<fixed claim text or null>",
+    "cleaned_excerpt": "<fixed excerpt text or null>"
+}}"""
 
     api_key = os.environ.get('ANTHROPIC_API_KEY')
     if not api_key:
-        return None
+        return None, None, None
 
     try:
         response = requests.post(
@@ -268,7 +302,7 @@ Answer with only the matching ID number, or NONE if there is no match. No other 
             },
             json={
                 'model': ANTHROPIC_MODEL,
-                'max_tokens': 20,
+                'max_tokens': 250, # Increased slightly for the extra text
                 'messages': [{'role': 'user', 'content': prompt}]
             },
             timeout=15
@@ -276,12 +310,16 @@ Answer with only the matching ID number, or NONE if there is no match. No other 
         response.raise_for_status()
         data = response.json()
         answer = data['content'][0]['text'].strip()
-        match = re.search(r'\d+', answer)
+        
+        match = re.search(r'\{.*\}', answer, re.DOTALL)
         if match:
-            return int(match.group())
-        return None
-    except Exception:
-        return None
+            result = json.loads(match.group())
+            return result.get('match_id'), result.get('cleaned_note'), result.get('cleaned_excerpt')
+            
+        return None, None, None
+    except Exception as e:
+        print(f"Error in check_force_claim_match_and_clean: {e}")
+        return None, None, None
     
 
 # Synthesize multiple contributor-submitted mechanism descriptions into one
@@ -304,6 +342,7 @@ Rules:
 - Do not name any country, region, or specific place.
 - Do not name any individual or organisation.
 - Do not copy any single claim verbatim — synthesize the pattern they share.
+- **Use standard sentence capitalization and correct spelling. Do not copy user typos or erratic casing (e.g., fix "finanCIAalisation" to "financialization").**
 - One sentence only, maximum 25 words.
 
 Answer with only the sentence. No other text."""
@@ -333,3 +372,77 @@ Answer with only the sentence. No other text."""
         return result if result else None
     except Exception:
         return None
+    
+
+# Fix obvious typos and formatting for display purposes only
+def clean_display_text(text):
+    if not text:
+        return text
+    
+    prompt = f"""Fix obvious typos, capitalization errors, and formatting issues in this text. 
+    Preserve the original meaning and technical terms. Return ONLY the cleaned text.
+
+    Text: {text}"""
+    
+    api_key = os.environ.get('ANTHROPIC_API_KEY')
+    if not api_key:
+        return text
+    
+    try:
+        response = requests.post(
+            ANTHROPIC_API_URL,
+            headers={
+                'x-api-key': api_key,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json'
+            },
+            json={
+                'model': ANTHROPIC_MODEL,
+                'max_tokens': 100,
+                'messages': [{'role': 'user', 'content': prompt}]
+            },
+            timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+        return data['content'][0]['text'].strip()
+    except Exception:
+        return text  # Return original on error
+    
+
+# Clean typos in a new submission before saving
+def clean_submission_text(text):
+    if not text:
+        return text
+    
+    prompt = f"""Fix ALL typos and erratic capitalization in this text. 
+    Example: Change "ecONnoMy" to "economy". Do NOT change the meaning.
+    Return ONLY the fixed text.
+    
+    Text: {text}"""
+    
+    api_key = os.environ.get('ANTHROPIC_API_KEY')
+    if not api_key:
+        return text
+    
+    try:
+        response = requests.post(
+            ANTHROPIC_API_URL,
+            headers={
+                'x-api-key': api_key,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json'
+            },
+            json={
+                'model': ANTHROPIC_MODEL,
+                'max_tokens': 150,
+                'messages': [{'role': 'user', 'content': prompt}]
+            },
+            timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+        return data['content'][0]['text'].strip()
+    except Exception:
+        return text
+    
