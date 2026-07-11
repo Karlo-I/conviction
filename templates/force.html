@@ -7,8 +7,29 @@
     <p><a href="{{ url_for('forces') }}" style="font-size: 0.9rem; color: #457b9d; text-decoration: none;">← All forces</a></p>
     <h1>{{ force.title }}</h1>
 
+    {% if session.user_id %}
+    <form method="POST" action="{{ url_for('spend_force') }}" style="margin-bottom: 2rem;">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="force_id" value="{{ force.id }}">
+        <input type="hidden" name="force_slug" value="{{ force.slug }}">
+        <button type="submit" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+            Spend token
+        </button>
+    </form>
+    {% else %}
+    <p style="margin-bottom: 2rem;"><a href="{{ url_for('login') }}" style="color: #457b9d;">Log in to spend tokens</a></p>
+    {% endif %}
+
     <div class="evidence-chain">
         <h2>Corroborating sources</h2>
+
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: .5rem; margin-bottom: 1.5rem; border-radius: 4px;">
+            <p style="margin: 0; color: #856404; font-size: 0.9rem;">
+                <strong>Note:</strong> Some sources may require institutional access or subscription. 
+                The evidence excerpts below are provided for reference.
+            </p>
+        </div>
+
         {% if force.evidence_chain %}
             {% for entry in force.evidence_chain %}
             {# Updated to use evidence-card class #}

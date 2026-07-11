@@ -5,7 +5,9 @@
 {% block content %}
 <div class="contribute-container">
     <h1>Submit a contribution</h1>
-    <p>Share local data, observations, or evidence that adds to or challenges what the platform shows. All contributions go through peer validation before appearing.</p>
+    <p>Share local data, observation, or evidence that adds to or challenges what the platform shows. </p>
+    <p>All contributions go through peer validation. Additionally, a force claim must match another claim in the same category before appearing in the Forces layer. When suggesting a new lens or force layer, please check first whether it already exists on the homepage or the Forces page. Note that we use AI to automatically merge claims that are closely aligned. </p>
+
 
     <form method="POST" action="{{ url_for('contribute') }}">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
@@ -214,6 +216,14 @@
                 <option value="regulatory_arbitrage">Regulatory arbitrage</option>
                 <option value="externalised_cost">Externalised cost</option>
                 <option value="information_asymmetry">Information asymmetry</option>
+                <option value="labor_exploitation">Labor exploitation</option>
+                <option value="market_concentration">Market concentration</option>
+                <option value="regulatory_capture">Regulatory capture</option>
+                <option value="asset_extraction">Asset extraction</option>
+                <option value="access_barriers">Access barriers</option>
+                <option value="risk_shifting">Risk shifting</option>
+                <option value="infrastructure_deficit">Infrastructure deficit</option>
+                <option value="algorithmic_exploitation">Algorithmic exploitation</option>
             </select>
         </div>
 
@@ -222,7 +232,7 @@
             <select id="indicator_id" name="indicator_id">
                 <option value="">None — this is a general observation</option>
                 {% for indicator in indicators %}
-                <option value="{{ indicator.id }}">{{ indicator.name }} ({{ indicator.source }})</option>
+                <option value="{{ indicator.id }}">{{ indicator.name }}</option>
                 {% endfor %}
             </select>
         </div>

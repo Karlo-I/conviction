@@ -366,6 +366,17 @@ nav a.active {
     flex: 1;
 }
 
+/* Center the quiz box */
+.quiz-container {
+    max-width: 700px; /* Adjust this number to make the box wider or narrower */
+    margin-left: auto;
+    margin-right: auto;
+    background: rgba(255, 255, 255, 0.95); /* Optional: gives it that clean card look */
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
 /* ============================================================
    6. SMOOTH PAGE TRANSITION WHEN NAVIGATING BETWEEN ROUTES
    ============================================================ */
@@ -649,4 +660,84 @@ nav, .nav-container, .user-menu {
 .token-badge:hover .tooltip-text {
     visibility: visible;
     opacity: 1;
+}
+
+/* ============================================================
+   10. REAL-TIME VOTE COUNTERS & BUTTONS
+   ============================================================ */
+   .vote-counts {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.vote-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.vote-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    font-family: inherit;
+    background: none;
+    border: none;
+}
+
+/* Approve badge - soft teal green */
+.approve-badge {
+    background: rgba(42, 157, 143, 0.1);
+    color: #2a9d8f;
+    border: 1px solid rgba(42, 157, 143, 0.25);
+}
+
+.approve-badge:hover {
+    background: rgba(42, 157, 143, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(42, 157, 143, 0.2);
+}
+
+/* Reject badge - warm coral */
+.reject-badge {
+    background: rgba(231, 111, 81, 0.1);
+    color: #e76f51;
+    border: 1px solid rgba(231, 111, 81, 0.25);
+}
+
+.reject-badge:hover {
+    background: rgba(231, 111, 81, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 111, 81, 0.2);
+}
+
+.vote-badge svg {
+    flex-shrink: 0;
+}
+
+.vote-number {
+    font-variant-numeric: tabular-nums;
+    min-width: 1ch;
+    text-align: center;
+}
+
+/* Subtle pulse animation when a vote is added */
+@keyframes votePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.vote-number.updated {
+    animation: votePulse 0.4s ease;
 }

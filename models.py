@@ -5,10 +5,48 @@
 # Logic, decisions, and direction are the author's own.
 
 import agent
+import datetime
 import json
 import re
 import sqlite3
 from datetime import datetime, timezone
+
+
+COUNTRY_NAMES = {
+    'AFG': 'Afghanistan', 'ALB': 'Albania', 'DZA': 'Algeria', 'AND': 'Andorra', 'AGO': 'Angola',
+    'ARG': 'Argentina', 'ARM': 'Armenia', 'AUS': 'Australia', 'AUT': 'Austria', 'AZE': 'Azerbaijan',
+    'BHS': 'Bahamas', 'BHR': 'Bahrain', 'BGD': 'Bangladesh', 'BLR': 'Belarus', 'BEL': 'Belgium',
+    'BLZ': 'Belize', 'BEN': 'Benin', 'BTN': 'Bhutan', 'BOL': 'Bolivia', 'BIH': 'Bosnia and Herzegovina',
+    'BWA': 'Botswana', 'BRA': 'Brazil', 'BRN': 'Brunei', 'BGR': 'Bulgaria', 'BFA': 'Burkina Faso',
+    'BDI': 'Burundi', 'CPV': 'Cabo Verde', 'KHM': 'Cambodia', 'CMR': 'Cameroon', 'CAN': 'Canada',
+    'CAF': 'Central African Republic', 'TCD': 'Chad', 'CHL': 'Chile', 'CHN': 'China', 'COL': 'Colombia',
+    'COM': 'Comoros', 'COD': 'Congo, Dem. Rep.', 'COG': 'Congo, Rep.', 'CRI': 'Costa Rica', 'CIV': "Côte d'Ivoire",
+    'HRV': 'Croatia', 'CUB': 'Cuba', 'CYP': 'Cyprus', 'CZE': 'Czech Republic', 'DNK': 'Denmark',
+    'DJI': 'Djibouti', 'DOM': 'Dominican Republic', 'ECU': 'Ecuador', 'EGY': 'Egypt', 'SLV': 'El Salvador',
+    'GNQ': 'Equatorial Guinea', 'ERI': 'Eritrea', 'EST': 'Estonia', 'SWZ': 'Eswatini', 'ETH': 'Ethiopia',
+    'FJI': 'Fiji', 'FIN': 'Finland', 'FRA': 'France', 'GAB': 'Gabon', 'GMB': 'Gambia', 'GEO': 'Georgia',
+    'DEU': 'Germany', 'GHA': 'Ghana', 'GRC': 'Greece', 'GTM': 'Guatemala', 'GIN': 'Guinea',
+    'GNB': 'Guinea-Bissau', 'GUY': 'Guyana', 'HTI': 'Haiti', 'HND': 'Honduras', 'HUN': 'Hungary',
+    'ISL': 'Iceland', 'IND': 'India', 'IDN': 'Indonesia', 'IRN': 'Iran', 'IRQ': 'Iraq', 'IRL': 'Ireland',
+    'ISR': 'Israel', 'ITA': 'Italy', 'JAM': 'Jamaica', 'JPN': 'Japan', 'JOR': 'Jordan', 'KAZ': 'Kazakhstan',
+    'KEN': 'Kenya', 'PRK': 'Korea, North', 'KOR': 'Korea, South', 'KWT': 'Kuwait', 'KGZ': 'Kyrgyzstan',
+    'LAO': 'Laos', 'LVA': 'Latvia', 'LBN': 'Lebanon', 'LSO': 'Lesotho', 'LBR': 'Liberia', 'LBY': 'Libya',
+    'LIE': 'Liechtenstein', 'LTU': 'Lithuania', 'LUX': 'Luxembourg', 'MDG': 'Madagascar', 'MWI': 'Malawi',
+    'MYS': 'Malaysia', 'MDV': 'Maldives', 'MLI': 'Mali', 'MLT': 'Malta', 'MRT': 'Mauritania', 'MUS': 'Mauritius',
+    'MEX': 'Mexico', 'MDA': 'Moldova', 'MCO': 'Monaco', 'MNG': 'Mongolia', 'MNE': 'Montenegro', 'MAR': 'Morocco',
+    'MOZ': 'Mozambique', 'MMR': 'Myanmar', 'NAM': 'Namibia', 'NPL': 'Nepal', 'NLD': 'Netherlands',
+    'NZL': 'New Zealand', 'NIC': 'Nicaragua', 'NER': 'Niger', 'NGA': 'Nigeria', 'MKD': 'North Macedonia',
+    'NOR': 'Norway', 'OMN': 'Oman', 'PAK': 'Pakistan', 'PSE': 'Palestine', 'PAN': 'Panama', 'PNG': 'Papua New Guinea',
+    'PRY': 'Paraguay', 'PER': 'Peru', 'PHL': 'Philippines', 'POL': 'Poland', 'PRT': 'Portugal', 'QAT': 'Qatar',
+    'ROU': 'Romania', 'RUS': 'Russia', 'RWA': 'Rwanda', 'SAU': 'Saudi Arabia', 'SEN': 'Senegal', 'SRB': 'Serbia',
+    'SLE': 'Sierra Leone', 'SGP': 'Singapore', 'SVK': 'Slovakia', 'SVN': 'Slovenia', 'SOM': 'Somalia',
+    'ZAF': 'South Africa', 'SSD': 'South Sudan', 'ESP': 'Spain', 'LKA': 'Sri Lanka', 'SDN': 'Sudan',
+    'SUR': 'Suriname', 'SWE': 'Sweden', 'CHE': 'Switzerland', 'SYR': 'Syria', 'TWN': 'Taiwan', 'TJK': 'Tajikistan',
+    'TZA': 'Tanzania', 'THA': 'Thailand', 'TLS': 'Timor-Leste', 'TGO': 'Togo', 'TTO': 'Trinidad and Tobago',
+    'TUN': 'Tunisia', 'TUR': 'Turkey', 'TKM': 'Turkmenistan', 'UGA': 'Uganda', 'UKR': 'Ukraine',
+    'ARE': 'United Arab Emirates', 'GBR': 'United Kingdom', 'USA': 'United States', 'URY': 'Uruguay',
+    'UZB': 'Uzbekistan', 'VEN': 'Venezuela', 'VNM': 'Vietnam', 'YEM': 'Yemen', 'ZMB': 'Zambia', 'ZWE': 'Zimbabwe'
+}
 
 
 ## USER FUNCTIONS ##
@@ -64,13 +102,13 @@ def reconcile_token_balance(db, user_id):
     return result['balance'] or 0
 
 
-def add_token_transactions(db, user_id, amount, reason, issue_id=None):
+def add_token_transactions(db, user_id, amount, reason, issue_id=None, force_id=None):
     db.execute(
         '''
-        INSERT INTO token_transactions (user_id, amount, reason, issue_id)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO token_transactions (user_id, amount, reason, issue_id, force_id)
+        VALUES (?, ?, ?, ?, ?)
         ''',
-        (user_id, amount, reason, issue_id)
+        (user_id, amount, reason, issue_id, force_id)
     )
     db.execute(
         'UPDATE users SET token_balance = token_balance + ? WHERE id = ?',
@@ -226,6 +264,10 @@ def create_contribution(db, user_id, country_code, note, contribution_type='data
                 
             return db.execute('SELECT * FROM contributions WHERE id = ?', (match_id,)).fetchone()
 
+    # Clean the title if it's a lens proposal
+    if title:
+        title = agent.clean_submission_text(title)
+    
     # Clean the text before saving (for non-merged claims)
     note = agent.clean_submission_text(note)
     source_excerpt = agent.clean_submission_text(source_excerpt) # Clean excerpt here too!
@@ -523,7 +565,7 @@ def get_all_lenses(db):
 def get_forces_for_lens(db, lens_id):
     rows = db.execute(
         '''
-        SELECT DISTINCT f.id, f.slug, f.title, f.category, fil.issue_id
+        SELECT DISTINCT f.id, f.slug, f.title, f.category
         FROM forces f
         JOIN force_issue_links fil ON fil.force_id = f.id
         JOIN issues i ON fil.issue_id = i.id
@@ -670,12 +712,13 @@ def get_issues_with_data(db, lens_id):
     
     for issue in issues:
         # Get all approved contributions (formerly community + seed data, now unified)
+        # Note: We added c.created_at to the SELECT list below
         contributions = db.execute(
             '''
             SELECT DISTINCT
                 c.id,
                 c.country_code AS country,
-                strftime('%Y', c.created_at) AS year,
+                c.created_at,
                 c.value,
                 c.title,
                 c.note,
@@ -695,8 +738,29 @@ def get_issues_with_data(db, lens_id):
             (issue['indicator_id'], issue['issue_id'])
         ).fetchall()
         
-        # Assign to the key used in the template
-        issue['community_contributions'] = list(contributions)
+        # Process contributions to add full country name and formatted date
+        processed_contributions = []
+        for c in contributions:
+            c_dict = dict(c)
+            
+            # 1. Map country code to full name
+            code = c_dict.get('country', '')
+            c_dict['country_name'] = COUNTRY_NAMES.get(code, code)
+            
+            # 2. Format the date (e.g., "July 12, 2026")
+            if c_dict.get('created_at'):
+                # Handle both string and datetime object formats
+                date_obj = c_dict['created_at']
+                if isinstance(date_obj, str):
+                    date_obj = datetime.fromisoformat(date_obj)
+                c_dict['formatted_date'] = date_obj.strftime('%d %B %Y')
+            else:
+                c_dict['formatted_date'] = 'Unknown Date'
+                
+            processed_contributions.append(c_dict)
+            
+        # Assign the processed list to the key used in the template
+        issue['community_contributions'] = processed_contributions
     
     return issues
 
@@ -898,10 +962,12 @@ def has_user_voted(db, contribution_id, user_id):
 
 # Get pending contributions that the user hasn't voted on yet
 def get_pending_contributions_for_user(db, user_id):
-    # 1. Fetch base contributions WITHOUT joining the digest table
+    # 1. Fetch base contributions WITH vote counts and WITHOUT joining the digest table
     contributions = db.execute(
         '''
-        SELECT c.*, u.username
+        SELECT c.*, u.username,
+               (SELECT COUNT(*) FROM contribution_votes WHERE contribution_id = c.id AND vote = 'approve') as approve_count,
+               (SELECT COUNT(*) FROM contribution_votes WHERE contribution_id = c.id AND vote = 'reject') as reject_count
         FROM contributions c
         JOIN users u ON c.user_id = u.id
         WHERE c.status = 'pending'
@@ -921,7 +987,6 @@ def get_pending_contributions_for_user(db, user_id):
         c_dict = dict(c)
         
         # 2. Fetch only the LATEST digest for this specific contribution
-        # (ORDER BY rowid DESC LIMIT 1 ensures we get the most recent AI summary)
         digest = db.execute(
             '''
             SELECT summary, confidence FROM contribution_digests 

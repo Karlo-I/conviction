@@ -59,15 +59,30 @@
             <p style="margin: 1rem 0; font-style: italic; color: #666;">AI digest is still generating. Please check back shortly.</p>
             {% endif %}
 
-            <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}">
-                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" name="vote" value="approve" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                    Approve
-                </button>
-                <button type="submit" name="vote" value="reject" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                    Reject
-                </button>
-            </form>
+            <div class="vote-counts" id="votes-{{ c.id }}">
+                <!-- Approve Button/Counter -->
+                <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" name="vote" value="approve" class="vote-badge approve-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span class="vote-number">{{ c.approve_count or 0 }}</span>
+                    </button>
+                </form>
+
+                <!-- Reject Button/Counter -->
+                <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" name="vote" value="reject" class="vote-badge reject-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        <span class="vote-number">{{ c.reject_count or 0 }}</span>
+                    </button>
+                </form>
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -116,15 +131,30 @@
             <p style="margin: 1rem 0; font-style: italic; color: #666;">AI digest is still generating. Please check back shortly.</p>
             {% endif %}
 
-            <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}">
-                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" name="vote" value="approve" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                    Approve
-                </button>
-                <button type="submit" name="vote" value="reject" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                    Reject
-                </button>
-            </form>
+            <div class="vote-counts" id="votes-{{ c.id }}">
+                <!-- Approve Button/Counter -->
+                <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" name="vote" value="approve" class="vote-badge approve-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span class="vote-number">{{ c.approve_count or 0 }}</span>
+                    </button>
+                </form>
+
+                <!-- Reject Button/Counter -->
+                <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" name="vote" value="reject" class="vote-badge reject-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        <span class="vote-number">{{ c.reject_count or 0 }}</span>
+                    </button>
+                </form>
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -170,15 +200,30 @@
             <p style="margin: 1rem 0; font-style: italic; color: #666;">AI digest is still generating. Please check back shortly.</p>
             {% endif %}
 
-            <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}">
-                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" name="vote" value="approve" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                    Approve
-                </button>
-                <button type="submit" name="vote" value="reject" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                    Reject
-                </button>
-            </form>
+            <div class="vote-counts" id="votes-{{ c.id }}">
+                <!-- Approve Button/Counter -->
+                <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" name="vote" value="approve" class="vote-badge approve-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span class="vote-number">{{ c.approve_count or 0 }}</span>
+                    </button>
+                </form>
+
+                <!-- Reject Button/Counter -->
+                <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" name="vote" value="reject" class="vote-badge reject-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        <span class="vote-number">{{ c.reject_count or 0 }}</span>
+                    </button>
+                </form>
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -193,4 +238,47 @@
     </div>
 
 </div>
+
+<script>
+// Update vote counts every 5 seconds for all visible cards
+function updateVoteCounts() {
+    document.querySelectorAll('.vote-counts').forEach(counter => {
+        const contributionId = counter.id.replace('votes-', '');
+        
+        fetch(`/api/vote-counts/${contributionId}`)
+            .then(response => response.json())
+            .then(data => {
+                const approveNum = counter.querySelector('.approve-badge .vote-number');
+                const rejectNum = counter.querySelector('.reject-badge .vote-number');
+                
+                // Check if values changed and add pulse animation
+                if (parseInt(approveNum.textContent) !== data.approve) {
+                    approveNum.textContent = data.approve;
+                    approveNum.classList.add('updated');
+                    setTimeout(() => approveNum.classList.remove('updated'), 400);
+                }
+                if (parseInt(rejectNum.textContent) !== data.reject) {
+                    rejectNum.textContent = data.reject;
+                    rejectNum.classList.add('updated');
+                    setTimeout(() => rejectNum.classList.remove('updated'), 400);
+                }
+                
+                // If the contribution was just resolved, fade it out
+                if (data.status === 'approved' || data.status === 'rejected') {
+                    const card = counter.closest('.validate-card');
+                    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    card.style.opacity = '0.4';
+                    card.style.transform = 'scale(0.98)';
+                    
+                    // Remove it after the fade
+                    setTimeout(() => card.remove(), 600);
+                }
+            })
+            .catch(err => console.log('Vote count update failed:', err));
+    });
+}
+
+// Poll every 5 seconds
+setInterval(updateVoteCounts, 5000);
+</script>
 {% endblock %}

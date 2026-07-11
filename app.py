@@ -302,6 +302,53 @@ def spend():
     return redirect(url_for('lens', slug=lens_slug))
 
 
+# Handles token spend on a Force - mirrors the /spend route for issues
+@app.route('/spend-force', methods=['POST'])
+def spend_force():
+    if 'user_id' not in session:
+        flash('You need to be logged in to spend tokens.', 'error')
+        return redirect(url_for('login'))
+    
+    db = get_db()
+    user_id = session['user_id']
+    force_id = request.form.get('force_id', type=int)
+    force_slug = request.form.get('force_slug', '')
+
+    if not force_id or not force_slug:
+        flash('Invalid request.', 'error')
+        return redirect(url_for('forces'))
+    
+    # First check
+    balance = models.get_token_balance(db, user_id)
+    if balance < 1:
+        flash('Insufficient tokens', 'error')
+        return redirect(url_for('force_detail', slug=force_slug))
+    
+    # Verify the force exists
+    force = db.execute(
+        'SELECT id FROM forces WHERE id = ? AND slug = ?',
+        (force_id, force_slug)
+    ).fetchone()
+
+    if force is None:
+        flash('Invalid force.', 'error')
+        return redirect(url_for('forces'))
+    
+    # Double-check balance right before transaction
+    current_balance = models.get_token_balance(db, user_id)
+    if current_balance < 1:
+        flash('Insufficient tokens', 'error')
+        return redirect(url_for('force_detail', slug=force_slug))
+    
+    models.add_token_transactions(db, user_id, -1, 'spend', force_id=force_id)
+    
+    # Re-sync the session with the actual database ledger
+    session['token_balance'] = models.reconcile_token_balance(db, user_id)
+    
+    flash('Token spent.', 'success')
+    return redirect(url_for('force_detail', slug=force_slug))
+
+
 # Renders quiz on GET, scores responses and redirects to recommend lens on POST
 # Calls quiz.get_questions, quiz.score_responses, models.save_quiz_response, models.can_retake_quiz
 @app.route('/quiz', methods=['GET', 'POST'])
@@ -544,6 +591,29 @@ def cast_vote(contribution_id):
     flash(message, 'success')
 
     return redirect(url_for('validate'))
+
+
+# Return real-time vote counts for a specific contribution
+# Called by validate.html JavaScript to update approval/rejection badges
+@app.route('/api/vote-counts/<int:contribution_id>')
+def vote_counts(contribution_id):
+    db = get_db()
+    
+    # Get counts
+    approve_count = models.get_vote_count(db, contribution_id, 'approve')
+    reject_count = models.get_vote_count(db, contribution_id, 'reject')
+    
+    # Get the contribution status (in case it was just approved/rejected)
+    contribution = db.execute(
+        'SELECT status FROM contributions WHERE id = ?', 
+        (contribution_id,)
+    ).fetchone()
+    
+    return jsonify({
+        'approve': approve_count,
+        'reject': reject_count,
+        'status': contribution['status'] if contribution else 'unknown'
+    })
 
 
 @app.route('/forces')
