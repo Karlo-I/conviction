@@ -8,6 +8,7 @@ __pycache__/
 .Python
 pip-log.txt
 pip-delete-this-directory.txt
+app_backup.py
 
 # Database — runtime artifact, never commit
 conviction.db

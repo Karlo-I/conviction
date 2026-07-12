@@ -49,19 +49,31 @@ def csrf_protect():
             abort(403)
 
 
-# open db connection and store in g
-# if db connection don't already exist, create one and store in g
-DATABASE = 'conviction.db'
+# Database configuration - switches between SQLite (local) and PostgreSQL (Render)
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    # Production: PostgreSQL on Render
+    import psycopg2
+    DATABASE = DATABASE_URL
+    USE_POSTGRESQL = True
+else:
+    # Development: SQLite locally
+    DATABASE = 'conviction.db'
+    USE_POSTGRESQL = False
+
 def get_db(): 
     if 'db' not in g:
-        g.db = sqlite3.connect(
-            DATABASE,
-            # TIMESTAMP values come back as Python datetime object rather than raw string
-            detect_types=sqlite3.PARSE_DECLTYPES,
-            timeout=10  # Wait up 10 seconds if locked, to avoid crashes when two or more users tries to write at the exact same millisecond
-        )
-        # without this line, SQLite simply returns rows as plain tuples: row[0], row[1], instead of dictinaries: row['username'], row['token_balance']
-        g.db.row_factory = sqlite3.Row
+        if USE_POSTGRESQL:
+            g.db = psycopg2.connect(DATABASE)
+            g.db.row_factory = psycopg2.extras.RealDictCursor
+        else:
+            g.db = sqlite3.connect(
+                DATABASE,
+                detect_types=sqlite3.PARSE_DECLTYPES,
+                timeout=10
+            )
+            g.db.row_factory = sqlite3.Row
     return g.db
 
 
