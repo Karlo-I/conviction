@@ -10,7 +10,7 @@
 
     <div class="lens-links">
         {% for lens in lenses %}
-            <a href="{{ url_for('lens', slug=lens.slug) }}">{{ lens.title }}</a>
+            <a href="{{ url_for('lens', slug=lens.slug) }}"><span class="lens-title">{{ lens.title }}</span></a>
         {% endfor %}
     </div>
 
@@ -21,8 +21,7 @@
         <p style="color: #6c757d; margin-bottom: 1.5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
             Our diagnostic quiz analyses your lived experience to recommend which systemic lens you should explore first.
         </p>
-        <a href="{{ url_for('quiz_route') }}" 
-           style="display: inline-block; background-color: #457b9d; color: white; padding: 0.8rem 2rem; border-radius: 6px; text-decoration: none; font-weight: 600; transition: background-color 0.2s;">
+        <a href="{{ url_for('quiz_route') }}" class="quiz-cta-button">
             {{ quiz_button_text }}
         </a>
     </div>
@@ -31,11 +30,11 @@
     <!-- Existing "Get started" button for guests -->
     {% if not session.user_id %}
     <div style="margin-top: 3rem; text-align: center;">
-        <a href="{{ url_for('register') }}" 
-           style="display: inline-block; background-color: #1d3557; color: white; padding: 0.8rem 2rem; border-radius: 6px; text-decoration: none; font-weight: 600; transition: background-color 0.2s;">
+        <a href="{{ url_for('register') }}" class="cta-button">
             Get started
         </a>
     </div>
     {% endif %}
+    
 </div>
 {% endblock %}

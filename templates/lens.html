@@ -93,7 +93,7 @@
 
         {# Fallback if absolutely no data exists #}
         {% if not issue.official_data and not issue.community_contributions %}
-        <div style="margin-top: 3rem; padding: 2.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border: 2px dashed #adb5bd; text-align: center;">
+        <div style="margin-top: 3rem; padding: 2.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border: 2px dashed #fecdd3; text-align: center;">
             <div style="margin-bottom: 1rem;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#457b9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -109,13 +109,14 @@
                 This issue has been identified by the community but no data has been contributed yet.
             </p>
             <a href="{{ url_for('contribute') }}" 
-               style="display: inline-block; background-color: #457b9d; color: white; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; transition: all 0.2s;">
+            style="display: inline-block; background-color: #457b9d; color: white; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; transition: all 0.2s;">
                 Be the first to contribute
             </a>
             <p style="color: #adb5bd; margin-top: 1rem; font-size: 0.85rem;">
                 Your evidence will help illuminate this systemic issue.
             </p>
         </div>
+        
         {% else %}
         <!-- Existing data tables and cards -->
         {% endif %}

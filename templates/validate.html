@@ -8,16 +8,12 @@
     <p>Review the entries below and cast your vote. You will only see unvoted contributions from other users here.</p>
 
     {% if not contributions %}
-    <div style="text-align: center; padding: 3rem; background: #f8f9fa; border-radius: 8px; margin-top: 2rem;">
-        <p style="font-size: 1.1rem; color: #1d3557; margin-bottom: 0.5rem;">
-            ✓ All caught up!
-        </p>
-        <p style="color: #6c757d;">
-            There are no pending contributions waiting for your review right now.
-        </p>
-        <p style="color: #6c757d; margin-top: 1rem; font-size: 0.9rem;">
+    <div class="empty-state-card">
+        <h3>✓ All caught up!</h3>
+        <p>There are no pending contributions waiting for your review right now.</p>
+        <p class="empty-state-link">
             Check back later, or 
-            <a href="{{ url_for('contribute') }}" style="color: #457b9d;">submit your own contribution</a>.
+            <a href="{{ url_for('contribute') }}">submit your own contribution</a>.
         </p>
     </div>
     {% endif %}

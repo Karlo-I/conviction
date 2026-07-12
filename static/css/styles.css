@@ -19,7 +19,6 @@ body {
     display: flex;
     flex-direction: column;
     color: #4a4a4a;
-    /* Dramatic diagonal gradient */
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #f8f9fa 100%);
     background-attachment: fixed; 
 }
@@ -54,16 +53,24 @@ p {
     margin-bottom: 1rem;
 }
 
-/* Dark gradient footer with light text */
+/* Deep burgundy glassmorphism footer to match navigation */
 footer {
     margin-top: auto;
-    padding-top: 1.5rem;
-    padding-bottom: 1.5rem;
-    background: linear-gradient(135deg, #1d3557 0%, #264059 100%);
+    padding-top: .8rem;
+    padding-bottom: 0rem;
+    
+    /* Matching the glassmorphism effect */
+    background: rgba(127, 29, 29, 0.85); /* 85% opacity burgundy */
+    backdrop-filter: blur(12px); /* Blurs the background behind it */
+    -webkit-backdrop-filter: blur(12px);
+    
     color: #f8f9fa;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
     text-align: center;
     font-size: 0.875rem;
+    
+    /* Borders and shadows to match the nav */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1); /* Upward shadow for floating effect */
 }
 
 footer a {
@@ -88,10 +95,15 @@ nav {
     justify-content: space-between;
     align-items: center;
     padding: 1rem 2rem;
-    background: linear-gradient(135deg, #1d3557 0%, #2a4a6f 100%);
-    box-shadow: 0 2px 12px rgba(29, 53, 87, 0.2);
+    
+    /* The Glassmorphism Fade */
+    background: rgba(127, 29, 29, 0.85); /* 85% opacity burgundy */
+    backdrop-filter: blur(12px); /* Blurs the page content behind it */
+    -webkit-backdrop-filter: blur(12px); /* For Safari support */
+    
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Softer, neutral shadow */
     z-index: 1000;
-    border-bottom: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtle edge line */
 }
 
 .logo {
@@ -112,7 +124,6 @@ nav {
     gap: 1.5rem;
 }
 
-/* UPDATED: Sleeker User Menu */
 .user-menu {
     display: flex;
     align-items: center;
@@ -138,7 +149,6 @@ nav a.active {
     color: #ffffff;
 }
 
-/* UPDATED: Clean text username (no heavy pill background) */
 .username-display {
     font-weight: 600;
     color: #ffffff;
@@ -148,7 +158,6 @@ nav a.active {
     border-radius: 0;
 }
 
-/* UPDATED: Logout link styling */
 .user-menu a {
     color: rgba(255, 255, 255, 0.85);
     font-size: 0.9rem;
@@ -200,7 +209,6 @@ nav a.active {
     margin-bottom: 0.5rem;
 }
 
-/* Fix for ordered list numbers overflowing */
 .legal-container ol {
     padding-left: 2rem;
     margin-left: 0;
@@ -219,9 +227,8 @@ nav a.active {
 }
 
 .lens-links a {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid #e9ecef;
+    background: #ffffff;
+    border: 1px solid #fecdd3;
     border-radius: 12px;
     padding: 2rem 1.5rem;
     text-align: center;
@@ -230,7 +237,7 @@ nav a.active {
     font-weight: 600;
     font-size: 1.1rem;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -238,10 +245,16 @@ nav a.active {
 }
 
 .lens-links a:hover {
+    background: #fff1f2;
+    border-color: #fda4af;
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(69, 123, 157, 0.15);
-    border-color: #457b9d;
-    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(159, 18, 57, 0.08);
+    color: #1d3557;
+    text-decoration: none;
+}
+
+.lens-links a span.lens-title:hover {
+    color: #9f1239; 
 }
 
 .lens-links a:active {
@@ -249,6 +262,8 @@ nav a.active {
 }
 
 .contribute-container {
+    max-width: 800px;
+    margin: 0 auto;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     padding: 2rem;
@@ -258,7 +273,6 @@ nav a.active {
     margin-bottom: 2rem;
 }
 
-/* Add breathing space between validation cards */
 .validate-card {
     margin-bottom: 1.5rem;
     padding: 2rem;
@@ -270,45 +284,87 @@ nav a.active {
 /* ============================================================
    4. FORMS & BUTTONS
    ============================================================ */
-   .form-group {
+.form-group {
     margin-bottom: 1.5rem;
 }
 
 .form-group label {
     display: block;
-    font-weight: bold;
+    font-weight: 600;
     margin-bottom: 0.5rem;
-    color: #2d3436;
+    color: #1d3557;
 }
 
-/* UPDATED: Added max-width to cap the length of standard inputs */
 .form-group input[type="text"],
 .form-group input[type="password"],
 .form-group input[type="number"],
 .form-group input[type="url"],
 .form-group select {
     width: 100%;
-    max-width: 450px; /* <-- This stops them from stretching too far */
+    max-width: 450px;
     padding: 0.75rem;
-    border: 1px solid #ced4da;
+    border: 1px solid #ced4da; /* Neutral gray border */
     border-radius: 6px;
     font-size: 1rem;
     font-family: inherit;
     background-color: #ffffff;
+    transition: all 0.2s ease;
 }
 
-/* Textareas are kept at 100% width because users need space to write long claims */
 .form-group textarea {
     width: 100%;
     max-width: 100%; 
     padding: 0.75rem;
-    border: 1px solid #ced4da;
+    border: 1px solid #ced4da; /* Neutral gray border */
     border-radius: 6px;
     font-size: 1rem;
     font-family: inherit;
     background-color: #ffffff;
     resize: vertical;
     min-height: 100px;
+    transition: all 0.2s ease;
+}
+
+/* Focus states - subtle blue accent */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #457b9d; /* Blue on focus */
+    box-shadow: 0 0 0 3px rgba(69, 123, 157, 0.15);
+}
+
+/* Contribute form container with rose gold border */
+.contribute-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 2.5rem;
+    border-radius: 12px;
+    border: 1px solid #fecdd3; /* Soft rose gold border */
+    box-shadow: 0 4px 16px rgba(254, 205, 211, 0.2); /* Soft rose shadow */
+    margin-bottom: 2rem;
+}
+
+/* Contribute form submit button */
+.contribute-container button[type="submit"] {
+    background-color: #457b9d;
+    color: #ffffff;
+    border: 1px solid #457b9d;
+    padding: 0.75rem 2rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 1.5rem;
+}
+
+.contribute-container button[type="submit"]:hover {
+    background-color: #7f1d1d; /* Deep burgundy to match nav/footer */
+    border-color: #7f1d1d;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(127, 29, 29, 0.2); /* Burgundy shadow */
 }
 
 /* ============================================================
@@ -366,19 +422,63 @@ nav a.active {
     flex: 1;
 }
 
-/* Center the quiz box */
 .quiz-container {
-    max-width: 700px; /* Adjust this number to make the box wider or narrower */
+    max-width: 700px;
     margin-left: auto;
     margin-right: auto;
-    background: rgba(255, 255, 255, 0.95); /* Optional: gives it that clean card look */
+    background: rgba(255, 255, 255, 0.95);
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 }
 
+/* Diagnostic Quiz CTA Button */
+.quiz-cta-button {
+    background-color: #457b9d; /* Blue default */
+    color: #ffffff;
+    display: inline-block;
+    padding: 0.8rem 2.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 1px solid #457b9d;
+}
+
+.quiz-cta-button:hover {
+    background-color: #7f1d1d; /* Deep burgundy on hover */
+    border-color: #7f1d1d;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(127, 29, 29, 0.3);
+    color: #ffffff;
+    text-decoration: none;
+}
+
+/* General CTA Button (e.g., Get Started) */
+.cta-button {
+    display: inline-block;
+    background-color: #457b9d; /* Original Navy Blue */
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 1px solid #457b9d;
+}
+
+.cta-button:hover {
+    background-color: #7f1d1d; /* Deep burgundy on hover */
+    border-color: #7f1d1d;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(127, 29, 29, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
 /* ============================================================
-   6. SMOOTH PAGE TRANSITION WHEN NAVIGATING BETWEEN ROUTES
+   6. SMOOTH PAGE TRANSITION
    ============================================================ */
 @keyframes smoothFadeIn {
     from { 
@@ -406,30 +506,31 @@ main {
 }
 
 .force-card-grid {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid #e9ecef;
+    background: #ffffff;
+    border: 1px solid #fecdd3;
     border-radius: 8px;
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.2s ease;
     min-height: 150px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
 .force-card-grid:hover {
+    background: #fff1f2;
+    border-color: #fda4af;
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    box-shadow: 0 6px 16px rgba(159, 18, 57, 0.08);
 }
 
 .force-category-tag {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #457b9d;
-    font-weight: bold;
+    color: #9f1239;
+    font-weight: 700;
     margin-bottom: 0.5rem;
     display: block;
 }
@@ -438,6 +539,7 @@ main {
     font-size: 1.1rem;
     margin-bottom: 1rem;
     line-height: 1.4;
+    color: #1d3557;
 }
 
 .force-card-grid a {
@@ -446,7 +548,7 @@ main {
 }
 
 .force-card-grid a:hover {
-    color: #457b9d;
+    color: #9f1239;
 }
 
 .evidence-card {
@@ -459,19 +561,25 @@ main {
 
 .lens-tag {
     display: inline-block;
-    background: #eef2f5;
-    color: #1d3557;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
+    background: #fff1f2;
+    color: #9f1239;
+    padding: 0.6rem 1.2rem;
+    border-radius: 25px;
     text-decoration: none;
     font-size: 0.9rem;
-    font-weight: 500;
+    font-weight: 600;
     margin: 0.25rem 0.5rem 0.25rem 0;
+    transition: all 0.2s ease;
+    border: 1px solid #fecdd3;
 }
 
 .lens-tag:hover {
-    background: #d9e2ec;
+    background: #ffe4e6;
+    border-color: #fda4af;
+    color: #881337;
+    transform: translateY(-2px);
     text-decoration: none;
+    box-shadow: 0 2px 6px rgba(159, 18, 57, 0.1);
 }
 
 /* ============================================================
@@ -481,7 +589,7 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     width: 100%;
 }
@@ -505,6 +613,12 @@ main {
     background: #ffffff;
     border-radius: 3px;
     transition: all 0.3s linear;
+}
+
+.nav-left-group {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
 }
 
 @media screen and (max-width: 900px) {
@@ -574,21 +688,6 @@ main {
     }
 }
 
-.nav-left-group {
-    display: flex;
-    align-items: center;
-    gap: 2.5rem;
-}
-
-.nav-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
 /* ============================================================
    9. TOKEN BADGE TOOLTIP
    ============================================================ */
@@ -596,7 +695,6 @@ nav, .nav-container, .user-menu {
     overflow: visible !important;
 }
 
-/* UPDATED: Sleek, semi-transparent Token Badge */
 .token-badge {
     display: inline-flex;
     align-items: center;
@@ -623,7 +721,6 @@ nav, .nav-container, .user-menu {
     height: 16px;
 }
 
-/* Tooltip Box */
 .token-badge .tooltip-text {
     visibility: hidden;
     opacity: 0;
@@ -665,7 +762,7 @@ nav, .nav-container, .user-menu {
 /* ============================================================
    10. REAL-TIME VOTE COUNTERS & BUTTONS
    ============================================================ */
-   .vote-counts {
+.vote-counts {
     display: flex;
     gap: 0.75rem;
     margin-bottom: 1.25rem;
@@ -695,7 +792,6 @@ nav, .nav-container, .user-menu {
     border: none;
 }
 
-/* Approve badge - soft teal green */
 .approve-badge {
     background: rgba(42, 157, 143, 0.1);
     color: #2a9d8f;
@@ -708,7 +804,6 @@ nav, .nav-container, .user-menu {
     box-shadow: 0 4px 12px rgba(42, 157, 143, 0.2);
 }
 
-/* Reject badge - warm coral */
 .reject-badge {
     background: rgba(231, 111, 81, 0.1);
     color: #e76f51;
@@ -731,7 +826,6 @@ nav, .nav-container, .user-menu {
     text-align: center;
 }
 
-/* Subtle pulse animation when a vote is added */
 @keyframes votePulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.1); }
@@ -740,4 +834,49 @@ nav, .nav-container, .user-menu {
 
 .vote-number.updated {
     animation: votePulse 0.4s ease;
+}
+
+/* ============================================================
+   11. EMPTY STATE CARD STYLING
+   ============================================================ */
+.empty-state-card {
+    background: #ffffff;
+    border: 1px solid #fecdd3;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    margin-top: 2rem;
+    transition: all 0.3s ease;
+}
+
+.empty-state-card h3 {
+    color: #9f1239;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.empty-state-card p {
+    color: #4a4a4a;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.empty-state-card .empty-state-link {
+    font-size: 0.95rem;
+    margin-top: 1rem;
+}
+
+.empty-state-card a {
+    color: #9f1239;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.empty-state-card a:hover {
+    color: #881337;
+    text-decoration: underline;
 }
