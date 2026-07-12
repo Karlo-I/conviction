@@ -537,7 +537,7 @@ main {
 
 .force-card-grid h3 {
     font-size: 1.1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0rem;
     line-height: 1.4;
     color: #1d3557;
 }
@@ -879,4 +879,62 @@ nav, .nav-container, .user-menu {
 .empty-state-card a:hover {
     color: #881337;
     text-decoration: underline;
+}
+
+/* ============================================================
+   12. FLASH MESSAGES (Validation Prompts)
+   ============================================================ */
+.flash {
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    border-left: 4px solid;
+    animation: slideIn 0.4s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Success messages (approvals, elevations) - Rose/Burgundy theme */
+.flash.success {
+    background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+    border-left-color: #9f1239;
+    color: #7f1d1d;
+}
+
+/* Info messages (general notifications) - Soft blue */
+.flash.info {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    border-left-color: #0284c7;
+    color: #0c4a6e;
+}
+
+/* Warning messages - Soft amber */
+.flash.warning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-left-color: #d97706;
+    color: #92400e;
+}
+
+/* Error messages (rejections) - Soft red */
+.flash.error {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border-left-color: #dc2626;
+    color: #991b1b;
+}
+
+.flash strong {
+    font-weight: 700;
+}
+
+/* Smooth slide-in animation */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
