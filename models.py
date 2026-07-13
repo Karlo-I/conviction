@@ -381,7 +381,7 @@ def elevate_force_claim(db, contribution_id):
             'SELECT evidence_chain FROM forces WHERE id = ?', (force_id,)
         ).fetchone()['evidence_chain']
         
-        existing_chain = json.loads(existing_chain_json) if existing_chain_json else []
+        existing_chain = json.loads(existing_chain_json) if isinstance(existing_chain_json, str) else (existing_chain_json if existing_chain_json else [])
         
         for new_evidence in evidence_chain:
             if new_evidence not in existing_chain:
@@ -452,8 +452,9 @@ def elevate_lens_proposal(db, contribution_id):
         existing_lens_id = existing_lens['id']
         existing_lens_slug = existing_lens['slug']
 
+        # Fetch title safely using dictionary key access (works in both SQLite and PostgreSQL)
         title_row = db.execute('SELECT title FROM lenses WHERE id = ?', (existing_lens_id,)).fetchone()
-        existing_lens_title = title_row[0] if title_row else lens_title
+        existing_lens_title = title_row['title'] if title_row else lens_title
 
         proposed_issue_slug = slugify(core_issue)
         issue = db.execute(
