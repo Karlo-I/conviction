@@ -53,10 +53,12 @@ COUNTRY_NAMES = {
 ## USER FUNCTIONS ##
 
 def create_user(db, username, password_hash):
+    import os
+    
+    # Safely check if we are using PostgreSQL or SQLite
+    use_postgresql = os.environ.get('DATABASE_URL') is not None
+    
     try:
-        # Check if we're using PostgreSQL or SQLite
-        use_postgresql = os.environ.get('DATABASE_URL') is not None
-        
         if use_postgresql:
             # PostgreSQL uses %s for placeholders
             db.execute(
@@ -88,17 +90,10 @@ def create_user(db, username, password_hash):
             
         return user
         
-    except Exception:
-        # Handles both sqlite3.IntegrityError and psycopg2 unique constraint errors
+    except Exception as e:
+        print(e)  # For debug only
+
         if use_postgresql:
-            db.conn.rollback()
-        else:
-            db.rollback()
-        return None
-        
-    except Exception:
-        # Handles both sqlite3.IntegrityError and psycopg2 unique constraint errors
-        if USE_POSTGRESQL:
             db.conn.rollback()
         else:
             db.rollback()
