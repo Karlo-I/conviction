@@ -15,6 +15,24 @@ ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
 ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001'
 
 
+# Remove markdown formatting from text returned by AI digest
+def strip_markdown(text):
+    if not text:
+        return text
+    
+    # Remove bold/italic markers
+    text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)  # **bold**
+    text = re.sub(r'\*(.*?)\*', r'\1', text)      # *italic*
+    
+    # Remove headers
+    text = re.sub(r'^#+\s*', '', text, flags=re.MULTILINE)
+    
+    # Remove bullet points
+    text = re.sub(r'^[\-\*]\s*', '', text, flags=re.MULTILINE)
+    
+    return text.strip()
+
+
 def fetch_who_data(indicator_code, country_code):
     url = f'https://ghoapi.azureedge.net/api/{indicator_code}'
     params = {
@@ -215,6 +233,8 @@ def run_agent(db, contribution_id, existing_lenses):
             lines = summary.strip().split('\n')
             clean_lines = [line for line in lines if not line.strip().startswith('CONFIDENCE:')]
             summary = '\n'.join(clean_lines).strip()
+
+            summary = strip_markdown(summary)
             
         except Exception as e:
             summary = f'AI digest failed: {str(e)}'
