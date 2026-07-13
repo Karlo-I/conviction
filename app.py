@@ -699,6 +699,36 @@ def add_security_headers(response):
     response.headers['Expires'] = '0'
     response.headers['Surrogate-Control'] = 'no-store'
     return response
+
+
+# TEMPORARY ROUTE TO INITIALIZE DATABASE ON RENDER
+@app.route('/init-db-now')
+def init_db_now():
+    db = get_db()
+    
+    # Choose the correct schema file
+    if USE_POSTGRESQL:
+        schema_file = 'schema_postgres.sql'
+    else:
+        schema_file = 'schema.sql'
+        
+    with open(schema_file) as f:
+        sql_script = f.read()
+    
+    if USE_POSTGRESQL:
+        cursor = db.conn.cursor()
+        statements = [s.strip() for s in sql_script.split(';') if s.strip()]
+        for statement in statements:
+            try:
+                cursor.execute(statement)
+            except Exception as e:
+                print(f"Ignoring: {e}")
+        db.conn.commit()
+        cursor.close()
+        return "PostgreSQL Database initialised successfully! You can now remove this route from app.py."
+    else:
+        db.execute(sql_script)
+        return "SQLite Database initialised successfully!"
     
 
 # IMPORTANT: Delete these two lines when the project moves to PROD
