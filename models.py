@@ -425,8 +425,10 @@ def elevate_lens_proposal(db, contribution_id):
         return False
 
     try:
-        data = json.loads(digest['sources'])
-    except json.JSONDecodeError:
+        data = digest['sources']
+        if isinstance(data, str):
+            data = json.loads(data)
+    except (json.JSONDecodeError, AttributeError):
         return False
     
     proposal_data = data.get('lens_proposal')

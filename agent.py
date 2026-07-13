@@ -234,7 +234,16 @@ def run_agent(db, contribution_id, existing_lenses):
             clean_lines = [line for line in lines if not line.strip().startswith('CONFIDENCE:')]
             summary = '\n'.join(clean_lines).strip()
 
+            # Strip markdown formatting
             summary = strip_markdown(summary)
+
+            # Remove "Evidence Analysis" header if present
+            if summary.startswith('Evidence Analysis'):
+                # Find where the actual content starts (after the header)
+                lines = summary.split('\n')
+                if len(lines) > 1:
+                    # Skip the first line (the header) and join the rest
+                    summary = '\n'.join(lines[1:]).strip()
             
         except Exception as e:
             summary = f'AI digest failed: {str(e)}'
