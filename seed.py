@@ -1,80 +1,108 @@
 # seed.py
 # Conviction: seeds the database with real data from WHO and other sources
-# Run after flask --app app init-db: python seed.py
+# Run via web route: /seed-data
 # AI assistance: Claude (Anthropic) assisted with API query structure and data parsing
 # Logic, decisions, and direction are the author's own
 
-import sqlite3
 import requests
 import json
 from datetime import datetime, timezone
 
 
-DATABASE = 'conviction.db'
-
-def get_db():
-    db = sqlite3.connect(DATABASE)
-    db.row_factory = sqlite3.Row
-    return db
-
-
-def create_system_user(db):
+def create_system_user(db, use_postgresql):
     """Create the Data Archive system user if it doesn't exist."""
-    user = db.execute("SELECT id FROM users WHERE username = 'Data Archive'").fetchone()
-    
-    if not user:
-        db.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", 
-                   ('Data Archive', 'dummy_hash_for_system_user'))
-        db.commit()
+    if use_postgresql:
+        cursor = db.conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE username = %s", ('Data Archive',))
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.execute(
+                "INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id",
+                ('Data Archive', 'dummy_hash_for_system_user')
+            )
+            system_user_id = cursor.fetchone()[0]
+            db.conn.commit()
+            print(f'Created Data Archive user with ID: {system_user_id}')
+        else:
+            system_user_id = user[0]
+            print(f'Data Archive user already exists with ID: {system_user_id}')
+        cursor.close()
+    else:
         user = db.execute("SELECT id FROM users WHERE username = 'Data Archive'").fetchone()
-        print(f'Created Data Archive user with ID: {user["id"]}')
+        
+        if not user:
+            db.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", 
+                       ('Data Archive', 'dummy_hash_for_system_user'))
+            db.commit()
+            user = db.execute("SELECT id FROM users WHERE username = 'Data Archive'").fetchone()
+            system_user_id = user['id']
+            print(f'Created Data Archive user with ID: {system_user_id}')
+        else:
+            system_user_id = user['id']
+            print(f'Data Archive user already exists with ID: {system_user_id}')
     
-    return user['id']
+    return system_user_id
 
 
-def seed_food_lens(db, system_user_id):
+def seed_food_lens(db, system_user_id, use_postgresql):
     """Seed the food lens, its issues, indicators and WHO data points"""
 
-    db.execute(
-        'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
-        (
-            'food',
-            'Food',
-            'How the global food system shapes what people eat, who profits, and who bears the cost.'
+    if use_postgresql:
+        cursor = db.conn.cursor()
+        cursor.execute(
+            "INSERT INTO lenses (slug, title, description) VALUES (%s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+            ('food', 'Food', 'How the global food system shapes what people eat, who profits, and who bears the cost.')
         )
-    )
-    db.commit()
-
-    lens = db.execute("SELECT id FROM lenses WHERE slug = 'food'").fetchone()
-    lens_id = lens['id']
-
-    db.execute(
-        'INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
-        (
-            lens_id,
-            'ultra-processed-food',
-            'Ultra-Processed-Food',
-            'Industrial food products engineered for overconsumption, dominant in supply global chains.'
+        db.conn.commit()
+        cursor.execute("SELECT id FROM lenses WHERE slug = 'food'")
+        lens_id = cursor.fetchone()[0]
+        
+        cursor.execute(
+            "INSERT INTO issues (lens_id, slug, title, description) VALUES (%s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+            (lens_id, 'ultra-processed-food', 'Ultra-Processed-Food', 'Industrial food products engineered for overconsumption, dominant in supply global chains.')
         )
-    )
-    db.commit()
+        db.conn.commit()
+        cursor.execute("SELECT id FROM issues WHERE slug = 'ultra-processed-food'")
+        upf_issue_id = cursor.fetchone()[0]
+        
+        cursor.execute(
+            "INSERT INTO indicators (issue_id, name, source, unit) VALUES (%s, %s, %s, %s) ON CONFLICT (issue_id, name) DO NOTHING",
+            (upf_issue_id, 'Adult obesity rate', 'WHO Global Health Observation', '%')
+        )
+        db.conn.commit()
+        cursor.execute("SELECT id FROM indicators WHERE name = 'Adult obesity rate'")
+        indicator_id = cursor.fetchone()[0]
+        cursor.close()
+    else:
+        db.execute(
+            'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
+            ('food', 'Food', 'How the global food system shapes what people eat, who profits, and who bears the cost.')
+        )
+        db.commit()
+        lens = db.execute("SELECT id FROM lenses WHERE slug = 'food'").fetchone()
+        lens_id = lens['id']
+        
+        db.execute(
+            'INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
+            (lens_id, 'ultra-processed-food', 'Ultra-Processed-Food', 'Industrial food products engineered for overconsumption, dominant in supply global chains.')
+        )
+        db.commit()
+        upf_issue = db.execute("SELECT id FROM issues WHERE slug = 'ultra-processed-food'").fetchone()
+        upf_issue_id = upf_issue['id']
+        
+        db.execute(
+            'INSERT OR IGNORE INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
+            (upf_issue_id, 'Adult obesity rate', 'WHO Global Health Observation', '%')
+        )
+        db.commit()
+        obesity_indicator = db.execute("SELECT id FROM indicators WHERE name = 'Adult obesity rate'").fetchone()
+        indicator_id = obesity_indicator['id']
+    
+    fetch_who_obesity(db, indicator_id, upf_issue_id, system_user_id, use_postgresql)
 
-    upf_issue = db.execute("SELECT id FROM issues WHERE slug = 'ultra-processed-food'").fetchone()
-    upf_issue_id = upf_issue['id']
 
-    db.execute(
-        'INSERT OR IGNORE INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
-        (upf_issue_id, 'Adult obesity rate', 'WHO Global Health Observation', '%')
-    )
-    db.commit()
-
-    obesity_indicator = db.execute("SELECT id FROM indicators WHERE name = 'Adult obesity rate'").fetchone()
-    indicator_id = obesity_indicator['id']
-
-    fetch_who_obesity(db, indicator_id, upf_issue_id, system_user_id)
-
-
-def fetch_who_obesity(db, indicator_id, issue_id, system_user_id):
+def fetch_who_obesity(db, indicator_id, issue_id, system_user_id, use_postgresql):
     """Fetch adult obesity rates from WHO GHO API and insert as contributions."""
 
     target_countries = ['CAN', 'BRA']
@@ -114,55 +142,93 @@ def fetch_who_obesity(db, indicator_id, issue_id, system_user_id):
         note_text = f"Official record: {point['value']}% in {country_code} for {point['year']}."
         source_url = "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/bmi-30-age-standardized-estimate-adults-18-years"
         
-        db.execute(
-            'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
-            (system_user_id, 'data_point', country_code, point['value'], note_text, source_url, 'approved', indicator_id)
-        )
+        if use_postgresql:
+            cursor = db.conn.cursor()
+            cursor.execute(
+                "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
+                (system_user_id, 'data_point', country_code, point['value'], note_text, source_url, 'approved', indicator_id)
+            )
+            contribution_id = cursor.fetchone()[0]
+            cursor.execute(
+                "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
+                (contribution_id, issue_id)
+            )
+            db.conn.commit()
+            cursor.close()
+        else:
+            db.execute(
+                'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
+                (system_user_id, 'data_point', country_code, point['value'], note_text, source_url, 'approved', indicator_id)
+            )
+            contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
+            contribution_id = contribution['id']
+            db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
         
-        contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
-        contribution_id = contribution['id']
-        
-        db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
         inserted += 1
 
-    db.commit()
+    if not use_postgresql:
+        db.commit()
     print(f'  {inserted} new contributions inserted.')
 
 
-def seed_housing_lens(db, system_user_id):
+def seed_housing_lens(db, system_user_id, use_postgresql):
     """Seed the housing lens with World Bank urban slum population data."""
 
-    db.execute(
-        'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
-        ('housing', 'Housing', 'How housing systems around the world fail to provide adequate shelter for urban populations.')
-    )
-    db.commit()
+    if use_postgresql:
+        cursor = db.conn.cursor()
+        cursor.execute(
+            "INSERT INTO lenses (slug, title, description) VALUES (%s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+            ('housing', 'Housing', 'How housing systems around the world fail to provide adequate shelter for urban populations.')
+        )
+        db.conn.commit()
+        cursor.execute("SELECT id FROM lenses WHERE slug = 'housing'")
+        lens_id = cursor.fetchone()[0]
+        
+        cursor.execute(
+            "INSERT INTO issues (lens_id, slug, title, description) VALUES (%s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+            (lens_id, 'urban-housing-inadequacy', 'Urban Housing Inadequacy', 'The percentage of urban residents living in slum conditions without access to adequate shelter.')
+        )
+        db.conn.commit()
+        cursor.execute("SELECT id FROM issues WHERE slug = 'urban-housing-inadequacy'")
+        issue_id = cursor.fetchone()[0]
+        
+        cursor.execute(
+            "INSERT INTO indicators (issue_id, name, source, unit) VALUES (%s, %s, %s, %s) ON CONFLICT (issue_id, name) DO NOTHING",
+            (issue_id, 'Urban slum population', 'World Bank', '% of urban population')
+        )
+        db.conn.commit()
+        cursor.execute("SELECT id FROM indicators WHERE name = 'Urban slum population'")
+        indicator_id = cursor.fetchone()[0]
+        cursor.close()
+    else:
+        db.execute(
+            'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
+            ('housing', 'Housing', 'How housing systems around the world fail to provide adequate shelter for urban populations.')
+        )
+        db.commit()
+        lens = db.execute("SELECT id FROM lenses WHERE slug = 'housing'").fetchone()
+        lens_id = lens['id']
+        
+        db.execute(
+            'INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
+            (lens_id, 'urban-housing-inadequacy', 'Urban Housing Inadequacy', 'The percentage of urban residents living in slum conditions without access to adequate shelter.')
+        )
+        db.commit()
+        issue = db.execute("SELECT id FROM issues WHERE slug = 'urban-housing-inadequacy'").fetchone()
+        issue_id = issue['id']
+        
+        db.execute(
+            'INSERT OR IGNORE INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
+            (issue_id, 'Urban slum population', 'World Bank', '% of urban population')
+        )
+        db.commit()
+        indicator = db.execute("SELECT id FROM indicators WHERE name = 'Urban slum population'").fetchone()
+        indicator_id = indicator['id']
+    
+    fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id, use_postgresql)
 
-    lens = db.execute("SELECT id FROM lenses WHERE slug = 'housing'").fetchone()
-    lens_id = lens['id']
 
-    db.execute(
-        'INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
-        (lens_id, 'urban-housing-inadequacy', 'Urban Housing Inadequacy', 'The percentage of urban residents living in slum conditions without access to adequate shelter.')
-    )
-    db.commit()
-
-    issue = db.execute("SELECT id FROM issues WHERE slug = 'urban-housing-inadequacy'").fetchone()
-    issue_id = issue['id']
-
-    db.execute(
-        'INSERT OR IGNORE INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
-        (issue_id, 'Urban slum population', 'World Bank', '% of urban population')
-    )
-    db.commit()
-
-    indicator = db.execute("SELECT id FROM indicators WHERE name = 'Urban slum population'").fetchone()
-    indicator_id = indicator['id']
-
-    fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id)
-
-
-def fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id):
+def fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id, use_postgresql):
     """Fetch urban slum population rates from World Bank API."""
 
     target_countries = 'ZAF;PHL'
@@ -202,55 +268,93 @@ def fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id):
         note_text = f"Official record: {value}% of urban population in {country_code} for {year}."
         source_url = "https://data.worldbank.org/indicator/EN.POP.SLUM.UR.ZS"
         
-        db.execute(
-            'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
-            (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
-        )
+        if use_postgresql:
+            cursor = db.conn.cursor()
+            cursor.execute(
+                "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
+                (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
+            )
+            contribution_id = cursor.fetchone()[0]
+            cursor.execute(
+                "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
+                (contribution_id, issue_id)
+            )
+            db.conn.commit()
+            cursor.close()
+        else:
+            db.execute(
+                'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
+                (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
+            )
+            contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
+            contribution_id = contribution['id']
+            db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
         
-        contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
-        contribution_id = contribution['id']
-        
-        db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
         inserted += 1
 
-    db.commit()
+    if not use_postgresql:
+        db.commit()
     print(f'  {inserted} new contributions inserted.')
 
 
-def seed_mobility_lens(db, system_user_id):
+def seed_mobility_lens(db, system_user_id, use_postgresql):
     """Seed the mobility lens with World Bank road traffic mortality data."""
 
-    db.execute(
-        'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
-        ('mobility', 'Mobility', 'How transport infrastructure decisions shape who lives, who dies, and who can move freely.')
-    )
-    db.commit()
+    if use_postgresql:
+        cursor = db.conn.cursor()
+        cursor.execute(
+            "INSERT INTO lenses (slug, title, description) VALUES (%s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+            ('mobility', 'Mobility', 'How transport infrastructure decisions shape who lives, who dies, and who can move freely.')
+        )
+        db.conn.commit()
+        cursor.execute("SELECT id FROM lenses WHERE slug = 'mobility'")
+        lens_id = cursor.fetchone()[0]
+        
+        cursor.execute(
+            "INSERT INTO issues (lens_id, slug, title, description) VALUES (%s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+            (lens_id, 'road-traffic-mortality', 'Road Traffic Mortality', 'Deaths per 100,000 population caused by road traffic crashes — a direct measure of transport system safety.')
+        )
+        db.conn.commit()
+        cursor.execute("SELECT id FROM issues WHERE slug = 'road-traffic-mortality'")
+        issue_id = cursor.fetchone()[0]
+        
+        cursor.execute(
+            "INSERT INTO indicators (issue_id, name, source, unit) VALUES (%s, %s, %s, %s) ON CONFLICT (issue_id, name) DO NOTHING",
+            (issue_id, 'Road traffic mortality rate', 'World Bank / WHO', 'per 100,000 population')
+        )
+        db.conn.commit()
+        cursor.execute("SELECT id FROM indicators WHERE name = 'Road traffic mortality rate'")
+        indicator_id = cursor.fetchone()[0]
+        cursor.close()
+    else:
+        db.execute(
+            'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
+            ('mobility', 'Mobility', 'How transport infrastructure decisions shape who lives, who dies, and who can move freely.')
+        )
+        db.commit()
+        lens = db.execute("SELECT id FROM lenses WHERE slug = 'mobility'").fetchone()
+        lens_id = lens['id']
+        
+        db.execute(
+            'INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
+            (lens_id, 'road-traffic-mortality', 'Road Traffic Mortality', 'Deaths per 100,000 population caused by road traffic crashes — a direct measure of transport system safety.')
+        )
+        db.commit()
+        issue = db.execute("SELECT id FROM issues WHERE slug = 'road-traffic-mortality'").fetchone()
+        issue_id = issue['id']
+        
+        db.execute(
+            'INSERT OR IGNORE INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
+            (issue_id, 'Road traffic mortality rate', 'World Bank / WHO', 'per 100,000 population')
+        )
+        db.commit()
+        indicator = db.execute("SELECT id FROM indicators WHERE name = 'Road traffic mortality rate'").fetchone()
+        indicator_id = indicator['id']
+    
+    fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id, use_postgresql)
 
-    lens = db.execute("SELECT id FROM lenses WHERE slug = 'mobility'").fetchone()
-    lens_id = lens['id']
 
-    db.execute(
-        'INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
-        (lens_id, 'road-traffic-mortality', 'Road Traffic Mortality', 'Deaths per 100,000 population caused by road traffic crashes — a direct measure of transport system safety.')
-    )
-    db.commit()
-
-    issue = db.execute("SELECT id FROM issues WHERE slug = 'road-traffic-mortality'").fetchone()
-    issue_id = issue['id']
-
-    db.execute(
-        'INSERT OR IGNORE INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
-        (issue_id, 'Road traffic mortality rate', 'World Bank / WHO', 'per 100,000 population')
-    )
-    db.commit()
-
-    indicator = db.execute("SELECT id FROM indicators WHERE name = 'Road traffic mortality rate'").fetchone()
-    indicator_id = indicator['id']
-
-    fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id)
-
-
-def fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id):
+def fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id, use_postgresql):
     """Fetch road traffic mortality rates from World Bank API."""
 
     target_countries = 'AUS;NOR'
@@ -290,70 +394,128 @@ def fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id):
         note_text = f"Official record: {value} deaths per 100,000 in {country_code} for {year}."
         source_url = "https://data.worldbank.org/indicator/SH.STA.TRAF.P5"
         
-        db.execute(
-            'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
-            (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
-        )
+        if use_postgresql:
+            cursor = db.conn.cursor()
+            cursor.execute(
+                "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
+                (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
+            )
+            contribution_id = cursor.fetchone()[0]
+            cursor.execute(
+                "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
+                (contribution_id, issue_id)
+            )
+            db.conn.commit()
+            cursor.close()
+        else:
+            db.execute(
+                'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
+                (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
+            )
+            contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
+            contribution_id = contribution['id']
+            db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
         
-        contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
-        contribution_id = contribution['id']
-        
-        db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
         inserted += 1
 
-    db.commit()
+    if not use_postgresql:
+        db.commit()
     print(f'  {inserted} new contributions inserted.')
 
 
-def seed_energy_lens(db, system_user_id):
+def seed_energy_lens(db, system_user_id, use_postgresql):
     """Seed the energy lens with climate and access issues."""
     
-    db.execute(
-        'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
-        ('energy', 'Energy', 'How energy systems determine who thrives, who survives, and who is left in the dark.')
-    )
-    db.commit()
-    
-    lens = db.execute("SELECT id FROM lenses WHERE slug = 'energy'").fetchone()
-    lens_id = lens['id']
-    
-    issues = [
-        (lens_id, 'energy-poverty', 'Energy Poverty', 'Lack of access to affordable, reliable energy services'),
-        (lens_id, 'fossil-fuel-dependency', 'Fossil Fuel Dependency', 'Economic and infrastructural lock-in to carbon-intensive energy sources'),
-    ]
-    
-    for issue in issues:
-        db.execute('INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)', issue)
-    db.commit()
+    if use_postgresql:
+        cursor = db.conn.cursor()
+        cursor.execute(
+            "INSERT INTO lenses (slug, title, description) VALUES (%s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+            ('energy', 'Energy', 'How energy systems determine who thrives, who survives, and who is left in the dark.')
+        )
+        db.conn.commit()
+        cursor.execute("SELECT id FROM lenses WHERE slug = 'energy'")
+        lens_id = cursor.fetchone()[0]
+        
+        issues = [
+            (lens_id, 'energy-poverty', 'Energy Poverty', 'Lack of access to affordable, reliable energy services'),
+            (lens_id, 'fossil-fuel-dependency', 'Fossil Fuel Dependency', 'Economic and infrastructural lock-in to carbon-intensive energy sources'),
+        ]
+        
+        for issue in issues:
+            cursor.execute(
+                "INSERT INTO issues (lens_id, slug, title, description) VALUES (%s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+                issue
+            )
+        db.conn.commit()
+        cursor.close()
+    else:
+        db.execute(
+            'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
+            ('energy', 'Energy', 'How energy systems determine who thrives, who survives, and who is left in the dark.')
+        )
+        db.commit()
+        lens = db.execute("SELECT id FROM lenses WHERE slug = 'energy'").fetchone()
+        lens_id = lens['id']
+        
+        issues = [
+            (lens_id, 'energy-poverty', 'Energy Poverty', 'Lack of access to affordable, reliable energy services'),
+            (lens_id, 'fossil-fuel-dependency', 'Fossil Fuel Dependency', 'Economic and infrastructural lock-in to carbon-intensive energy sources'),
+        ]
+        
+        for issue in issues:
+            db.execute('INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)', issue)
+        db.commit()
     
     print('Seeded Energy lens with 2 issues')
 
 
-def seed_healthcare_lens(db, system_user_id):
+def seed_healthcare_lens(db, system_user_id, use_postgresql):
     """Seed the healthcare lens with access and affordability issues."""
     
-    db.execute(
-        'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
-        ('healthcare', 'Healthcare', 'How healthcare systems determine who gets healed, who gets billed, and who gets left behind.')
-    )
-    db.commit()
-    
-    lens = db.execute("SELECT id FROM lenses WHERE slug = 'healthcare'").fetchone()
-    lens_id = lens['id']
-    
-    issues = [
-        (lens_id, 'healthcare-access', 'Healthcare Access', 'Barriers to obtaining timely, affordable, and quality medical care'),
-        (lens_id, 'pharmaceutical-pricing', 'Pharmaceutical Pricing', 'Drug pricing mechanisms that prioritize profit over patient access'),
-    ]
-    
-    for issue in issues:
-        db.execute('INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)', issue)
-    db.commit()
+    if use_postgresql:
+        cursor = db.conn.cursor()
+        cursor.execute(
+            "INSERT INTO lenses (slug, title, description) VALUES (%s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+            ('healthcare', 'Healthcare', 'How healthcare systems determine who gets healed, who gets billed, and who gets left behind.')
+        )
+        db.conn.commit()
+        cursor.execute("SELECT id FROM lenses WHERE slug = 'healthcare'")
+        lens_id = cursor.fetchone()[0]
+        
+        issues = [
+            (lens_id, 'healthcare-access', 'Healthcare Access', 'Barriers to obtaining timely, affordable, and quality medical care'),
+            (lens_id, 'pharmaceutical-pricing', 'Pharmaceutical Pricing', 'Drug pricing mechanisms that prioritize profit over patient access'),
+        ]
+        
+        for issue in issues:
+            cursor.execute(
+                "INSERT INTO issues (lens_id, slug, title, description) VALUES (%s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+                issue
+            )
+        db.conn.commit()
+        cursor.close()
+    else:
+        db.execute(
+            'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
+            ('healthcare', 'Healthcare', 'How healthcare systems determine who gets healed, who gets billed, and who gets left behind.')
+        )
+        db.commit()
+        lens = db.execute("SELECT id FROM lenses WHERE slug = 'healthcare'").fetchone()
+        lens_id = lens['id']
+        
+        issues = [
+            (lens_id, 'healthcare-access', 'Healthcare Access', 'Barriers to obtaining timely, affordable, and quality medical care'),
+            (lens_id, 'pharmaceutical-pricing', 'Pharmaceutical Pricing', 'Drug pricing mechanisms that prioritize profit over patient access'),
+        ]
+        
+        for issue in issues:
+            db.execute('INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)', issue)
+        db.commit()
     
     print('Seeded Healthcare lens with 2 issues')
 
 
-def seed_forces_layer(db, system_user_id):
+def seed_forces_layer(db, system_user_id, use_postgresql):
     """Seed the forces layer with pre-approved systemic mechanisms."""
     
     print('Seeding Forces layer...')
@@ -364,10 +526,19 @@ def seed_forces_layer(db, system_user_id):
         'energy-poverty', 'fossil-fuel-dependency', 'healthcare-access', 'pharmaceutical-pricing'
     ]
     
-    for slug in issue_slugs:
-        issue = db.execute("SELECT id FROM issues WHERE slug = ?", (slug,)).fetchone()
-        if issue:
-            issues[slug] = issue['id']
+    if use_postgresql:
+        cursor = db.conn.cursor()
+        for slug in issue_slugs:
+            cursor.execute("SELECT id FROM issues WHERE slug = %s", (slug,))
+            issue = cursor.fetchone()
+            if issue:
+                issues[slug] = issue[0]
+        cursor.close()
+    else:
+        for slug in issue_slugs:
+            issue = db.execute("SELECT id FROM issues WHERE slug = ?", (slug,)).fetchone()
+            if issue:
+                issues[slug] = issue['id']
     
     forces_data = [
         {
@@ -440,50 +611,119 @@ def seed_forces_layer(db, system_user_id):
     
     inserted_forces = 0
     for force_data in forces_data:
-        db.execute(
-            'INSERT OR IGNORE INTO forces (slug, title, category, mechanism, evidence_chain, created_at) VALUES (?, ?, ?, ?, ?, datetime(\'now\'))',
-            (
-                force_data['slug'],
-                force_data['title'],
-                force_data['category'],
-                force_data['mechanism'],
-                json.dumps(force_data['evidence_chain'])
+        if use_postgresql:
+            cursor = db.conn.cursor()
+            cursor.execute(
+                "INSERT INTO forces (slug, title, category, mechanism, evidence_chain, created_at) VALUES (%s, %s, %s, %s, %s, NOW()) ON CONFLICT (slug) DO NOTHING",
+                (
+                    force_data['slug'],
+                    force_data['title'],
+                    force_data['category'],
+                    force_data['mechanism'],
+                    json.dumps(force_data['evidence_chain'])
+                )
             )
-        )
-        
-        force = db.execute("SELECT id FROM forces WHERE slug = ?", (force_data['slug'],)).fetchone()
-        if force:
-            force_id = force['id']
+            db.conn.commit()
+            cursor.execute("SELECT id FROM forces WHERE slug = %s", (force_data['slug'],))
+            force = cursor.fetchone()
+            if force:
+                force_id = force[0]
+                
+                for issue_slug in force_data['linked_issues']:
+                    if issue_slug in issues:
+                        cursor.execute(
+                            "INSERT INTO force_issue_links (force_id, issue_id, explanation) VALUES (%s, %s, %s) ON CONFLICT (force_id, issue_id) DO NOTHING",
+                            (force_id, issues[issue_slug], force_data['mechanism'])
+                        )
+                
+                inserted_forces += 1
+            db.conn.commit()
+            cursor.close()
+        else:
+            db.execute(
+                'INSERT OR IGNORE INTO forces (slug, title, category, mechanism, evidence_chain, created_at) VALUES (?, ?, ?, ?, ?, datetime(\'now\'))',
+                (
+                    force_data['slug'],
+                    force_data['title'],
+                    force_data['category'],
+                    force_data['mechanism'],
+                    json.dumps(force_data['evidence_chain'])
+                )
+            )
             
-            for issue_slug in force_data['linked_issues']:
-                if issue_slug in issues:
-                    db.execute(
-                        'INSERT OR IGNORE INTO force_issue_links (force_id, issue_id, explanation) VALUES (?, ?, ?)',
-                        (force_id, issues[issue_slug], force_data['mechanism'])
-                    )
-            
-            inserted_forces += 1
+            force = db.execute("SELECT id FROM forces WHERE slug = ?", (force_data['slug'],)).fetchone()
+            if force:
+                force_id = force['id']
+                
+                for issue_slug in force_data['linked_issues']:
+                    if issue_slug in issues:
+                        db.execute(
+                            'INSERT OR IGNORE INTO force_issue_links (force_id, issue_id, explanation) VALUES (?, ?, ?)',
+                            (force_id, issues[issue_slug], force_data['mechanism'])
+                        )
+                
+                inserted_forces += 1
     
-    db.commit()
+    if not use_postgresql:
+        db.commit()
     print(f'  {inserted_forces} forces inserted with cross-lens links')
 
 
-if __name__ == '__main__':
-    db = get_db()
-    system_user_id = create_system_user(db)
+def seed_all(db, use_postgresql):
+    """Run all seed functions."""
+    system_user_id = create_system_user(db, use_postgresql)
     
-    seed_food_lens(db, system_user_id)
-    seed_housing_lens(db, system_user_id)
-    seed_mobility_lens(db, system_user_id)
+    seed_food_lens(db, system_user_id, use_postgresql)
+    seed_housing_lens(db, system_user_id, use_postgresql)
+    seed_mobility_lens(db, system_user_id, use_postgresql)
     
-    seed_energy_lens(db, system_user_id)
-    seed_healthcare_lens(db, system_user_id)
+    seed_energy_lens(db, system_user_id, use_postgresql)
+    seed_healthcare_lens(db, system_user_id, use_postgresql)
     
-    seed_forces_layer(db, system_user_id)
+    seed_forces_layer(db, system_user_id, use_postgresql)
     
-    db.close()
     print('\n✅ Seeding complete!')
     print('   - 5 lenses seeded (3 with API data, 2 structure-only)')
     print('   - 7 forces seeded with evidence chains and cross-lens links')
     print('   - All sources properly deep-linked')
     print('   - Ready for demo!')
+
+# --- PASTE THE NEW CODE RIGHT HERE (No indentation) ---
+if __name__ == '__main__':
+    import os
+    import psycopg2
+    
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    
+    if DATABASE_URL:
+        print('Using PostgreSQL database...')
+        use_postgresql = True
+        db = psycopg2.connect(DATABASE_URL)
+        db.cursor_factory = psycopg2.extras.RealDictCursor
+        
+        class DBWrapper:
+            def __init__(self, conn):
+                self.conn = conn
+            def execute(self, query, params=None):
+                cursor = self.conn.cursor()
+                if params:
+                    cursor.execute(query, params)
+                else:
+                    cursor.execute(query)
+                return cursor
+            def commit(self):
+                self.conn.commit()
+            def close(self):
+                self.conn.close()
+        
+        db_wrapper = DBWrapper(db)
+    else:
+        print('Using SQLite database...')
+        use_postgresql = False
+        import sqlite3
+        db_wrapper = sqlite3.connect('conviction.db')
+        db_wrapper.row_factory = sqlite3.Row
+    
+    seed_all(db_wrapper, use_postgresql)
+    
+    db_wrapper.close()

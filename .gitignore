@@ -14,6 +14,7 @@ app_backup2.py
 # Database — runtime artifact, never commit
 conviction.db
 conviction_backup*.db
+conviction-db.session.sql
 *.db-journal
 *.db-wal
 *.db-shm

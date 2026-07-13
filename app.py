@@ -699,6 +699,19 @@ def add_security_headers(response):
     response.headers['Expires'] = '0'
     response.headers['Surrogate-Control'] = 'no-store'
     return response
+
+
+# PERMANENT ROUTE TO SEED DATABASE WITH REAL DATA
+@app.route('/seed-data')
+def seed_data():
+    import seed
+    
+    db = get_db()
+    try:
+        seed.seed_all(db, USE_POSTGRESQL)
+        return "✅ Seeding complete! Check your database for the new data."
+    except Exception as e:
+        return f"Error during seeding: {str(e)}"
     
 
 # IMPORTANT: Delete these two lines when the project moves to PROD
