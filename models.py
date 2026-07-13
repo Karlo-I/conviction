@@ -53,7 +53,6 @@ COUNTRY_NAMES = {
 ## USER FUNCTIONS ##
 
 def create_user(db, username, password_hash):
-    import os
     try:
         # Check if we're using PostgreSQL or SQLite
         use_postgresql = os.environ.get('DATABASE_URL') is not None
