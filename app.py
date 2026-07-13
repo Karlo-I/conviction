@@ -706,26 +706,36 @@ def add_security_headers(response):
 def init_db_now():
     db = get_db()
     
-    # Choose the correct schema file
     if USE_POSTGRESQL:
         schema_file = 'schema_postgres.sql'
     else:
         schema_file = 'schema.sql'
         
-    with open(schema_file) as f:
-        sql_script = f.read()
-    
+    try:
+        with open(schema_file) as f:
+            sql_script = f.read()
+    except FileNotFoundError:
+        return f"Error: {schema_file} not found!"
+
     if USE_POSTGRESQL:
         cursor = db.conn.cursor()
         statements = [s.strip() for s in sql_script.split(';') if s.strip()]
+        errors = []
+        
         for statement in statements:
             try:
                 cursor.execute(statement)
             except Exception as e:
-                print(f"Ignoring: {e}")
-        db.conn.commit()
-        cursor.close()
-        return "PostgreSQL Database initialised successfully! You can now remove this route from app.py."
+                # Capture the error instead of hiding it
+                errors.append(f"FAILED: {statement[:50]}... -> {str(e)}")
+        
+        if errors:
+            db.conn.rollback()
+            # Return the errors to the browser so we can see them
+            return "<br><br>".join(errors) 
+        else:
+            db.conn.commit()
+            return "PostgreSQL Database initialised successfully!"
     else:
         db.execute(sql_script)
         return "SQLite Database initialised successfully!"
