@@ -531,8 +531,12 @@ def contribute():
             import sqlite3
             # We MUST create a new database connection for the background thread.
             # SQLite connections cannot be safely shared across threads.
-            bg_db = sqlite3.connect(DATABASE)
-            bg_db.row_factory = sqlite3.Row
+            if os.environ.get('DATABASE_URL'):
+                bg_db = psycopg2.connect(os.environ.get('DATABASE_URL'))
+                bg_db.cursor_factory = RealDictCursor
+            else:
+                bg_db = sqlite3.connect(DATABASE)
+                bg_db.row_factory = sqlite3.Row
             try:
                 # Fetch existing lenses to pass to the AI agent
                 existing_lenses = bg_db.execute('SELECT title FROM lenses').fetchall()
