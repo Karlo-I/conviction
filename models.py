@@ -7,6 +7,7 @@
 import agent
 import datetime
 import json
+import os
 import re
 import sqlite3
 from datetime import datetime, timezone
@@ -52,22 +53,56 @@ COUNTRY_NAMES = {
 ## USER FUNCTIONS ##
 
 def create_user(db, username, password_hash):
+    import os
     try:
-        db.execute(
-            'INSERT INTO users (username, password_hash) VALUES (?, ?)',
-            (username, password_hash)
-        )
-        user = db.execute(
-            'SELECT * FROM users WHERE username = ?', (username,)
-        ).fetchone()
-        db.execute(
-            'INSERT INTO token_transactions (user_id, amount, reason) VALUES (?, ?, ?)',
-            (user['id'], 10, 'registration')
-        )
-        db.commit()
+        # Check if we're using PostgreSQL or SQLite
+        use_postgresql = os.environ.get('DATABASE_URL') is not None
+        
+        if use_postgresql:
+            # PostgreSQL uses %s for placeholders
+            db.execute(
+                'INSERT INTO users (username, password_hash) VALUES (%s, %s)',
+                (username, password_hash)
+            )
+            user = db.execute(
+                'SELECT * FROM users WHERE username = %s', (username,)
+            ).fetchone()
+            db.execute(
+                'INSERT INTO token_transactions (user_id, amount, reason) VALUES (%s, %s, %s)',
+                (user['id'], 10, 'registration')
+            )
+            db.conn.commit()
+        else:
+            # SQLite uses ? for placeholders
+            db.execute(
+                'INSERT INTO users (username, password_hash) VALUES (?, ?)',
+                (username, password_hash)
+            )
+            user = db.execute(
+                'SELECT * FROM users WHERE username = ?', (username,)
+            ).fetchone()
+            db.execute(
+                'INSERT INTO token_transactions (user_id, amount, reason) VALUES (?, ?, ?)',
+                (user['id'], 10, 'registration')
+            )
+            db.commit()
+            
         return user
-    except sqlite3.IntegrityError:
-        db.rollback()
+        
+    except Exception:
+        # Handles both sqlite3.IntegrityError and psycopg2 unique constraint errors
+        if use_postgresql:
+            db.conn.rollback()
+        else:
+            db.rollback()
+        return None
+        
+    except Exception:
+        # Handles both sqlite3.IntegrityError and psycopg2 unique constraint errors
+        if USE_POSTGRESQL:
+            db.conn.rollback()
+        else:
+            db.rollback()
         return None
 
 
