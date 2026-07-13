@@ -834,10 +834,12 @@ def process_vote_logic(db, contribution, user_id, vote):
             lens_title = "Lens"
             if digest and digest['sources']:
                 try:
-                    sources_data = json.loads(digest['sources'])
+                    sources_data = digest['sources']
+                    if isinstance(sources_data, str):
+                        sources_data = json.loads(sources_data)
                     proposal_data = sources_data.get('lens_proposal', {})
                     lens_title = proposal_data.get('lens_title', 'Lens')
-                except json.JSONDecodeError:
+                except (json.JSONDecodeError, AttributeError):
                     pass
             
             elevated = elevate_lens_proposal(db, contribution_id)
