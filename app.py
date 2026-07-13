@@ -51,6 +51,29 @@ def csrf_protect():
             abort(403)
 
 
+# Wrapper class to make psycopg2 behave like sqlite3
+class Psycopg2Wrapper:
+    def __init__(self, conn):
+        self.conn = conn
+        
+    def execute(self, query, params=None):
+        cursor = self.conn.cursor()
+        if params:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
+        return cursor
+        
+    def commit(self):
+        self.conn.commit()
+        
+    def close(self):
+        self.conn.close()
+        
+    def cursor(self):
+        return self.conn.cursor()
+
+
 # Database configuration between SQLite (local) and PostgreSQL (Render)
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -66,8 +89,8 @@ else:
 def get_db(): 
     if 'db' not in g:
         if USE_POSTGRESQL:
-            g.db = psycopg2.connect(DATABASE)
-            g.db.cursor_factory = psycopg2.extras.RealDictCursor # psycopg2 uses cursor_factory, not row_factory like in SQLite3
+            conn = psycopg2.connect(DATABASE)
+            g.db = Psycopg2Wrapper(conn)
         else:
             g.db = sqlite3.connect(
                 DATABASE,
