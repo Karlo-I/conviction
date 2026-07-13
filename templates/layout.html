@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Conviction{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/Luffy-Straw-Hat2.png') }}">
     <meta property="og:title" content="Conviction — You already know something is wrong.">
     <meta property="og:description" content="Explore how financial capture, regulatory arbitrage, and externalised costs shape what we eat, where we live, and how we move.">
     <meta property="og:type" content="website">
@@ -18,7 +19,10 @@
     <nav>
         <div class="nav-container">
             <div class="nav-left-group">
-                <a href="{{ url_for('index') }}" class="logo">Conviction</a>
+                <a href="{{ url_for('index') }}" class="logo">
+                    <img src="{{ url_for('static', filename='images/Luffy-Straw-Hat1.png') }}" alt="Conviction logo" class="logo-img">
+                    Conviction
+                </a>
                 
                 <!-- Hamburger Menu Button -->
                 <button class="hamburger" onclick="toggleMenu()" aria-label="Toggle navigation">

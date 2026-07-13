@@ -94,7 +94,8 @@ nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 2rem;
+    height: 64px;
+    padding: 0 2rem;
     
     /* The Glassmorphism Fade */
     background: rgba(127, 29, 29, 0.85); /* 85% opacity burgundy */
@@ -111,6 +112,14 @@ nav {
     font-size: 1.25rem;
     color: #ffffff;
     text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo-img {
+    height: 60px;
+    width: auto;
 }
 
 .nav-right {
