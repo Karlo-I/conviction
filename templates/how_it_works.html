@@ -8,8 +8,8 @@
     <p>Transparency about the technology, AI, and methodology behind Conviction.</p>
 
     <h2>The Diagnostic Quiz</h2>
-    <p>The quiz classifies your lived experience into one of our systemic lenses (e.g., Food, Housing, Mobility, Natural Environment). It uses a weighted scoring system to determine which domain you feel most directly. This is not machine learning — it's a rule-based classification that matches your responses to pre-defined patterns.</p>
-    <p><strong>Retake policy:</strong> You can retake the quiz once every 90 days. Your circumstances change; your lens might too.</p>
+    <p>The quiz classifies your lived experience into one of our systemic lenses (e.g., Food, Housing, Mobility). It uses a weighted scoring system to determine which domain you feel most directly. This is not machine learning — it's a rule-based classification that matches your responses to pre-defined patterns.</p>
+    <p><strong>Retake policy:</strong> You can retake the quiz once every 90 days.</p>
 
     <h2>Token Economy</h2>
     <p>When you register, you receive 10 tokens. These are spent on issues within each lens to signal conviction — a deliberate act that forces genuine prioritisation, unlike a passive "like" button.</p>
@@ -17,19 +17,19 @@
     <ul>
         <li>Contributing local data points (pending peer validation)</li>
         <li>Validating other users' contributions (1 token per validation)</li>
-        <li>Sharing content (rate-limited to prevent gaming)</li>
     </ul>
 
     <h2>AI Contribution Digest</h2>
-    <p>When you submit a contribution, an AI agent generates a plain-language summary comparing your claim against pre-approved data sources. This digest is shown to all peer validators.</p>
+    <p>When you submit a contribution, an AI agent generates a plain-language summary comparing your claim against other approved data sources, if any. This digest is shown to all peer validators.</p>
     
     <h3>How the AI works:</h3>
     <ol>
         <li><strong>Constructs a search query</strong> from your claim, country, and indicator</li>
-        <li><strong>Fetches data</strong> from pre-approved sources (WHO, World Bank, FAO, Our World in Data)</li>
+        <li><strong>Fetches data</strong> from pre-approved sources (WHO, World Bank, FAO, Our World in Data), if available</li>
         <li><strong>Sends the data + your claim</strong> to a lightweight language model (Claude Haiku or GPT-4o Mini)</li>
         <li><strong>Generates a summary</strong> of what the evidence says relative to your claim — <em>not a verdict</em></li>
         <li><strong>Returns a confidence signal:</strong> "Evidence found", "Partial evidence", or "No data available"</li>
+        <li><strong>Data quality controller:</strong> "It ensures contribution notes and excerpts have no typos and erratic capitalization for better UI/UX experience"</li>
     </ol>
 
     <h3>Important principles:</h3>
@@ -48,13 +48,13 @@
     </ul>
 
     <h2>Peer Validation</h2>
-    <p>Contributions enter a validation queue where other users review the AI digest and your submitted evidence. A contribution requires multiple approvals before being added to the platform.</p>
+    <p>Contributions enter a peer validation queue where other users review the AI digest and your submitted evidence. A contribution requires multiple approvals before being added to the platform. Different types of contribution have different minimum approval thresholds</p>
     <p><strong>Validators cannot add new evidence</strong> — they can only approve or reject based on what you submitted. This is a deliberate scope decision. If you know of a relevant source, submit it as your own contribution.</p>
 
     <h2>The Forces Layer</h2>
     <p>The forces layer surfaces cross-domain mechanisms — financial capture, regulatory arbitrage, externalised cost, information asymmetry — that operate across multiple lenses simultaneously.</p>
     <p><strong>Community-built, not editor-curated.</strong> Users submit force claims through the same contribution flow. These require an elevated validation threshold (more approvals than regular contributions) before being elevated to the forces layer.</p>
-    <p><strong>Cross-lens validation:</strong> For a force claim to be elevated, it must be linked to at least two different lenses. A mechanism that only operates in one domain is an issue, not a force.</p>
+    <p><strong>Cross-lens validation:</strong> For a force claim to be elevated, it must be linked to at least two different lenses arisng from at least two separate force claims. A mechanism that only operates in one domain is an issue, not a force.</p>
 
     <h2>Community Lens Proposals</h2>
     <p>Conviction is designed to grow organically. If users identify a systemic domain not currently tracked, they can propose a new lens via the Contribute route.</p>
@@ -96,7 +96,7 @@
     <p>We have a thesis. What we offer instead of neutrality is full transparency.</p>
 
     <h2>Questions or Concerns?</h2>
-    <p>This is a CS50x final project. For questions about the platform, methodology, or AI implementation, please reach out via the project repository on GitHub.</p>
+    <p>This is a CS50x final project. For questions about the platform, methodology, or AI implementation, please reach out via the project repository on GitHub (see here: https://github.com/Karlo-I/conviction)</p>
     <p><a href="{{ url_for('index') }}" style="font-size: 0.9rem; color: #457b9d; text-decoration: none;">← Back to home</a></p>
 </div>
 {% endblock %}
