@@ -57,7 +57,14 @@ class Psycopg2Wrapper:
         self.conn = conn
         
     def execute(self, query, params=None):
-        cursor = self.conn.cursor()
+        # Auto-convert SQLite ? placeholders to PostgreSQL %s
+        query = query.replace('?', '%s')
+        # Auto-convert SQLite datetime function to PostgreSQL NOW()
+        query = query.replace("datetime('now')", "NOW()")
+        
+        # CRITICAL FIX: Use RealDictCursor so fetchone() returns a dictionary like {'id': 1}
+        cursor = self.conn.cursor(cursor_factory=RealDictCursor)
+        
         if params:
             cursor.execute(query, params)
         else:
@@ -67,11 +74,14 @@ class Psycopg2Wrapper:
     def commit(self):
         self.conn.commit()
         
+    def rollback(self):
+        self.conn.rollback()
+        
     def close(self):
         self.conn.close()
         
     def cursor(self):
-        return self.conn.cursor()
+        return self.conn.cursor(cursor_factory=RealDictCursor)
 
 
 # Database configuration between SQLite (local) and PostgreSQL (Render)

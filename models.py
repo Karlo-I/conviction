@@ -13,6 +13,45 @@ import sqlite3
 from datetime import datetime, timezone
 
 
+## HELPER FUNCTIONS TO READ BETWEEN SQLITE AND POSTGRES SYNTAX ##
+
+# Global flag to detect database type
+USE_POSTGRESQL = os.environ.get('DATABASE_URL') is not None
+
+def convert_query_for_db(query):
+    """Convert SQLite ? placeholders to PostgreSQL %s placeholders if needed."""
+    if USE_POSTGRESQL:
+        return query.replace('?', '%s')
+    return query
+
+def execute_query(db, query, params=None):
+    """Execute a query with automatic placeholder conversion."""
+    converted_query = convert_query_for_db(query)
+    return db.execute(converted_query, params)
+
+def commit_changes(db):
+    """Commit changes with database-specific method."""
+    if USE_POSTGRESQL:
+        db.conn.commit()
+    else:
+        db.commit()
+
+def rollback_changes(db):
+    """Rollback changes with database-specific method."""
+    if USE_POSTGRESQL:
+        db.conn.rollback()
+    else:
+        db.rollback()
+
+def get_last_insert_id(db):
+    """Get last inserted ID with database-specific method."""
+    if USE_POSTGRESQL:
+        # PostgreSQL uses RETURNING clause, so we handle it differently
+        return None
+    else:
+        return db.execute('SELECT last_insert_rowid()').fetchone()[0]
+    
+
 COUNTRY_NAMES = {
     'AFG': 'Afghanistan', 'ALB': 'Albania', 'DZA': 'Algeria', 'AND': 'Andorra', 'AGO': 'Angola',
     'ARG': 'Argentina', 'ARM': 'Armenia', 'AUS': 'Australia', 'AUT': 'Austria', 'AZE': 'Azerbaijan',
@@ -235,8 +274,7 @@ def merge_into_contribution(db, contribution_id, note, source_url, source_excerp
     if issue_id:
         db.execute(
             '''
-            INSERT OR IGNORE INTO contribution_lens_links (contribution_id, issue_id)
-            VALUES (?, ?)
+            INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s) ON CONFLICT (contribution_id, issue_id) DO NOTHING
             ''',
             (contribution_id, issue_id)
         )
@@ -318,7 +356,7 @@ def create_contribution(db, user_id, country_code, note, contribution_type='data
 
     if issue_id:
         db.execute(
-            'INSERT OR IGNORE INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)',
+            'INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s) ON CONFLICT (contribution_id, issue_id) DO NOTHING',
             (contribution['id'], issue_id)
         )
         db.commit()
@@ -467,7 +505,7 @@ def elevate_force_claim(db, contribution_id):
     
     for li in linked_issues:
         db.execute(
-            'INSERT OR IGNORE INTO force_issue_links (force_id, issue_id, explanation) VALUES (?, ?, ?)',
+            'INSERT INTO force_issue_links (force_id, issue_id, explanation) VALUES (%s, %s, %s) ON CONFLICT (force_id, issue_id) DO NOTHING',
             (force_id, li['issue_id'], refined_title)
         )
 
@@ -540,7 +578,8 @@ def elevate_lens_proposal(db, contribution_id):
                 'INSERT INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
                 (existing_lens_id, fallback_slug, 'General Evidence', f'Community evidence for the {existing_lens_title} lens')
             )
-            issue = db.execute('SELECT last_insert_rowid() as id').fetchone()
+            # We handle this by fetching the issue we just created by its unique slug
+            issue = db.execute('SELECT id FROM issues WHERE slug = %s', (fallback_slug,)).fetchone()
 
         # Link contribution to the existing lens/issue
         db.execute(
@@ -552,19 +591,19 @@ def elevate_lens_proposal(db, contribution_id):
         return "merged"
 
     # 3. Create the Lens (only if it doesn't exist)
-    db.execute(
-        'INSERT INTO lenses (slug, title, description) VALUES (?, ?, ?)',
+    new_lens = db.execute(
+        'INSERT INTO lenses (slug, title, description) VALUES (%s, %s, %s) RETURNING id',
         (lens_slug, lens_title, lens_desc)
-    )
-    new_lens_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
+    ).fetchone()
+    new_lens_id = new_lens['id']
 
     # 4. Create the Core Issue
-    issue_slug = slugify(core_issue)
-    db.execute(
-        'INSERT INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
+    # Replace the old INSERT and SELECT lines with this:
+    new_issue = db.execute(
+        'INSERT INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?) RETURNING id',
         (new_lens_id, issue_slug, core_issue, f'Primary systemic issue tracked under the {lens_title} lens.')
-    )
-    new_issue_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
+    ).fetchone()
+    new_issue_id = new_issue['id']
 
     # 5. Create the "Catch-All" Indicator with contextual name
     indicator_name = f"General {lens_title.lower()} evidence"
@@ -849,7 +888,7 @@ def cast_vote(db, contribution_id, user_id, vote):
         )
         db.commit()
         return True
-    except sqlite3.IntegrityError:
+    except Exception:
         db.rollback()
         return False
 
