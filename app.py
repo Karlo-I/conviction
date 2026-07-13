@@ -8,12 +8,14 @@ import click
 import json
 import models
 import os
+import psycopg2
 import quiz
 import secrets
 import sqlite3
 import threading
 from dotenv import load_dotenv
 from flask import abort, current_app, flash, Flask, g, jsonify, render_template, redirect, request, session, url_for
+from psycopg2.extras import RealDictCursor
 from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
@@ -49,12 +51,11 @@ def csrf_protect():
             abort(403)
 
 
-# Database configuration - switches between SQLite (local) and PostgreSQL (Render)
+# Database configuration between SQLite (local) and PostgreSQL (Render)
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
     # Production: PostgreSQL on Render
-    import psycopg2
     DATABASE = DATABASE_URL
     USE_POSTGRESQL = True
 else:
@@ -66,7 +67,7 @@ def get_db():
     if 'db' not in g:
         if USE_POSTGRESQL:
             g.db = psycopg2.connect(DATABASE)
-            g.db.row_factory = psycopg2.extras.RealDictCursor
+            g.db.cursor_factory = psycopg2.extras.RealDictCursor # psycopg2 uses cursor_factory, not row_factory like in SQLite3
         else:
             g.db = sqlite3.connect(
                 DATABASE,
