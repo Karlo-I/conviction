@@ -532,8 +532,9 @@ def contribute():
             # We MUST create a new database connection for the background thread.
             # SQLite connections cannot be safely shared across threads.
             if os.environ.get('DATABASE_URL'):
-                bg_db = psycopg2.connect(os.environ.get('DATABASE_URL'))
-                bg_db.cursor_factory = RealDictCursor
+                conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+                conn.cursor_factory = RealDictCursor
+                bg_db = Psycopg2Wrapper(conn)  # Use the wrapper that provides .execute()
             else:
                 bg_db = sqlite3.connect(DATABASE)
                 bg_db.row_factory = sqlite3.Row
