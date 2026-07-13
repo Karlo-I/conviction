@@ -544,7 +544,11 @@ def get_force_by_slug(db, slug):
         return None
     
     force = dict(force)
-    force['evidence_chain'] = json.loads(force['evidence_chain']) if force['evidence_chain'] else []
+    evidence = force['evidence_chain']
+    if isinstance(evidence, str):
+        force['evidence_chain'] = json.loads(evidence)
+    elif not isinstance(evidence, list):
+        force['evidence_chain'] = []
 
     linked_issues = db.execute(
         '''
