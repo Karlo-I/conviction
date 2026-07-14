@@ -1,0 +1,35 @@
+{% extends 'layout.html' %}
+
+{% block title %}Our Commitments{% endblock %}
+
+{% block content %}
+<div class="legal-container">
+    <h1>Our Commitments</h1>
+    <p>These are not guidelines or aspirations. They are commitments — things this platform will and will not do, regardless of pressure, growth, or circumstance.</p>
+
+    <h2>We will always follow the evidence</h2>
+    <p>Conviction has a thesis. But if the data leads somewhere that contradicts it, we follow the data. Truth is not what confirms our argument — it is what the evidence actually shows. No incentive, reputation, or external pressure overrides this.</p>
+
+    <h2>We will acknowledge when we are wrong</h2>
+    <p>This platform can be wrong — about data, about mechanisms, about editorial decisions. When we are, we correct publicly, transparently, and without delay. We do not quietly edit. Significant corrections are documented publicly in our <a href="https://github.com/Karlo-I/conviction/blob/main/CHANGELOG.md" style="color: #457b9d;">public changelog</a> on GitHub.</p>
+
+    <h2>We will never discriminate or gatekeep</h2>
+    <p>Disagreeing with this platform's thesis is not grounds for exclusion. We hold our argument openly and allow it to be challenged. Moderation exists only where content causes harm by universal moral and ethical standards — not where it challenges our worldview. All voices, all geographies, all perspectives are welcome as long as they engage in good faith.</p>
+
+    <h2>We will not cause harm in the name of truth</h2>
+    <p>How truth is told matters as much as what is told. The pursuit of systemic accountability will never become an instrument of personal destruction. We will not surface information in a way that causes direct harm to individuals or communities, even when that information is accurate.</p>
+
+    <h2>We serve you — not the other way around</h2>
+    <p>Every feature on this platform — the token economy, the heatmap, the quiz, the peer validation system — exists to help you understand and act. None of it will ever be designed to manipulate your behaviour for the platform's benefit, inflate engagement metrics, or serve undisclosed interests. You are a participant, not a product.</p>
+
+    <h2>Your data belongs to you</h2>
+    <p>The data contributed by communities around the world belongs to those communities in spirit. We are custodians of that knowledge, not its owners. We will never sell it, use it for purposes beyond this platform's stated mission, or prevent you from withdrawing your contributions.</p>
+
+    <h2>We claim transparency, not neutrality</h2>
+    <p>We have a point of view and we do not pretend otherwise. What we offer instead of neutrality is full transparency — every data point sourced and cited, every editorial decision documented, every methodology open to scrutiny. A platform that hides its assumptions is less honest than one that states them clearly and shows its working.</p>
+
+    <h2>Questions or Concerns?</h2>
+    <p>If you believe we have violated any of these commitments, we want to know. Reach out via the project repository on GitHub: <a href="https://github.com/Karlo-I/conviction" style="color: #457b9d;">github.com/Karlo-I/conviction</a></p>
+    <p><a href="{{ url_for('index') }}" style="font-size: 0.9rem; color: #457b9d; text-decoration: none;">← Back to home</a></p>
+</div>
+{% endblock %}

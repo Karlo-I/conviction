@@ -1,231 +1,211 @@
 # Conviction
-**CS50x Final Project — Living Project Brief**  
-**Last Updated: July 09, 2026 (rev 17)**  
-**Status: Testing Complete / Ready for Deployment**
+### CS50x Final Project — Living Project Brief
+**Last Updated:** July 14, 2026 (rev 18)
+**Status:** Deployed — Live at https://conviction-20z3.onrender.com/
 
-## Video Demo
+---
+
+#### Video Demo
 `<URL to be added after recording>`
 
+---
+
 ## Description
+
 Conviction is a web application that helps people trace the line between what they experience daily — rising costs, poor health, environmental damage, financial precarity — and the systemic mechanisms that produce those outcomes.
 
 Most people see symptoms. This app surfaces the machinery — and the forces operating that machinery.
 
-Users explore three systemic lenses — Food, Housing, and Mobility — through real global data drawn from sources including the WHO, World Bank, FAO, and Our World in Data. But the data alone is incomplete. Behind each lens sits a fourth layer: the underlying forces — financial capture, regulatory arbitrage, externalised cost, information asymmetry — that operate across all three domains simultaneously. The same mechanism that keeps ultra-processed food dominant in dietary policy also keeps housing treated as an investment asset and car dependency entrenched in urban planning. The platform makes that cross-domain pattern visible.
+Users explore five systemic lenses — **Food**, **Housing**, **Mobility**, **Energy**, and **Healthcare** — through real global data drawn from sources including the WHO and World Bank. But the data alone is incomplete. Behind each lens sits a fourth layer: the **underlying forces** — financial capture, regulatory arbitrage, externalised cost, information asymmetry — that operate across all domains simultaneously. The same mechanism that keeps ultra-processed food dominant in dietary policy also keeps housing treated as an investment asset and car dependency entrenched in urban planning. The platform makes that cross-domain pattern visible.
 
 Users take a short diagnostic quiz that personalises which lens they see first, then move through the evidence at their own depth. They register, receive tokens, and spend them on the issues they believe matter most. Their conviction aggregates into a global heatmap showing where collective concern is concentrating.
 
 The platform is designed for people who already sense something is wrong and want to understand the mechanism — and made accessible enough that people who don't yet see the problem can be brought in through the quiz. It names no individual actors. It presents mechanisms, evidence chains, and sourced data and lets users draw their own conclusions.
 
+---
+
 ## The Thesis
+
 The systems that govern how people eat, live, and move are optimised for extraction, not human flourishing. The data is global, the pattern is consistent, and most people never see the mechanism — only its consequences.
 
 The root problem is not individual greed or moral failure. It is that certain systems select for and reward short-term extraction, externalised harm, and regulatory capture — and will continue to do so regardless of who occupies positions of power within them. Change the people; the system produces new versions of the same behaviour. Change the rules; the behaviour changes. This platform is about the rules.
 
 The platform classifies mechanisms — financial capture, regulatory arbitrage, externalised cost, information asymmetry — and presents the evidence chains that demonstrate those mechanisms operating. The evidence speaks. Users conclude.
 
-## Guiding Principles
-These principles are the moral foundation of the platform. They govern every decision — technical, editorial, and strategic — now and as the platform grows. They are not implementation rules; they are commitments that remain true regardless of how the technology changes.
+The platform's commitments to truth, transparency, epistemic humility, and non-discrimination are published at https://conviction-20z3.onrender.com/commitments.
 
-1. **Truth is non-negotiable**  
-   The platform pursues what the evidence actually shows, not what confirms its thesis. If the data leads somewhere uncomfortable, that is the data. The standard is universal truth — meaning truth that does not belong to any one culture, ideology, or interest group. No pressure, incentive, or reputational consideration overrides this commitment.
-
-2. **Epistemic humility**  
-   The platform acknowledges it can be wrong. When it is, it corrects itself publicly, transparently, and without delay. Certainty is the enemy of honest inquiry. Every methodology is visible and auditable precisely because the platform does not claim infallibility.
-
-3. **No discrimination, no ideological gatekeeping**  
-   Disagreement with the platform's thesis is not grounds for exclusion. The platform holds its argument openly and allows it to be challenged. Moderation exists only where content causes harm by universal moral and ethical standards — not where it challenges the platform's worldview. All voices, all geographies, all perspectives are welcome as long as they engage in good faith.
-
-4. **Do no harm**  
-   The platform will not surface or publish information in a way that causes direct harm to individuals or communities, even in the service of truth. How truth is told matters as much as what is told. The pursuit of systemic accountability must never become an instrument of personal destruction.
-
-5. **The platform serves the user, not the other way around**  
-   Every feature — the token economy, the heatmap, the quiz, the peer validation system — exists to help users understand and act. None of these mechanisms will ever be designed to manipulate user behaviour for the platform's benefit, to inflate engagement metrics, or to serve undisclosed interests. Users are participants, not products.
-
-6. **Stewardship, not ownership**  
-   The data contributed by communities around the world belongs to those communities in spirit. The platform is a custodian of that knowledge, not a proprietor. This means data is never sold, never used for purposes beyond the platform's stated mission, and communities always retain the right to withdraw their contributions.
-
-7. **Transparency over neutrality**  
-   The platform has a thesis and does not pretend otherwise. What it offers instead of neutrality is full transparency: every data point sourced and cited, every editorial decision documented, every methodology open to scrutiny. A platform that hides its assumptions is less honest than one that states them clearly and shows its working.
+---
 
 ## Stack
+
 | Layer | Technology | Notes |
-|-------|------------|-------|
+|---|---|---|
 | Backend | Python / Flask | Routing, business logic, API endpoints |
-| Database | SQLite (dev) → PostgreSQL (prod) | Hosted free on Render |
+| Database | SQLite (dev) → PostgreSQL (prod) | PostgreSQL hosted on Render; two separate schema files |
+| Compatibility | `Psycopg2Wrapper` in `app.py` | Auto-converts SQLite `?` to PostgreSQL `%s`; `models.py` unchanged |
 | Frontend | Vanilla JavaScript | No framework — keeps scope tight |
 | Mapping | Leaflet.js | Free, open source, handles global heatmap |
 | Charts | Chart.js | Data visualisation per lens |
 | Activity | Strava API (free tier) | OAuth 2.0, activity sync for token rewards — post-submission pipeline |
-| AI Agent | claude-haiku / gpt-4o-mini | Contribution digest generation — runs once per contribution |
-| Hosting | Render (free tier) | Zero cost deployment |
-| Data Sources | WHO, World Bank, FAO, Our World in Data | Free APIs and downloadable datasets |
+| AI Agent | claude-haiku-4-5-20251001 | Contribution digest generation — runs once per contribution |
+| Hosting | Render (free tier) | Live at https://conviction-20z3.onrender.com/ |
+| Data Sources | WHO, World Bank | Free APIs; seeded via `seed.py` into unified `contributions` table |
 
-**Cost target:** Near-zero  
+**Cost target: Near-zero**
 The only ongoing cost is the AI agent call triggered when a user submits a contribution. Using a lightweight model (claude-haiku or gpt-4o-mini), each call costs approximately $0.002–$0.01. At low traffic — say 100 contributions in the first few months — total cost is under $1. Cost scales with contributions submitted, not with page views or users. This is the right scaling relationship. All other components remain free.
+
+---
 
 ## Core Features (MVP)
 
-### Diagnostic Quiz
-5–7 questions classifying the user's lived experience into system impact categories. Designed for people who already sense something is wrong; accessible enough to bring in those who don't yet see it.
+1. **Diagnostic Quiz** — 5–7 questions classifying the user's lived experience into system impact categories. Designed for people who already sense something is wrong; accessible enough to bring in those who don't yet see it.
 
-**Onboarding flow:** The quiz is the final step of registration, not a separate visit. Sequence: register (username, password) → complete quiz → land on personalised lens. No email address is collected at any point. This ensures every user has a `quiz_response` stored against their `user_id` from the first interaction and personalisation feels immediate.
+   **Onboarding flow:** The quiz is the final step of registration, not a separate visit. Sequence: register (username, password) → complete quiz → land on personalised lens. No email address is collected at any point. This ensures every user has a `quiz_response` stored against their `user_id` from the first interaction and personalisation feels immediate.
 
-**After the quiz:** The result page shows the user's primary lens and a cross-pollination hook — "people who care about food systems often find the housing lens surprising" with a specific data point as the entry. This is the first echo chamber prevention mechanism: exposure to a secondary lens is built into the onboarding result, not left to chance.
+   **After the quiz:** The result page shows the user's primary lens and a cross-pollination hook — "people who care about food systems often find the housing lens surprising" with a specific data point as the entry. This is the first echo chamber prevention mechanism: exposure to a secondary lens is built into the onboarding result, not left to chance.
 
-**Retake policy:** Retakeable once every 90 days, enforced by a Python check on the most recent `quiz_responses` entry for that `user_id`. People's circumstances and concerns change — locking the result permanently is wrong. But unlimited retakes allow gaming the lens routing. The 90-day gate is stored in `platform_config` as `quiz_retake_days` and is adjustable without code changes. When a user retakes and gets a different result, the UI surfaces the shift: "your primary lens has moved from Food to Housing since you joined" — the platform reflecting personal change back to the user.
+   **Retake policy:** Retakeable once every 90 days, enforced by a Python check on the most recent `quiz_responses` entry for that `user_id`. People's circumstances and concerns change — locking the result permanently is wrong. But unlimited retakes allow gaming the lens routing. The 90-day gate is stored in `platform_config` as `quiz_retake_days` and is adjustable without code changes. When a user retakes and gets a different result, the UI surfaces the shift: "your primary lens has moved from Food to Housing since you joined" — the platform reflecting personal change back to the user.
 
-### Three Lenses
-Food, Housing, Mobility. Each lens presents real global data for that systemic domain, with country-level filtering. Data is pre-processed by Python at build time and stored in SQL — no per-query AI cost.
+2. **Five Lenses** — Food, Housing, Mobility, Energy, and Healthcare. Food, Housing, and Mobility are seeded with a few API data from WHO and World Bank. Energy and Healthcare are seeded with structural content (lenses and issues) ready for community data contributions. All lenses present data through the unified contributions table — no distinction between institutional and community data.
 
-**Unified data architecture:** All data — whether seeded from WHO/World Bank or contributed by users — lives in a single `contributions` table. There is no distinction between "official" and "community" data. Every data point is treated as peer-validated evidence, whether it came from the Data Archive system user or a registered contributor.
+3. **Forces Layer** — The fourth layer beneath all lenses. Each force is a cross-domain mechanism classified into these categories, amongst others:
+   - **Financial capture** — when financial interests shape policy outcomes in their favour
+   - **Regulatory arbitrage** — exploiting gaps between jurisdictions or regulatory frameworks
+   - **Externalised cost** — when the real cost of an activity is borne by those who didn't choose it
+   - **Information asymmetry** — when one party in a system has access to knowledge the other doesn't
 
-**Why three lenses:** Scope and timeline — one person, one month, tight and polished over broad and shallow. Three lenses is sufficient to demonstrate the cross-domain pattern the platform argues. Expanding to a fourth lens (Finance, Health, Environment, or others) requires only an INSERT into the `lenses` table — no code changes. This is an explicit design goal, not a limitation.
+   Each force entry contains: a plain-language mechanism description, sourced evidence chain, and cross-lens links showing where the same force appears across domains. No verdicts. No named actors. Mechanisms and receipts.
 
-### Forces Layer
-The fourth layer beneath all three lenses. Each force is a cross-domain mechanism that appears in food, housing, and mobility simultaneously. Forces are classified into four categories:
+4. **Token System** — Users register and immediately receive an opening balance of 10 tokens. This is deliberate — a new user who cannot act immediately will leave immediately. Ten tokens is enough to spend meaningfully across two or three issues and experience the platform's core mechanic, but not so large that scarcity loses its meaning. Tokens are spent on issues within lenses to signal conviction — a deliberate act that forces genuine prioritisation, unlike a like button.
 
-- **Financial capture** — when financial interests shape policy outcomes in their favour
-- **Regulatory arbitrage** — exploiting gaps between jurisdictions or regulatory frameworks
-- **Externalised cost** — when the real cost of an activity is borne by those who didn't choose it
-- **Information asymmetry** — when one party in a system has access to knowledge the other doesn't
+5. **Token Earning** — Users earn additional tokens through two mechanisms:
+   - Contributing local data points (pending peer validation and AI digest)
+   - Validating other users' contributions (one token per validation cast)
 
-Each force entry contains: a plain-language mechanism description, sourced evidence chain, and cross-lens links showing where the same force appears across domains. No verdicts. No named actors. Mechanisms and receipts.
+6. **Peer Validation with AI Digest** — When a user submits a contribution, an AI agent (running in `agent.py`) generates a plain-language summary comparing the claim against pre-approved data sources. This digest is stored once and shown to all validators — the AI runs once per contribution, not once per validator. Validators read the digest and cast an approve or reject vote. The AI presents evidence only; it does not make a verdict.
 
-### Token System
-Users register and immediately receive an opening balance of 10 tokens. This is deliberate — a new user who cannot act immediately will leave immediately. Ten tokens is enough to spend meaningfully across two or three issues and experience the platform's core mechanic, but not so large that scarcity loses its meaning. Tokens are spent on issues within lenses to signal conviction — a deliberate act that forces genuine prioritisation, unlike a like button.
+   **User-submitted sources:** Contributors can optionally include their own evidence via two fields: a pasted text excerpt (primary) and a source URL (citation). The pasted text is the reliable input — the agent processes it directly. The URL is a citation for validators to verify manually, not a resource the agent fetches. A "verify source" link on `validate.html` opens the URL in a new tab. This approach is more robust than URL fetching, which can fail on PDFs, paywalled content, and JavaScript-rendered pages.
 
-### Token Earning
-Users earn additional tokens through three mechanisms:
-- Contributing local data points (pending peer validation and AI digest)
-- Validating other users' contributions (one token per validation cast)
-- Sharing content (rate-limited to prevent gaming — once per unique share per day)
+   **Source conflict as a feature:** Where a user-submitted source conflicts with pre-approved API data, the digest surfaces the conflict explicitly rather than resolving it. Conflict between a local source and an institutional dataset is precisely the kind of information asymmetry the forces layer documents — making it visible is consistent with the platform's thesis.
 
-### Peer Validation with AI Digest
-When a user submits a contribution, an AI agent (running in `agent.py`) generates a plain-language summary comparing the claim against pre-approved data sources. This digest is stored once and shown to all validators — the AI runs once per contribution, not once per validator. Validators read the digest and cast an approve or reject vote. The AI presents evidence only; it does not make a verdict.
+   **Agent fallback:** If a user provides no pasted text and no URL, the agent falls back to querying pre-approved sources only. If those return nothing, the digest shows `'no data available'` and the UI tells the validator: "No external data found. Evaluate based on the claim alone."
 
-**User-submitted sources:** Contributors can optionally include their own evidence via two fields: a pasted text excerpt (primary) and a source URL (citation). The pasted text is the reliable input — the agent processes it directly. The URL is a citation for validators to verify manually, not a resource the agent fetches. A "verify source" link on `validate.html` opens the URL in a new tab. This approach is more robust than URL fetching, which can fail on PDFs, paywalled content, and JavaScript-rendered pages.
+7. **Global Heatmap** — Aggregate token spend by country renders as a heatmap via Leaflet.js. Users watch their contribution shift the map. Starts as a static render; near-real-time updates (page refresh triggers new data fetch) are the target. True real-time via WebSockets is a post-submission stretch goal.
 
-**Source conflict as a feature:** Where a user-submitted source conflicts with pre-approved API data, the digest surfaces the conflict explicitly rather than resolving it. Conflict between a local source and an institutional dataset is precisely the kind of information asymmetry the forces layer documents — making it visible is consistent with the platform's thesis.
+   **Echo chamber prevention toggle:** The heatmap has two modes — "highest conviction" (where token spend is densest) and "least heard" (countries and issues with real data but low token spend). The second mode actively directs attention toward underrepresented voices rather than amplifying already-loud ones. This is a JavaScript toggle on the frontend, backed by two different query parameters to the heatmap endpoint in `app.py`.
 
-**Agent fallback:** If a user provides no pasted text and no URL, the agent falls back to querying pre-approved sources only. If those return nothing, the digest shows `'no data available'` and the UI tells the validator: "No external data found. Evaluate based on the claim alone."
-
-**Display and UX:** The AI digest is displayed to all validators on validate.html with a color-coded confidence badge. Validators see the summary immediately upon page load. For contributors, the AI agent runs in a background thread after submission, allowing instant redirect to the confirmation page. The page auto-refreshes every 3 seconds until the digest appears, providing a seamless user experience without blocking.
-
-### Global Heatmap
-Aggregate token spend by country renders as a heatmap via Leaflet.js. Users watch their contribution shift the map. The map dynamically loads country data from a comprehensive `countries.json` file containing 180+ countries, ensuring any contribution or token spend automatically appears on the map without code changes.
-
-**Echo chamber prevention toggle:** The heatmap has two modes — "highest conviction" (where token spend is densest) and "least heard" (countries and issues with real data but low token spend). The second mode actively directs attention toward underrepresented voices rather than amplifying already-loud ones. This is a JavaScript toggle on the frontend, backed by two different query parameters to the heatmap endpoint in `app.py`.
-
-**Mode-specific visualisation:** Each heatmap mode uses distinct scaling algorithms to ensure meaningful visual differentiation. "Highest conviction" uses square-root scaling to handle large token spend values, while "least heard" uses linear scaling for smaller contribution counts. This ensures both modes display proportional bubble sizes that accurately represent the underlying data.
+---
 
 ## SQL Schema
-This is the most important architectural decision. The schema is designed to be flexible — new lenses, new issues, and new indicators are added as data rows, not as new code.
+
+This is the most important architectural decision. The schema is designed to be flexible — new lenses, new issues, and new indicators are added as data rows, not as new code. Two schema files exist: `schema.sql` for SQLite (local development) and `schema_postgres.sql` for PostgreSQL (production on Render). The `Psycopg2Wrapper` class in `app.py` handles syntax differences transparently so `models.py` uses SQLite syntax throughout.
 
 ```sql
 -- Core content structure
-CREATE TABLE lenses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    slug TEXT UNIQUE NOT NULL,           -- e.g. 'food', 'housing', 'mobility'
+CREATE TABLE IF NOT EXISTS lenses (
+    id SERIAL PRIMARY KEY,                   -- PostgreSQL: SERIAL; SQLite: INTEGER PRIMARY KEY AUTOINCREMENT
+    slug TEXT UNIQUE NOT NULL,
     title TEXT NOT NULL,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE issues (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE IF NOT EXISTS issues (
+    id SERIAL PRIMARY KEY,
     lens_id INTEGER NOT NULL REFERENCES lenses(id),
-    slug TEXT UNIQUE NOT NULL,           -- e.g. 'ultra-processed-food'
+    slug TEXT UNIQUE NOT NULL,
     title TEXT NOT NULL,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE indicators (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE IF NOT EXISTS indicators (
+    id SERIAL PRIMARY KEY,
     issue_id INTEGER NOT NULL REFERENCES issues(id),
-    name TEXT NOT NULL,                  -- e.g. 'Obesity rate (%)'
-    source TEXT,                         -- e.g. 'WHO Global Health Observatory'
-    unit TEXT                            -- e.g. '%', 'USD', 'kg CO2'
+    name TEXT NOT NULL,
+    source TEXT,
+    unit TEXT,
+    UNIQUE(issue_id, name)
 );
 
 -- Forces layer (fourth layer — cross-domain mechanisms beneath all lenses)
-CREATE TABLE forces (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    slug TEXT UNIQUE NOT NULL,           -- e.g. 'financial-capture', 'externalised-cost'
-    title TEXT NOT NULL,                 -- plain-language name
-    category TEXT NOT NULL,             -- 'financial_capture', 'regulatory_arbitrage',
-                                        -- 'externalised_cost', 'information_asymmetry'
-    mechanism TEXT NOT NULL,            -- how it works, in plain language, sourced
-    evidence_chain JSON,                -- array of {claim, source_url, data_summary} objects
+CREATE TABLE IF NOT EXISTS forces (
+    id SERIAL PRIMARY KEY,
+    slug TEXT UNIQUE NOT NULL,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL,              -- 'financial_capture', 'regulatory_arbitrage',
+                                         -- 'externalised_cost', 'information_asymmetry'
+    mechanism TEXT NOT NULL,
+    evidence_chain JSON,                 -- array of {claim, source_url, data_summary} objects
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Links forces to the issues they drive (many-to-many)
--- e.g. 'financial-capture' links to 'ultra-processed-food' AND 'housing-as-asset' AND 'car-dependency'
-CREATE TABLE force_issue_links (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE IF NOT EXISTS force_issue_links (
+    id SERIAL PRIMARY KEY,
     force_id INTEGER NOT NULL REFERENCES forces(id),
     issue_id INTEGER NOT NULL REFERENCES issues(id),
-    explanation TEXT,                   -- how this force manifests in this specific issue
-    UNIQUE(force_id, issue_id)          -- prevent duplicate links
+    explanation TEXT,
+    UNIQUE(force_id, issue_id)
 );
 
 -- Users and authentication
 -- No email address is collected — privacy by design decision.
 -- Bot prevention handled by hCaptcha at registration (no PII collected).
 -- Account recovery is not possible without email — disclosed explicitly at registration.
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,         -- never store plain text passwords
+    password_hash TEXT NOT NULL,
     token_balance INTEGER DEFAULT 10,    -- opening balance granted at registration
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Data sources registry (reference points, not arbiters of truth)
-CREATE TABLE sources (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,                  -- e.g. 'WHO Global Health Observatory'
-    url TEXT NOT NULL,                   -- root URL
-    methodology_url TEXT,                -- link to their methodology documentation
-    limitations TEXT,                    -- known biases, coverage gaps, or data quality issues
-    institutional_context TEXT,          -- who funds it, who governs it
+CREATE TABLE IF NOT EXISTS sources (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    methodology_url TEXT,
+    limitations TEXT,
+    institutional_context TEXT,
     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Token economy
-CREATE TABLE token_transactions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE IF NOT EXISTS token_transactions (
+    id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id),
     amount INTEGER NOT NULL,             -- positive = earned, negative = spent
-    reason TEXT NOT NULL,                -- 'registration', 'contribution', 'share', 'spend', 'strava_activity'
-    issue_id INTEGER REFERENCES issues(id),  -- populated when reason = 'spend'
+    reason TEXT NOT NULL,                -- 'registration', 'contribution', 'validation', 'spend'
+    issue_id INTEGER REFERENCES issues(id),
+    force_id INTEGER REFERENCES forces(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- User contributions (moderated via peer validation)
--- UNIFIED ARCHITECTURE: All data lives here — both seeded institutional data and user contributions.
--- Seeded data uses 'Data Archive' system user; user data uses registered user IDs.
--- No distinction between "official" and "community" data — all is peer-validated evidence.
-CREATE TABLE contributions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+-- UNIFIED DATA ARCHITECTURE: All data lives here — both seeded institutional data
+-- (via 'Data Archive' system user) and user contributions. No distinction between
+-- "official" and "community" data — all is peer-validated evidence.
+CREATE TABLE IF NOT EXISTS contributions (
+    id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id),
     indicator_id INTEGER REFERENCES indicators(id),
     country_code TEXT NOT NULL,
+    title TEXT,
+    category TEXT,
     value REAL,
-    note TEXT,                           -- free text claim or observation
-    source_url TEXT,                     -- citation URL — shown to validators as a manual check link
-    source_excerpt TEXT,                 -- pasted text from source — primary input for AI agent
-    contribution_type TEXT DEFAULT 'data_point', -- 'data_point' or 'force_claim'
-    status TEXT DEFAULT 'pending',       -- 'pending', 'approved', 'rejected'
+    note TEXT,
+    source_url TEXT,
+    source_excerpt TEXT,
+    contribution_type TEXT DEFAULT 'data_point', -- 'data_point', 'force_claim', 'lens_proposal'
+    status TEXT DEFAULT 'pending',
     reviewed_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS contribution_sources (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     contribution_id INTEGER NOT NULL REFERENCES contributions(id),
+    note TEXT,
     source_url TEXT,
     source_excerpt TEXT,
     contributor_user_id INTEGER NOT NULL REFERENCES users(id),
@@ -233,122 +213,93 @@ CREATE TABLE IF NOT EXISTS contribution_sources (
 );
 
 CREATE TABLE IF NOT EXISTS contribution_lens_links (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     contribution_id INTEGER NOT NULL REFERENCES contributions(id),
     issue_id INTEGER NOT NULL REFERENCES issues(id),
     UNIQUE(contribution_id, issue_id)
 );
 
 -- Diagnostic quiz
-CREATE TABLE quiz_responses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER REFERENCES users(id),  -- NULL if anonymous
-    session_id TEXT,                       -- for anonymous users
-    responses JSON NOT NULL,               -- stores question/answer pairs
+CREATE TABLE IF NOT EXISTS quiz_responses (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    session_id TEXT,
+    responses JSON NOT NULL,
     recommended_lens_id INTEGER REFERENCES lenses(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Strava OAuth connections
-CREATE TABLE strava_connections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    strava_athlete_id INTEGER UNIQUE NOT NULL,  -- Strava's own user ID
-    access_token TEXT NOT NULL,                 -- expires every 6 hours
-    refresh_token TEXT NOT NULL,                -- used to get a new access_token
-    token_expires_at TIMESTAMP NOT NULL,        -- checked before every API call
-    connected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Strava activities already rewarded (prevents double-earning)
-CREATE TABLE strava_activities_rewarded (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    strava_activity_id INTEGER UNIQUE NOT NULL,  -- UNIQUE enforces one reward per activity
-    activity_type TEXT NOT NULL,                 -- 'ride', 'run', 'walk'
-    distance_meters REAL NOT NULL,               -- raw value from Strava API
-    tokens_awarded INTEGER NOT NULL,
-    awarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Strava reward milestones (config table — adjust rewards without touching Python)
-CREATE TABLE strava_milestones (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    activity_type TEXT NOT NULL,    -- 'ride', 'run', 'walk'
-    threshold_meters REAL NOT NULL, -- e.g. 100000 for 100km, 8000 for 8km
-    tokens_awarded INTEGER NOT NULL -- e.g. 5 for cycling, 1 for run/walk
-);
-
--- Seed data for milestones (insert once at setup)
--- INSERT INTO strava_milestones (activity_type, threshold_meters, tokens_awarded)
--- VALUES ('ride', 100000, 5), ('run', 8000, 1), ('walk', 8000, 1);
-
--- AI-generated source digest for each contribution (generated once, shown to all validators)
-CREATE TABLE contribution_digests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+-- AI-generated source digest (generated once per contribution, shown to all validators)
+CREATE TABLE IF NOT EXISTS contribution_digests (
+    id SERIAL PRIMARY KEY,
     contribution_id INTEGER NOT NULL REFERENCES contributions(id),
-    summary TEXT NOT NULL,          -- plain-language summary of evidence found
-    sources JSON,                   -- URLs and snippets the agent used
-    confidence TEXT NOT NULL,       -- 'evidence found', 'partial evidence', 'no data available'
-    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    summary TEXT NOT NULL,
+    sources JSON,
+    confidence TEXT NOT NULL,            -- 'evidence found', 'partial evidence', 'no data available'
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    extracted_json TEXT
 );
 
 -- Peer validation votes
-CREATE TABLE contribution_votes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE IF NOT EXISTS contribution_votes (
+    id SERIAL PRIMARY KEY,
     contribution_id INTEGER NOT NULL REFERENCES contributions(id),
     user_id INTEGER NOT NULL REFERENCES users(id),
-    vote TEXT NOT NULL,             -- 'approve' or 'reject'
+    vote TEXT NOT NULL,                  -- 'approve' or 'reject'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(contribution_id, user_id) -- one vote per user per contribution
+    UNIQUE(contribution_id, user_id)
 );
 
 -- Platform configuration (adjust behaviour without code changes)
-CREATE TABLE platform_config (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE IF NOT EXISTS platform_config (
+    id SERIAL PRIMARY KEY,
     key TEXT UNIQUE NOT NULL,
     value TEXT NOT NULL,
     description TEXT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Seed data for platform config (insert once at setup)
--- INSERT INTO platform_config (key, value, description) VALUES
--- ('validation_threshold', '2', 'Peer approvals needed to approve a data_point contribution'),
--- ('force_approval_threshold', '5', 'Peer approvals needed to elevate a force_claim into forces layer'),
--- ('tokens_per_validation', '1', 'Tokens earned for casting a validation vote'),
--- ('tokens_per_contribution', '3', 'Tokens earned when contribution is approved'),
--- ('agent_model', 'claude-haiku-4-5-20251001', 'AI model used for contribution digests'),
--- ('max_contributions_per_day', '5', 'Rate limit per user per day'),
--- ('max_shares_per_day', '3', 'Max token-earning shares per user per day'),
--- ('quiz_retake_days', '90', 'Minimum days between quiz retakes per user');
+-- Seed data for platform config
+INSERT INTO platform_config (key, value, description) VALUES
+    ('validation_threshold', '2', 'Peer approvals needed to approve a data_point contribution'),
+    ('force_approval_threshold', '3', 'Peer approvals needed to elevate a force_claim into forces layer'),
+    ('rejection_threshold_data_point', '3', 'Reject votes needed to reject a data_point contribution'),
+    ('rejection_threshold_force_claim', '5', 'Reject votes needed to reject a force_claim contribution'),
+    ('minimum_total_votes_data_point', '3', 'Minimum total votes before a data_point can resolve'),
+    ('minimum_total_votes_force_claim', '5', 'Minimum total votes before a force_claim can resolve'),
+    ('tokens_per_validation', '1', 'Tokens earned for casting a validation vote'),
+    ('tokens_per_contribution', '3', 'Tokens earned when contribution is approved'),
+    ('agent_model', 'claude-haiku-4-5-20251001', 'AI model used for contribution digests'),
+    ('max_contributions_per_day', '5', 'Rate limit per user per day'),
+    ('max_shares_per_day', '3', 'Max token-earning shares per user per day'),
+    ('quiz_retake_days', '90', 'Minimum days between quiz retakes per user')
+ON CONFLICT (key) DO NOTHING;
 
--- Share tracking (prevents gaming the sharing mechanic)
-CREATE TABLE shares (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+-- Share tracking (kept in schema for future use — sharing mechanic not implemented in MVP)
+CREATE TABLE IF NOT EXISTS shares (
+    id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id),
-    content_type TEXT NOT NULL,     -- 'issue', 'lens', 'heatmap'
-    content_id INTEGER,             -- references the shared item
+    content_type TEXT NOT NULL,
+    content_id INTEGER,
     shared_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
+
 **Key design decisions:**
-- `lenses`, `issues`, `indicators`, `data_points` form a clean hierarchy. Adding a fourth lens (e.g. Finance) is an INSERT, not a schema change.
-- `Unified data architecture`: The contributions table stores ALL data — both seeded institutional data (via the "Data Archive" system user) and user-submitted contributions. There is no separate data_points table. This reflects the platform's philosophical commitment: all knowledge is built by the community through peer validation, not handed down from authority.
+- `lenses`, `issues`, `indicators` form a clean hierarchy. Adding a new lens is an INSERT, not a schema change — proven during build when Energy and Healthcare were added with no code changes.
+- `Unified data architecture`: The `contributions` table stores ALL data — both seeded institutional data (via the "Data Archive" system user) and user-submitted contributions. There is no separate `data_points` table. This reflects the platform's philosophical commitment: all knowledge is built by the community through peer validation, not handed down from authority.
 - `sources` is a registry of reference data sources — not arbiters of truth, but documented reference points with known limitations and institutional context recorded explicitly.
-- `forces` sits beneath all lenses simultaneously. A force is not owned by a lens — it connects to issues across lenses via `force_issue_links`. This is the architectural expression of the platform's core argument: the same mechanism operates across domains.
-- `force_issue_links` is a many-to-many join table. One force links to many issues; one issue can be linked to many forces. The `explanation` column holds the specific description of how that force manifests in that issue — not generic, but precise.
-- `evidence_chain` in `forces` stores a JSON array of sourced claims. Each object contains a claim, a source URL, and a plain-language data summary. This is the "receipts" layer — the mechanism is not asserted, it is demonstrated.
+- `forces` sits beneath all lenses simultaneously. A force is not owned by a lens — it connects to issues across lenses via `force_issue_links`.
+- `evidence_chain` in `forces` stores a JSON array of sourced claims. Each object contains a claim, a source URL, and a plain-language data summary.
 - `users` stores no email address — a deliberate privacy-by-design decision. Bot prevention is handled by hCaptcha at registration. Account recovery is not possible and this is disclosed explicitly to users at registration.
 - `token_transactions` is an append-only ledger. `token_balance` on `users` is a derived cache — always recalculable from the ledger. Python always writes to the ledger first; balance is never updated independently.
-- `contributions` has a `contribution_type` field — `'data_point'` for regular contributions, `'force_claim'` for forces layer nominations. Python in `models.py` routes approved force claims into `forces` and `force_issue_links` when the `force_approval_threshold` in `platform_config` is reached.
-- `contribution_lens_links` is a many-to-many join table that links contributions to issues. This allows one contribution to relate to multiple issues across different lenses, supporting the platform's cross-domain architecture.
-- `contribution_digests` stores the AI agent's output once per contribution. All validators see the same digest — the agent never runs more than once per contribution regardless of how many validators review it.
+- `contributions` has a `contribution_type` field — `'data_point'`, `'force_claim'`, or `'lens_proposal'`. Python in `models.py` routes approved force claims into `forces` and `force_issue_links` when the `force_approval_threshold` in `platform_config` is reached.
+- `contribution_digests` stores the AI agent's output once per contribution. All validators see the same digest — the agent never runs more than once per contribution.
 - `contribution_votes` has a `UNIQUE` constraint on `(contribution_id, user_id)` — the database enforces one vote per user per contribution.
 - `confidence` in `contribution_digests` uses plain-language values (`'evidence found'`, `'partial evidence'`, `'no data available'`) — the AI reports what it found, not what it concluded.
 - `platform_config` is a key-value config table. Validation thresholds, token rewards, AI model choice, and rate limits are all rows — adjustable without touching Python code.
-- `shares` table rate-limits the sharing mechanic. Python checks daily share count against `platform_config.max_shares_per_day` before awarding tokens.
 - `quiz_responses` stores raw JSON so question wording can evolve without a schema migration.
+- `shares` table is in the schema for future use. The sharing mechanic was deliberately not implemented in MVP — the platform has no way to verify a share actually happened, making token awards for sharing inconsistent with the platform's integrity principles.
 
 ---
 
@@ -372,16 +323,24 @@ project/
                             # app.py calls these functions; it never writes SQL directly.
 ├── quiz.py                 # Quiz classification logic (the AI component)
 ├── agent.py                # AI agent — fetches sources, generates contribution digests
-├── schema.sql              # SQL schema (run once to initialise DB)
+├── forces.py               # Forces layer logic — cross-lens mechanism queries
+├── strava.py               # Strava OAuth flow and activity reward logic (post-submission)
+├── schema.sql              # SQLite schema — local development only
+├── schema_postgres.sql     # PostgreSQL schema — production on Render. Key differences from
+                            # schema.sql: SERIAL PRIMARY KEY instead of AUTOINCREMENT,
+                            # ON CONFLICT DO NOTHING instead of INSERT OR IGNORE, no PRAGMA.
+├── Procfile                # Tells Render to serve via gunicorn: 'web: gunicorn app:app'
 ├── seed.py                 # Seeds the database with real global data. Creates a "Data Archive"
-                            # system user, then seeds the food, housing, and mobility lenses with
-                            # real WHO and World Bank API data. All data is inserted into the
-                            # unified contributions table — no separate data_points table. This
-                            # reflects the platform's philosophical commitment: all knowledge is
-                            # community-built through peer validation.
-├── countries.json          # Comprehensive country data (180+ countries) with coordinates and
-                            # names for heatmap rendering. Loaded dynamically by app.py.
+                            # system user, then seeds five lenses: Food (WHO obesity data),
+                            # Housing (World Bank urban slum data), Mobility (World Bank road
+                            # traffic mortality), Energy, and Healthcare. Also seeds the forces
+                            # layer with four pre-approved systemic mechanisms and cross-lens
+                            # links. Dual-mode: detects PostgreSQL vs SQLite via DATABASE_URL.
+                            # Triggered via web route /seed-data in production.
+├── seed_forces.py          # Original standalone forces seed script — superseded by seed.py
+                            # which now handles forces seeding as part of seed_all()
 ├── requirements.txt        # Python dependencies
+├── CHANGELOG.md            # Keeps record of any corrections
 ├── README.md               # This file
 ├── static/
 │   ├── css/
@@ -403,19 +362,23 @@ project/
     ├── login.html
     ├── privacy.html        # Privacy policy — data collected, retention, deletion request
     ├── terms.html          # Terms of use — contribution liability, content policy
-    └── how_it_works.html   # AI disclosure — agent role, model used, limitations
+    ├── how_it_works.html   # AI disclosure — agent role, model used, limitations
+    └── strava.html         # Strava connection and activity summary (post-submission)
 ```
 
 ---
 
 ## AI Component
+
 There are two distinct AI components in this project, each doing a different job.
 
-### 1. Diagnostic Quiz Classifier (`quiz.py`)
+**1. Diagnostic Quiz Classifier (`quiz.py`)**
+
 A weighted scoring system that classifies user responses to 5–7 questions into lens affinity scores. The lens with the highest score becomes the user's entry point. This runs locally in Python with no API cost. Honest note: this is rule-based classification, not machine learning. It qualifies as AI in the CS50 sense but is closer to a decision tree than a neural network. If time allows post-submission, quiz responses stored in `quiz_responses` could train a simple scikit-learn classifier as a genuine ML upgrade.
 
-### 2. Contribution Digest Agent (`agent.py`)
-When a user submits a contribution, `agent.py` is called once in a 'background thread' to prevent blocking the user interface. The user is immediately redirected to a confirmation page that displays "AI digest is being generated. Check back shortly.". The page auto-refreshes every 3 seconds until the digest is ready. The agent does the following in sequence:
+**2. Contribution Digest Agent (`agent.py`)**
+
+When a user submits a contribution, `agent.py` is called once. It does the following in sequence:
 
 1. Constructs a search query from the contribution's claim, country, and indicator
 2. Fetches relevant data from pre-approved free sources (WHO API, World Bank API, Our World in Data CSVs)
@@ -423,6 +386,7 @@ When a user submits a contribution, `agent.py` is called once in a 'background t
 4. The prompt instructs the model to summarise what the evidence says relative to the claim — not to make a verdict
 5. Returns a `confidence` signal: `'evidence found'`, `'partial evidence'`, or `'no data available'`
 6. Writes the summary and sources to `contribution_digests`
+7. For better UI/UX design, AI also cleans any obvious grammatical errors without changing the context provided by the users in their submissions
 
 The digest is then displayed to all peer validators on `validate.html`. The AI runs once; all validators see the same output. This keeps API cost proportional to contributions submitted, not to user count or page views.
 
@@ -430,134 +394,78 @@ The digest is then displayed to all peer validators on `validate.html`. The AI r
 
 **Cost estimate:** ~$0.002–$0.01 per contribution at current model pricing. Under $1 for the first 100 contributions.
 
-**Background threading:** The AI agent runs asynchronously using Python's 'threading' module. A new database connection is created for the background thread to avoid SQLite connection sharing issues. This keeps the user experience responsive while the API call completes.
+**Known limitation:** Source coverage may be uneven globally as many institutional sources available appears more complete for OECD countries. Where data is absent, the agent returns `'no data available'` and the digest says so explicitly. The UI flags this rather than hiding it.
 
-**Known limitation:** Source coverage is uneven globally. WHO and World Bank data is more complete for OECD countries. Where data is absent, the agent returns `'no data available'` and the digest says so explicitly. The UI flags this rather than hiding it.
+---
 
 ## Action Plan
+
 | Week | Dates | Goal | Done? |
-|------|-------|------|-------|
+|---|---|---|---|
 | 1 | June 19–25 | Schema init, Flask skeleton, auth (register/login), first dataset seeded | ✓ |
 | 2 | June 26–Jul 2 | Three lenses with real data, token spend system, diagnostic quiz | ✓ |
 | 3 | Jul 3–9 | Heatmap, contribution flow, agent.py digest, peer validation, token earning | ✓ |
-| 4 | Jul 10–16 | Polish: AI digest display, background threading, legal pages (privacy/terms/how_it_works), heatmap hover, tooltips, validation UI spacing, README finalise, video, deploy to Render, submit | ✓ |
+| 4 | Jul 10–16 | Polish: conditional fields in contribute.html, legal pages, CSS polish, PostgreSQL migration, deployment to Render | ✓ |
+| Post-submission | Jul 17+ | Strava OAuth integration, real-time heatmap via WebSockets, ML quiz upgrade | ☐ |
 
-## Week 4 Polish Completed
-The following improvements were implemented during the final polish phase:
-
-### UX Enhancements:
-- AI digest now displays prominently in validation queue with color-coded confidence badges
-- Background threading prevents UI blocking during AI processing
-- Auto-refresh on contribution confirmation page (every 3 seconds until digest ready)
-- Heatmap markers show country info on hover (no click required)
-- Improved validation card spacing and visual separation
-- Unified evidence cards: All data (seeded and user-contributed) now displays in identical card format — no separate "official data" tables
-- Forces grid layout with responsive 4-column design
-- Force detail page with evidence cards and lens tags
-- Token balance display in navbar with coin icon
-- Instant token balance updates after spend/earn actions
-- "Back to top" and "Back to Lenses" navigation buttons
-- Rounded percentage displays (1 decimal place) for readability
-- Improved font typography (Inter + Lora) for professional appearance
-- Dynamic country loading: Heatmap now loads from comprehensive countries.json (180+ countries) instead of hardcoded list
-
-### Architectural Improvements:
-- **Unified data model**: Migrated all seed data from data_points table to contributions table. Created "Data Archive" system user for seeded contributions. No distinction between "official" and "community" data — all is peer-validated evidence.
-- **Heatmap scaling**: Implemented mode-specific bubble scaling (square-root for conviction, linear for least-heard) to ensure meaningful visual differentiation
-- **Negative value handling**: Fixed heatmap rendering by using ABS() function to convert negative token spend values to positive for proper bubble sizing
-- **Global country support**: Replaced hardcoded country dictionary with dynamic countries.json file, enabling any country to appear on heatmap without code changes
-
-### Bug Fixes (Critical):
-- **Flash message accuracy**: Resolved issue where flash messages incorrectly displayed "reject vote" language when user clicked "approve". Implemented `is_triggering_vote` logic to accurately distinguish between the user whose vote triggered approval vs. late voters.
-- **Validate queue duplicates**: Fixed "ghost duplicate" entries in validate queue caused by multiple AI digests per contribution. Implemented single-digest fetch with `ORDER BY rowid DESC LIMIT 1` to ensure only one entry per contribution appears.
-- **Multi-contributor token rewards**: Resolved issue where only original submitters received token rewards. Implemented reward distribution to ALL contributors (original submitter + merged source contributors) when a contribution is elevated.
-- **Token balance sync**: Fixed session/database sync issues causing delayed balance updates. Implemented `reconcile_token_balance()` after all token transactions for instant UI updates.
-- **Force claim elevation**: Completed dual-threshold elevation logic requiring both peer consensus (3 approvals, 5 minimum votes) AND structural quality (2+ sources, 2+ lenses) before elevation to forces layer.
-- **Heatmap bubble sizing**: Fixed issue where all bubbles appeared same size due to hardcoded radius. Implemented dynamic scaling based on token spend values.
-
-### Legal & Transparency:
-- Privacy policy page detailing no-email policy and data retention
-- Terms of use page outlining contribution standards and platform limitations  
-- How It Works page with full AI disclosure and methodology transparency
-- Footer navigation added to all pages
-
-### Code Quality:
-- Business logic extracted from `app.py` into `models.py` (`process_vote_logic` function)
-- Country code mapping abstracted from JavaScript to Python dictionary
-- Raw AI CONFIDENCE markers stripped from digest text
-- All validation thresholds now configurable via `platform_config`
-
-### Architecture:
-- Background threading with separate SQLite connections per thread
-- Append-only token ledger with balance cache
-- Collaborative force claims via `contribution_sources` and `contribution_lens_links`
-- Dual-threshold force elevation (peer consensus + AI source corroboration + cross-lens validation)
-- Unified data model: Migrated all seed data from data_points table to contributions table. Created "Data Archive" system user for seeded contributions.
-- Heatmap scaling: Implemented mode-specific bubble scaling (square-root for conviction, linear for least-heard)
-- Global country support: Replaced hardcoded country dictionary with dynamic countries.json file
-
-## Known Risks — RESOLVED
-
-✅ **Force claim elevation logic** — RESOLVED 08/07/26: Force claim elevation is now fully implemented in models.py with dual-threshold requirements (3 approvals + 5 minimum votes) and structural quality checks (2+ sources + 2+ lenses).
-
-✅ **Reject threshold implementation** — RESOLVED 08/07/26: Reject thresholds are now implemented via platform_config keys (`rejection_threshold_data_point` and `rejection_threshold_force_claim`).
-
-✅ **Flash message accuracy** — RESOLVED 08/07/26: Flash messages now accurately reflect user actions and contribution status using `is_triggering_vote` logic.
-
-✅ **Validate queue duplicates** — RESOLVED 08/07/26: Ghost duplicate entries eliminated via single-digest fetch logic.
-
-✅ **Multi-contributor rewards** — RESOLVED 08/07/26: All contributors (original + merged sources) now receive token rewards upon elevation.
-
-✅ **Token balance sync** — RESOLVED 08/07/26: Session balance now syncs instantly with database via `reconcile_token_balance()`.
-
-✅ **Unified data architecture** — RESOLVED 09/07/26: Migrated all seed data from data_points to contributions table. Created "Data Archive" system user. Platform now philosophically consistent: all data is community-built through peer validation.
-
-✅ **Heatmap rendering** — RESOLVED 09/07/26: Fixed negative token values, implemented mode-specific scaling, added dynamic country loading from countries.json.
-
-### Remaining Known Risks (Accepted):
-- **Multiple accounts**: No email address is collected, making duplicate account detection impossible by design. Mitigation: the token economy limits the damage — opening balance of 10 tokens requires genuine participation to grow, and peer validation requires coordination across fake accounts to manipulate. Acknowledged as a known limitation in `privacy.html`.
-- **No account recovery**: Without email, users who lose their password cannot recover their account. Disclosed explicitly at registration. Acceptable trade-off given the privacy benefit.
-- **Quiz AI credibility**: The weighted scoring classifier in `quiz.py` is rule-based logic, not machine learning. Call it a "classification system" in the README unless upgraded to scikit-learn post-submission.
-- **Agent.py data coverage bias**: WHO and World Bank data covers OECD countries more completely. Where data is absent, the UI says so explicitly: "No global data found for this region. Your contribution may be filling a real gap."
-- **Validator read-only limitation**: Validators can read the AI digest and the contributor's submitted evidence, but cannot add, annotate, or counter-submit evidence of their own. A validator who knows of a relevant source has no mechanism to surface it. This is a deliberate scope decision for MVP. Acknowledged explicitly in `how_it_works.html` — "validators evaluate evidence submitted with the contribution; they cannot add new evidence at this stage." A `contribution_comments` table is scoped for post-submission.
+---
 
 ## Data Sources
-| Layer | Dataset | Source | Format |
-|-------|---------|--------|--------|
-| Food lens | Global dietary data, obesity rates, food security index | WHO / FAO | API / CSV |
-| Housing lens | Housing cost-to-income ratio, homelessness rates | World Bank | API |
-| Mobility lens | Car dependency index, cycling infrastructure, transit access | Our World in Data | CSV |
-| Forces layer | Lobbying expenditure, regulatory change timelines, industry funding of research | Investigative journalism databases, academic papers, government disclosure records | Manual curation → JSON seed data |
 
-**Note on reference sources:** WHO, World Bank, FAO, and Our World in Data are used as reference points for comparison — not as golden sources or arbiters of truth. Each has documented institutional context, funding relationships, and coverage limitations recorded in the `sources` table. Where user-contributed evidence diverges from these sources, the divergence is surfaced explicitly in the AI digest rather than resolved in favour of the institutional source.
+| Layer | Dataset | Source | Format |
+|---|---|---|---|
+| Food lens | Adult obesity rates | WHO Global Health Observatory | API |
+| Housing lens | Urban slum population | World Bank | API |
+| Mobility lens | Road traffic mortality rate | World Bank / WHO | API |
+| Energy lens | Structure seeded — community-built | — | — |
+| Healthcare lens | Structure seeded — community-built | — | — |
+| Forces layer | Lobbying expenditure, patent data, subsidy figures, environmental externalities | Academic papers, WHO, IMF, IEA, Ellen MacArthur Foundation | Manual curation → seed.py |
+
+**Note on reference sources:** WHO and World Bank are used as reference points for comparison — not as golden sources or arbiters of truth. Each has documented institutional context, funding relationships, and coverage limitations. Where user-contributed evidence diverges from these sources, the divergence is surfaced explicitly in the AI digest rather than resolved in favour of the institutional source.
+
+**Note on Energy and Healthcare lenses:** These lenses are seeded with structure (lens, issues) but no institutional API data. They are designed to be community-built — users contribute data points through the contribution flow. This is a deliberate design choice: it demonstrates the platform's architecture can support new domains without code changes, and it invites community participation from day one.
 
 **Food lens thesis:** The argument is not about raw price comparison across countries — everyone already knows food costs more in Oslo than Nairobi. The argument is about affordability relative to income, and what that affordability gap does to food choices. In many lower-income countries, ultra-processed food has become cheaper relative to local wages than fresh whole food — not because it is inherently cheap, but because it has been made artificially cheap through agricultural subsidies, supply chain consolidation, and regulatory environments shaped by the food industry. The result is that poor nutrition has become the economically rational choice for billions of people. That is not individual failure. It is a designed outcome. The health consequences — obesity, diabetes, cardiovascular disease — are measurable and global. The food lens surfaces the mechanism behind the affordability gap, not just the gap itself.
 
 **Mobility lens thesis:** Car dependency is not a natural outcome of human preference. It is an engineered outcome produced by decades of infrastructure investment decisions, zoning laws, suburban planning models, and the systematic defunding of public transit — many of which were actively shaped by automotive and oil industry interests. The person driving two hours a day in traffic is not expressing a preference; they are trapped in a system that left them no viable alternative. The measurable consequences include cardiovascular disease from sedentary commuting, respiratory illness from vehicle emissions, financial stress from car ownership costs, urban heat islands, pedestrian death rates, and social isolation from built environments designed around vehicles rather than people. Counter-evidence is built into the lens: cycling infrastructure investment in Amsterdam, Copenhagen, Bogotá, and Nairobi demonstrates that modal shift happens when the infrastructure exists. The data shows both the damage and the proof that alternatives work.
 
-**Note on forces data:** The forces layer is community-built, not editor-curated. Users submit force claims via the contribution flow — these go through an elevated peer validation threshold (`force_approval_threshold` in `platform_config`) before being elevated into the `forces` and `force_issue_links` tables. The platform founder seeds two or three initial force entries using multiple admin users (for contributions and approvals) during testing to establish the quality bar. After that, the community builds the layer. 
+**Note on forces data:** The forces layer is seeded with four pre-approved mechanisms during setup, establishing the quality bar. The community then builds the layer through the contribution flow — force claims go through an elevated peer validation threshold before elevation into the `forces` and `force_issue_links` tables.
+
+---
+
+## Known Risks — RESOLVED
+
+✅ **Force claim elevation logic** Fully implemented with dual-threshold requirements (3 approvals + 5 minimum votes) and structural quality checks (2+ sources, 2+ lenses).
+✅ **Reject threshold** Implemented via `platform_config` keys `rejection_threshold_data_point` and `rejection_threshold_force_claim`.
+✅ **Flash message accuracy** — RESOLVED: `is_triggering_vote` logic accurately distinguishes between approving and late-reject voters.
+✅ **Validate queue duplicates** Single-digest fetch with `ORDER BY id DESC LIMIT 1`.
+✅ **Multi-contributor rewards** — All contributors (original + merged sources) receive token rewards on elevation.
+✅ **Token balance sync** `reconcile_token_balance()` called after all token transactions for instant UI updates.
+✅ **Unified data architecture** All data in unified `contributions` table via "Data Archive" system user.
+✅ **Heatmap rendering** Mode-specific scaling, dynamic country loading from `countries.json`.
+✅ **PostgreSQL migration** `Psycopg2Wrapper` in `app.py` handles compatibility transparently — `models.py` unchanged.
+✅ **AI digest CONFIDENCE line** Stripped from digest display in Week 4 polish.
+✅ **Conditional fields in contribute.html** JavaScript show/hide based on contribution type selection.
+✅ **Force claim form** Fields now conditionally displayed based on contribution type.
+
+### Remaining Known Risks (Accepted):
+- **Multiple accounts:** No email collected, making duplicate account detection impossible by design. Token economy limits damage — opening balance requires genuine participation to grow.
+- **No account recovery:** Without email, users who lose their password cannot recover their account. Disclosed explicitly at registration.
+- **Quiz AI credibility:** The weighted scoring classifier in `quiz.py` is rule-based logic, not machine learning. Accurately described as a classification system, not AI in the neural network sense.
+- **Agent data coverage bias:** WHO and World Bank data covers OECD countries more completely. UI surfaces gaps explicitly.
+- **Validator read-only limitation:** Validators cannot add evidence of their own. Documented in `how_it_works.html`. `contribution_comments` table scoped for post-submission.
+- **Sharing mechanic deliberately dropped:** Unverifiable mechanic inconsistent with platform's integrity principles. `shares` table retained in schema for potential future implementation with proper verification.
+- **Render free tier spin-down:** 50-second cold start after inactivity. Mitigated by UptimeRobot ping every 5 minutes.
+
+---
 
 ## Legal and Ethical Framework
 
-**Data privacy and user consent**
-No email address is collected at any point — a deliberate privacy-by-design decision that eliminates the most significant PII liability. The platform collects only: username, password hash, quiz responses, token transactions, contributions, validation votes, and share activity. All of this is disclosed in `privacy.html`. Users consent explicitly at registration via a checkbox. Users can request full account deletion at any time — a Python function anonymises or removes all rows linked to their `user_id`. Contributions and votes are retained in anonymised form to preserve evidence integrity; all other personal data is deleted within 30 days of request.
+No email address is collected at any point — a deliberate privacy-by-design decision. The platform collects only username, password hash, quiz responses, token transactions, contributions, validation votes, and share activity. Users consent explicitly at registration and can request full account deletion at any time. Full details are in privacy.html.
 
-The platform operates under Render's standard data processing terms, which function as a GDPR-compliant Data Processing Agreement for infrastructure. No third-party email delivery service is used, eliminating the most common source of DPA obligation for small platforms.
+The platform operates under Render's standard data processing terms, which function as a GDPR-compliant Data Processing Agreement. No third-party email delivery service is used. Bot prevention uses hCaptcha — a privacy-respecting alternative to reCAPTCHA that collects no persistent identifier.
 
-**Bot prevention**
-hCaptcha is used at registration — a privacy-respecting alternative to Google's reCAPTCHA that does not send user behaviour data to third parties. No persistent identifier is collected from this process.
-
-**Account recovery**
-Not possible without email. This is disclosed clearly at registration: "Choose a username and password you will remember. We cannot recover your account if you lose access." This is an intentional trade-off in favour of user privacy.
-
-**User-submitted content liability**
-Terms of use (`terms.html`) state clearly: contributions represent the submitter's own research; the AI digest is an evidence summary, not an endorsement; the platform reserves the right to remove content that cannot be sourced; the forces layer is community-built and the platform does not guarantee its accuracy. A reporting mechanism for disputed contributions is required.
-
-**AI use disclosure**
-`how_it_works.html` — visible to all users, registered or not — explains that an AI agent generates contribution digests, which model is used, what its limitations are, that pre-approved sources are reference points not arbiters of truth, and that the AI presents evidence only without making moderation decisions.
-
-**Community editorial responsibility**
-The forces layer is built and maintained by the community through the peer validation system, not by a platform editor. The platform's responsibility is to maintain the validation standards defined in `platform_config`, correct systemic errors when identified, and ensure the methodology remains visible and auditable. These obligations flow directly from Guiding Principles 1, 2, and 7.
+User-submitted content liability, AI use disclosure, and community editorial standards are documented in terms.html and how_it_works.html.
 
 ---
 
@@ -571,186 +479,37 @@ After routing a user to their primary lens, the quiz result page surfaces a seco
 **Heatmap "least heard" mode**
 The heatmap toggle between "highest conviction" and "least heard" actively directs attention toward underrepresented countries and issues. Amplifying the already-loud is the default failure mode of conviction platforms — this toggle is the deliberate counter.
 
-**Heatmap hover tooltips**
-Country information appears on hover rather than requiring links, reducing friction and encouraging exploration of both "highest conviction" and "least heard" modes.
-
 **Forces layer as ideological bridge**
 The cross-lens links in `force_issue_links` are the strongest echo chamber prevention in the architecture. A user deep in the food lens who sees that the same financial capture force also drives the housing crisis is pulled out of their silo by the evidence itself — not by a recommendation algorithm, but by the structure of the data.
 
-**Contribution diversity signal**
-On `validate.html`, validators see a geographic diversity indicator for existing approved contributions on that issue — e.g. "14 contributions, 12 from North America." This gives validators context for whether approving another contribution from the same region adds genuine diversity or reinforces existing concentration.
-
-**Dissenting data shown explicitly**
-Where pre-approved API data complicates or contradicts the platform's thesis on a specific issue, that data is displayed on the lens page — not hidden. A lens that only shows confirming evidence is propaganda. One that shows the full picture including inconvenient data is analysis. The platform's credibility depends on the latter.
-
 **Forces layer community standards**
-The forces layer is built by the community through an elevated validation threshold (`force_approval_threshold` in `platform_config`, default 5 approvals). For a force claim to be elevated, it must meet three criteria enforced by validators, not a platform editor: the mechanism is described in plain language without characterising intent; at least two independent sources are cited in the evidence chain; and the cross-lens links span at least two different lenses. Single-lens forces are issues, not forces — the distinction matters. These criteria are published openly so validators know the standard they are applying.
+The forces layer is built by the community through an elevated validation threshold (`force_approval_threshold` in `platform_config`, default 5 approvals). For a force claim to be elevated, it must meet three criteria enforced by validators, not a platform editor: the mechanism is described in plain language without characterising intent; at least two independent sources are cited in the evidence chain; and the cross-lens links span at least two different lenses. Single-lens forces are issues, not forces — the distinction matters.
 
 ---
 
-## Pending Design Decisions
-- **Forces content disputes** — what happens when a user challenges a force entry's evidence chain. Needs a flagging mechanism and a documented review process. Deferred to post-submission.
+### PostgreSQL migration:
+- `schema_postgres.sql` created as a dedicated production schema (`SERIAL PRIMARY KEY`, `ON CONFLICT DO NOTHING`, no `PRAGMA` statements)
+- `Psycopg2Wrapper` class added to `app.py` — auto-converts `?` placeholders to `%s` and `datetime('now')` to `NOW()`, allowing `models.py` to remain in SQLite syntax throughout
+- `seed.py` updated to dual-mode operation — detects `DATABASE_URL` and uses PostgreSQL or SQLite syntax accordingly
+- `Procfile` added for gunicorn on Render
 
-## Post-Submission Pipeline
+### Deployment:
+- Live at: https://conviction-20z3.onrender.com/
+- Hosted on Render free tier (web service + managed PostgreSQL)
+- UptimeRobot configured to ping every 5 minutes — prevents the 50-second cold start on the free tier
+
 Features deferred to after CS50 submission. Schema already supports all of these — they require Python and template work only.
 
-- **Strava integration** — `strava.py` and `strava.html`. OAuth 2.0 flow, activity sync, milestone rewards. Tables already in schema.
-- **Real-time heatmap** — WebSockets via Flask-SocketIO. Map updates pushed to all connected clients when a token is spent.
-- **Quiz ML upgrade** — Replace weighted scoring in `quiz.py` with a scikit-learn classifier trained on accumulated `quiz_responses` data.
-- **Reputation-weighted validation** — Validator votes weighted by account age and token history. Reduces gaming risk as user base grows.
 - **Admin moderation interface** — Simple dashboard for reviewing flagged contributions, adjusting `platform_config` values, and monitoring token economy health.
 - **Forces content dispute mechanism** — Flagging flow for challenging a force entry's evidence chain, with a documented review process.
-- **Contribution comments** — Allow validators to annotate or counter-submit evidence. Requires `contribution_comments` table.
 
-## AI Attribution
-Every Python and JavaScript file in this project includes a header comment attributing Claude (Anthropic) as a development aid, describing what it assisted with in that specific file, and confirming that logic, decisions, and direction were the author's own. This satisfies CS50's AI citation requirement and documents the collaboration honestly.
-
-## Conversation Context (for new Claude sessions)
-
-Paste this section at the start of any new conversation:
-
-> I am building a CS50x final project called Conviction — a Flask/Python/JS/SQLite web app where users explore global systemic issues through three lenses (food, housing, mobility) and a fourth forces layer surfacing cross-domain mechanisms. Users spend tokens to signal conviction, earn tokens by contributing and validating data, and watch a global heatmap with a "least heard" toggle. The quiz is the final onboarding step, retakeable every 90 days. User contributions include pasted source text and a citation URL — the AI agent processes the text, validators check the URL manually. Pre-approved data sources (WHO, World Bank, FAO) are reference points not arbiters of truth — divergence between user sources and institutional data is surfaced as insight. The forces layer is community-built via elevated peer validation threshold, not editor-curated. No email address is collected — privacy by design, hCaptcha for bot prevention, no account recovery. Registration grants 10 opening tokens immediately. The platform has seven guiding principles, documented legal/ethical framework, and echo chamber prevention architecture. All data (seeded and user-contributed) lives in a unified contributions table — no distinction between "official" and "community" data. Strava is post-submission; schema is ready. All code files will include AI attribution comments. Full schema, stack, file structure, and action plan are in README.md. I am a technical PM with mid-level engineering knowledge — explain concepts clearly, don't oversimplify, flag syntax connecting to other functions or files. We are currently on: [INSERT CURRENT WEEK/TASK].
-
-## Glossary
-
-Plain-language definitions of every technology and concept used in this project. Written for reference during the build — not academic definitions, but working ones.
-
----
-
-**Backend**
-The part of the application the user never sees directly. It runs on a server, processes logic, talks to the database, and returns data to the frontend. In this project, the backend is Flask running in Python. When a user spends a token, the backend is what records the transaction, checks the balance, and updates the heatmap data.
-
-**Frontend**
-The part of the application the user sees and interacts with — buttons, charts, maps, forms. In this project, the frontend is HTML templates rendered by Flask, styled with CSS, and made interactive with vanilla JavaScript. The frontend asks the backend for data; the backend provides it.
-
-**Flask**
-A lightweight Python web framework. It handles incoming HTTP requests (someone visiting a URL), runs the appropriate Python function, and returns a response (usually an HTML page or JSON data). Think of it as the traffic controller between the user's browser and your Python logic.
-
-**Python**
-The programming language the backend is written in. Chosen for this project because it is readable, well-documented, and has strong libraries for data processing, API calls, and AI integration.
-
-**SQL (Structured Query Language)**
-The language used to communicate with a database. You write SQL to ask questions ("give me all contributions from this country") or make changes ("insert this new token transaction"). The database understands SQL regardless of what programming language your application is written in.
-
-**SQLite**
-A database that lives entirely in a single file on your computer. No server required, no configuration, no installation beyond a Python library. Ideal for development because it is simple and fast to set up. Not suitable for production because only one process can write to it at a time — which breaks when multiple users or servers try to write simultaneously.
-
-**PostgreSQL**
-A full database server — a separate running process that your application connects to over a network. Handles multiple simultaneous connections cleanly, has better performance under load, and is the industry standard for production web applications. In this project, SQLite is used during development on your laptop; PostgreSQL is used when the app is deployed to Render. The switch requires only a configuration change — the SQL schema itself is the same.
-
-**Render**
-A cloud hosting platform — the "landlord" that provides the server your application runs on. Render receives incoming web requests, runs your Flask app, and manages environment variables, HTTPS certificates, and deployment. Also offers a managed PostgreSQL service, meaning both the app and the database can live on Render with no additional providers needed.
-
-**Database**
-An organised system for storing and retrieving data persistently. Unlike a variable in Python that disappears when the program stops, a database retains data between sessions, server restarts, and deployments. In this project, the database stores users, tokens, contributions, heatmap data, and everything else the platform needs to remember.
-
-**Schema**
-The blueprint of a database — it defines what tables exist, what columns each table has, what data types those columns accept, and what relationships exist between tables. In this project, `schema.sql` is run once when the database is first created. It is the most important architectural document in the project.
-
-**Table**
-A database structure that holds rows of related data — like a spreadsheet with defined columns. In this project, `users` is a table, `contributions` is a table, `token_transactions` is a table. Each row in a table is one record.
-
-**Primary Key**
-A column in a table that uniquely identifies each row. In this project, every table has an `id` column that is the primary key — no two rows in the same table can have the same `id`. SQLite and PostgreSQL generate these automatically with `AUTOINCREMENT`.
-
-**Foreign Key**
-A column in one table that references the primary key of another table. In this project, `contributions.user_id` is a foreign key — it references `users.id`, linking each contribution to the user who submitted it. Foreign keys are how relationships between tables are expressed.
-
-**UNIQUE Constraint**
-A rule enforced by the database that prevents two rows from having the same value in a specified column. In this project, `contribution_votes` has a UNIQUE constraint on `(contribution_id, user_id)` — meaning the database itself prevents a user from voting twice on the same contribution, regardless of what the Python code does.
-
-**JSON (JavaScript Object Notation)**
-A text format for storing structured data. Looks like `{"key": "value", "numbers": [1, 2, 3]}`. In this project, `quiz_responses` stores question-answer pairs as JSON, and `evidence_chain` in `forces` stores an array of sourced claims as JSON. Useful when the structure of the data might change over time — you can add new fields without changing the database schema.
-
-**API (Application Programming Interface)**
-A defined way for two pieces of software to talk to each other. In this project, WHO, World Bank, and Our World in Data expose APIs — you send a structured request to their server and receive structured data back. Flask also exposes its own internal API endpoints — URLs that return JSON data to the JavaScript frontend rather than HTML pages.
-
-**HTTP / HTTPS**
-HTTP is the protocol browsers use to request web pages and data. HTTPS is the encrypted version — the S stands for Secure. All communication between users' browsers and your server should use HTTPS. Render enforces this automatically. Without HTTPS, data in transit — including passwords — is readable to anyone intercepting the connection.
-
-**Environment Variable**
-A configuration value stored outside your code — on the server, not in a file that gets committed to version control. In this project, your Anthropic API key, database connection string, and hCaptcha secret key are stored as environment variables on Render. This prevents sensitive credentials from appearing in your codebase or on GitHub.
-
-**OAuth 2.0**
-A standard protocol for letting users grant your application limited access to another service without sharing their password. In this project, Strava integration (post-submission) uses OAuth 2.0 — users click "connect Strava," get redirected to Strava's login page, and Strava sends your app a token that allows it to read activity data. Your app never sees the user's Strava password.
-
-**Token (authentication context)**
-Not to be confused with the platform's conviction tokens — in the context of OAuth and API authentication, a token is a string of characters that proves your application has been granted permission to access a service. Strava access tokens expire every 6 hours; the refresh token is used to obtain a new one automatically.
-
-**Hashing**
-A one-way mathematical transformation that converts any input into a fixed-length string. The same input always produces the same output, but you cannot reverse the output back to the input. In this project, passwords are hashed before being stored — if the database is compromised, attackers see the hash, not the password. `werkzeug.security` in Flask handles this using bcrypt.
-
-**Salt (cryptography)**
-A random string added to data before hashing to prevent attackers from using pre-computed tables of common hashes. Two users with the same password will have different hashes if different salts are used. In this project, Flask's `werkzeug.security` handles salting automatically for passwords.
-
-**hCaptcha**
-A bot-prevention service that presents users with a challenge at registration to confirm they are human. A privacy-respecting alternative to Google's reCAPTCHA — it does not send user behaviour data to Google. In this project, hCaptcha is used at registration as the only identity check, since no email address is collected.
-
-**Session**
-A way of remembering who a user is across multiple HTTP requests. HTTP is stateless — each request is independent and the server has no memory of previous ones. Flask uses a signed cookie stored in the browser to maintain session state, so a logged-in user remains logged in as they navigate between pages.
-
-**Cookie**
-A small piece of data stored in the user's browser and sent back to the server with every request. Flask uses a session cookie to track logged-in users. Cookies can be inspected by the user but the session cookie is cryptographically signed — it cannot be forged without knowing the Flask secret key.
-
-**Leaflet.js**
-An open-source JavaScript library for interactive maps. In this project, Leaflet renders the global heatmap showing where conviction is concentrating. Free, well-documented, and does not require an API key for basic usage.
-
-**Chart.js**
-An open-source JavaScript library for data visualisation — bar charts, line charts, pie charts. In this project, Chart.js renders the data visualisations within each lens page.
-
-**Virtual Machine (VM)**
-A piece of software that simulates a complete computer — with its own operating system, memory, and storage — running on shared physical hardware. Cloud providers rent VMs by the hour. Render's infrastructure runs on VMs, though this is abstracted away from you as the developer.
-
-**Container**
-A lightweight alternative to a VM. Instead of simulating a full operating system, a container packages just your application and its dependencies. Starts in seconds rather than minutes, uses fewer resources, and is portable across environments. Docker is the standard tool for building containers. Render runs your Flask app inside a container.
-
-**Kubernetes**
-A system for managing many containers running across many servers — deciding where each runs, restarting crashed containers, scaling up when traffic spikes, and scaling down when it drops. Relevant at significant scale; abstracted away entirely by Render for this project. Understanding it conceptually is useful for future architectural conversations.
-
-**Horizontal Scaling**
-Adding more servers to share load rather than making one server more powerful. Requires a database that can handle multiple simultaneous connections — which is why PostgreSQL replaces SQLite in production. When Conviction grows, horizontal scaling means spinning up additional Flask instances on Render, all connecting to the same PostgreSQL database.
-
-**Vertical Scaling**
-Making one server more powerful — more CPU, more RAM, more storage. Simpler than horizontal scaling but has a ceiling: there is a limit to how powerful a single machine can be, and it is more expensive per unit of capacity.
-
-**Render Free Tier**
-Render's no-cost hosting option. Suitable for a CS50 submission and early-stage deployment. Limitations include the server spinning down after periods of inactivity (causing a slow first load), limited compute resources, and a single server instance. Upgrading to a paid tier removes these limitations when traffic demands it.
-
-**GDPR (General Data Protection Regulation)**
-European Union regulation governing how personal data is collected, stored, processed, and deleted. Applies to any platform that serves EU users, regardless of where the platform is hosted. Key obligations: disclose what data you collect and why, obtain consent, allow users to request deletion, report breaches within 72 hours. In this project, the no-email decision eliminates the most significant GDPR liability.
-
-**PIPEDA (Personal Information Protection and Electronic Documents Act)**
-Canadian federal privacy legislation with similar principles to GDPR. Applies to this project given the platform founder is based in Canada. Render's infrastructure and the no-email approach keep compliance obligations manageable.
-
-**PII (Personally Identifiable Information)**
-Any data that can be used to identify a specific individual — name, email address, phone number, IP address, location data. In this project, the only PII collected is the username (which may or may not be a real name — the user's choice) and the IP address logged by default by Flask and Render's infrastructure. No email address is collected by design.
-
-**Data Processing Agreement (DPA)**
-A legal contract between a data controller (you) and a data processor (a third-party service handling data on your behalf) required under GDPR. Render's standard terms of service function as a DPA. No additional DPA is required because no email delivery service is used.
-
-**Seed Data**
-Initial data inserted into a database when it is first set up — not user-generated data, but the baseline content the application needs to function. In this project, `seed.py` loads real global data from WHO, World Bank, and Our World in Data APIs into `lenses`, `issues`, `indicators`, and `contributions`. `platform_config` and `strava_milestones` are seeded with INSERT statements documented in `schema.sql`.
-
-**Append-Only Ledger**
-A database pattern where records are only ever added, never modified or deleted. The `token_transactions` table in this project is an append-only ledger — every token movement is a new row. The current balance is always calculated by summing the ledger. This prevents data loss from bugs and provides a complete audit trail of every token movement.
-
-**Background Threading**
-A Python technique that runs time-consuming tasks (like AI API calls) in parallel with the main application, preventing the user interface from freezing. In this project, the AI agent runs in a background thread so users see instant confirmation after submitting a contribution.
-
-**Tooltip**
-A small UI element that appears when a user hovers their cursor over an element, without requiring a click. In this project, Leaflet.js tooltips show country names and token spend on the heatmap when users hover over markers.
-
-**Auto-Refresh**
-A JavaScript technique that automatically reloads a page at set intervals. In this project, the contribution confirmation page refreshes every 3 seconds until the AI digest appears, providing real-time feedback without manual user action.
+**AI Attribution:** Every Python and JavaScript file in this project includes a header comment attributing Claude (Anthropic) as a development aid, describing what it assisted with in that specific file, and confirming that logic, decisions, and direction were the author's own.
 
 ---
 
 ## Submission Checklist
 - [ ] Step 1: Record 3-minute video (title, name, GitHub username, edX username, city/country, date) → upload to YouTube unlisted
 - [ ] Step 2: Finalise README.md (750+ words) → run `submit50 cs50/problems/2026/x/project`
+- [x] Step 3 prep: Visit https://conviction-20z3.onrender.com/ to confirm live deployment
 - [ ] Step 3: Visit cs50.me/cs50x to trigger certificate generation
 - [ ] Deadline: Thursday, December 31, 2026 at 4:59 PM PDT
-
----
-
-**This README is a living document. Update it at each major milestone and at the start of each new Claude conversation.**

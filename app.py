@@ -704,6 +704,10 @@ def terms():
 def how_it_works():
     return render_template('how_it_works.html')
 
+@app.route('/commitments')
+def commitments():
+    return render_template('commitments.html')
+
 
 # Prevent browser caching to ensure back button always shows current auth state
 # Critical for security after logout
