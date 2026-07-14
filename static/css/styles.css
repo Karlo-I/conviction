@@ -83,6 +83,13 @@ footer a:hover {
     color: #ffffff;
 }
 
+.copyright {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+
 /* ============================================================
    2. NAVIGATION (Sticky)
    ============================================================ */
@@ -355,11 +362,12 @@ nav a.active {
     margin-bottom: 2rem;
 }
 
-/* Contribute form submit button */
+/* Quiz and Contribute form submit button */
+.quiz-container button[type="submit"],
 .contribute-container button[type="submit"] {
-    background-color: #457b9d;
+    background-color: #9e8042;
     color: #ffffff;
-    border: 1px solid #457b9d;
+    border: 1px solid #9e8042;
     padding: 0.75rem 2rem;
     border-radius: 6px;
     font-size: 1rem;
@@ -369,6 +377,7 @@ nav a.active {
     margin-top: 1.5rem;
 }
 
+.quiz-container button[type="submit"]:hover,
 .contribute-container button[type="submit"]:hover {
     background-color: #7f1d1d; /* Deep burgundy to match nav/footer */
     border-color: #7f1d1d;
@@ -437,13 +446,14 @@ nav a.active {
     margin-right: auto;
     background: rgba(255, 255, 255, 0.95);
     padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    border-radius: 12px;
+    border: 1px solid #fecdd3; /* Soft rose gold border */
+    box-shadow: 0 4px 16px rgba(254, 205, 211, 0.2); /* Soft rose shadow */
 }
 
 /* Diagnostic Quiz CTA Button */
 .quiz-cta-button {
-    background-color: #457b9d; /* Blue default */
+    background-color: #9e8042; /* default */
     color: #ffffff;
     display: inline-block;
     padding: 0.8rem 2.5rem;
@@ -452,7 +462,7 @@ nav a.active {
     font-size: 1.05rem;
     text-decoration: none;
     transition: all 0.3s ease;
-    border: 1px solid #457b9d;
+    border: 1px solid #9e8042;
 }
 
 .quiz-cta-button:hover {
@@ -467,14 +477,14 @@ nav a.active {
 /* General CTA Button (e.g., Get Started) */
 .cta-button {
     display: inline-block;
-    background-color: #457b9d; /* Original Navy Blue */
+    background-color: #9e8042;
     color: white;
     padding: 0.8rem 2rem;
     border-radius: 6px;
     text-decoration: none;
     font-weight: 600;
     transition: all 0.3s ease;
-    border: 1px solid #457b9d;
+    border: 1px solid #9e8042;
 }
 
 .cta-button:hover {
