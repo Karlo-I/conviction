@@ -350,6 +350,19 @@ nav a.active {
     box-shadow: 0 0 0 3px rgba(69, 123, 157, 0.15);
 }
 
+/* Registration form - checkbox */
+.form-group.checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.form-group.checkbox label {
+    display: inline;
+    font-weight: 400;
+    font-size: 0.85rem;
+}
+
 /* Contribute form container with rose gold border */
 .contribute-container {
     max-width: 800px;
@@ -383,6 +396,53 @@ nav a.active {
     border-color: #7f1d1d;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(127, 29, 29, 0.2); /* Burgundy shadow */
+}
+
+/* Registration form */
+.auth-container {
+    max-width: 450px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2.5rem;
+    border-radius: 12px;
+    border: 1px solid #fecdd3;
+    box-shadow: 0 4px 16px rgba(254, 205, 211, 0.2);
+}
+
+/* Registration form - Create account button */
+.auth-submit-button {
+    background-color: #9e8042;
+    color: #ffffff;
+    border: 1px solid #9e8042;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.auth-submit-button:hover {
+    background-color: #7f1d1d;
+    border-color: #7f1d1d;
+    color: #ffffff;
+}
+
+/* Registration form - Login line */
+.auth-container > p:last-child {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.auth-container > p:last-child a {
+    color: #7f1d1d;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-container > p:last-child a:hover {
+    text-decoration: underline;
 }
 
 /* ============================================================
