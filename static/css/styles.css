@@ -804,7 +804,7 @@ nav, .nav-container, .user-menu {
     visibility: hidden;
     opacity: 0;
     width: 260px;
-    background-color: #1d3557;
+    background-color: #7f1d1d;
     color: #fff;
     text-align: center;
     border-radius: 6px;
@@ -830,7 +830,7 @@ nav, .nav-container, .user-menu {
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: transparent transparent #1d3557 transparent;
+    border-color: transparent transparent #7f1d1d transparent;
 }
 
 .token-badge:hover .tooltip-text {
