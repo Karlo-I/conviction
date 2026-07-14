@@ -2,7 +2,7 @@
 # Conviction: AI digest agent — runs once per contribution after submission.
 # Fetches evidence from pre-approved sources, summarises against the user's claim.
 # Never makes a verdict — reports what evidence exists and surfaces divergence.
-# AI assistance: Claude (Anthropic) assisted with prompt design and API integration.
+# AI assistance: Both Claude (Anthropic) and Qwen.ai (3.7-Plus) assisted with query structure and error handling patterns.
 # Logic, decisions, and direction are the author's own.
 
 import requests

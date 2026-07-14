@@ -1,6 +1,6 @@
 # app.py
 # Conviction: Flask application entry point and route definitions.
-# AI assistance: Claude (Anthropic) assisted with Flask structure and route scaffolding.
+# AI assistance: Both Claude (Anthropic) and Qwen.ai (3.7-Plus) assisted with query structure and error handling patterns.
 # Logic, decisions, and direction are the author's own.
 
 import agent

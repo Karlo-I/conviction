@@ -1,7 +1,7 @@
 -- schema.sql
 -- Conviction: database schema
 -- Run once to initialise the database: flask --app app init-db
--- AI assistance: Claude (Anthropic) assisted with schema design review.
+-- AI assistance: Both Claude (Anthropic) and Qwen.ai (3.7-Plus) assisted with query structure and error handling patterns.
 -- Logic, structure, and decisions are the author's own.
 
 -- Required only for SQLite, enforces the foreign key rules defined in the schema

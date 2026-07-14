@@ -1,7 +1,7 @@
 # models.py
 # Conviction: database interaction functions.
 # All SQL queries live here. app.py calls these functions; it never writes SQL directly.
-# AI assistance: Claude (Anthropic) assisted with query structure and error handling patterns.
+# AI assistance: Both Claude (Anthropic) and Qwen.ai (3.7-Plus) assisted with query structure and error handling patterns.
 # Logic, decisions, and direction are the author's own.
 
 import agent

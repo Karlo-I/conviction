@@ -1,7 +1,7 @@
 # seed.py
 # Conviction: seeds the database with real data from WHO and other sources
 # Run via web route: /seed-data
-# AI assistance: Claude (Anthropic) assisted with API query structure and data parsing
+# AI assistance: Both Claude (Anthropic) and Qwen.ai (3.7-Plus) assisted with query structure and error handling patterns.
 # Logic, decisions, and direction are the author's own
 
 import requests
@@ -171,9 +171,9 @@ def fetch_who_obesity(db, indicator_id, issue_id, system_user_id, use_postgresql
     print(f'  {inserted} new contributions inserted.')
 
 
+# Seed the housing lens with World Bank urban slum population data
 def seed_housing_lens(db, system_user_id, use_postgresql):
-    """Seed the housing lens with World Bank urban slum population data."""
-
+    
     if use_postgresql:
         cursor = db.conn.cursor()
         cursor.execute(
@@ -228,9 +228,8 @@ def seed_housing_lens(db, system_user_id, use_postgresql):
     fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id, use_postgresql)
 
 
+# Fetch urban slum population rates from World Bank API
 def fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id, use_postgresql):
-    """Fetch urban slum population rates from World Bank API."""
-
     target_countries = 'ZAF;PHL'
     url = f'https://api.worldbank.org/v2/country/{target_countries}/indicator/EN.POP.SLUM.UR.ZS'
     params = {'format': 'json', 'per_page': 100, 'mrv': 1}
@@ -297,8 +296,8 @@ def fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id, use_post
     print(f'  {inserted} new contributions inserted.')
 
 
+# Seed the mobility lens with World Bank road traffic mortality data
 def seed_mobility_lens(db, system_user_id, use_postgresql):
-    """Seed the mobility lens with World Bank road traffic mortality data."""
 
     if use_postgresql:
         cursor = db.conn.cursor()
