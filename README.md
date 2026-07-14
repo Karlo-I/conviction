@@ -271,7 +271,6 @@ INSERT INTO platform_config (key, value, description) VALUES
     ('tokens_per_contribution', '3', 'Tokens earned when contribution is approved'),
     ('agent_model', 'claude-haiku-4-5-20251001', 'AI model used for contribution digests'),
     ('max_contributions_per_day', '5', 'Rate limit per user per day'),
-    ('max_shares_per_day', '3', 'Max token-earning shares per user per day'),
     ('quiz_retake_days', '90', 'Minimum days between quiz retakes per user')
 ON CONFLICT (key) DO NOTHING;
 
