@@ -18,7 +18,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    color: #4a4a4a;
+    color: #1d3557;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #f8f9fa 100%);
     background-attachment: fixed; 
 }
@@ -37,7 +37,7 @@ h1 {
     font-weight: 600;
     line-height: 1.4;
     margin-bottom: 1rem;
-    color: #1a1a1a;
+    color: #1d3557;
 }
 
 h2 {
@@ -46,7 +46,7 @@ h2 {
     font-weight: 600;
     margin-top: 2rem;
     margin-bottom: 1rem;
-    color: #2d3436;
+    color: #1d3557;
 }
 
 p {
@@ -213,7 +213,7 @@ nav a.active {
 .legal-container h2 {
     margin-top: 2rem;
     margin-bottom: 1rem;
-    color: #2d3436;
+    color: #1d3557;
 }
 
 .legal-container ul {
