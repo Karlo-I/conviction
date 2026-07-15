@@ -291,13 +291,12 @@ def fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id, use_post
 
             # Check if this contribution already exists
             cursor.execute(
-                "SELECT id FROM contributions WHERE country_code = %s AND indicator_id = %s AND value = %s AND user_id = %s",
-                (country_code, indicator_id, record['value'], system_user_id)
+                "SELECT id FROM contributions WHERE country_code = %s AND indicator_id = %s AND user_id = %s",
+                (country_code, indicator_id, system_user_id)
             )
-            existing = cursor.fetchone()
 
             # Only insert if it doesn't exist
-            if not existing:
+            if cursor.fetchone() is None:
                 cursor.execute(
                     "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
                     (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
@@ -436,13 +435,12 @@ def fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id, use_pos
 
             # Check if this contribution already exists
             cursor.execute(
-                "SELECT id FROM contributions WHERE country_code = %s AND indicator_id = %s AND value = %s AND user_id = %s",
-                (country_code, indicator_id, record['value'], system_user_id)
+                "SELECT id FROM contributions WHERE country_code = %s AND indicator_id = %s AND user_id = %s",
+                (country_code, indicator_id, system_user_id)
             )
-            existing = cursor.fetchone()
 
             # Only insert if it doesn't exist
-            if not existing:
+            if cursor.fetchone() is None:
                 cursor.execute(
                     "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
                     (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
