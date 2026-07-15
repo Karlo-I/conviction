@@ -103,9 +103,8 @@ def seed_food_lens(db, system_user_id, use_postgresql):
     fetch_who_obesity(db, indicator_id, upf_issue_id, system_user_id, use_postgresql)
 
 
+# Fetch adult obesity rates from WHO GHO API and insert as contributions
 def fetch_who_obesity(db, indicator_id, issue_id, system_user_id, use_postgresql):
-    """Fetch adult obesity rates from WHO GHO API and insert as contributions."""
-
     target_countries = ['CAN', 'BRA']
     url = 'https://ghoapi.azureedge.net/api/NCD_BMI_30C'
     country_filter = " or ".join([f"SpatialDim eq '{c}'" for c in target_countries])
@@ -148,13 +147,12 @@ def fetch_who_obesity(db, indicator_id, issue_id, system_user_id, use_postgresql
 
             # Check if this contribution already exist
             cursor.execute(
-                "SELECT id FROM contributions WHERE country_code = %s AND indicator_id = %s AND value = %s AND user_id = %s",
-                (country_code, indicator_id, point['value'], system_user_id)
+                "SELECT id FROM contributions WHERE country_code = %s AND indicator_id = %s AND user_id = %s",
+                (country_code, indicator_id, system_user_id)
             )
-            existing = cursor.fetchone()
 
             # Only insert if it doesn't exist
-            if not existing:
+            if cursor.fetchone() is None:
                 cursor.execute(
                     "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
                     (system_user_id, 'data_point', country_code, point['value'], note_text, source_url, 'approved', indicator_id)
