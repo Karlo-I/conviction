@@ -304,8 +304,6 @@ def add_issue_comment_route(issue_id):
     
     # Define the database connection for this request
     db = get_db()
-    print(f"DEBUG: Received comment submission for issue_id={issue_id}")
-    print(f"DEBUG: Form data: comment={request.form.get('comment')}, source_url={request.form.get('source_url')}")
     
     # Validate issue exists and get lens_slug for redirect
     issue = db.execute(
@@ -359,14 +357,7 @@ def add_issue_comment_route(issue_id):
         source_url, 
         parent_comment_id
     )
-    
-    # DEBUG: Verify it was saved
-    verify = db.execute(
-        'SELECT COUNT(*) as count FROM issue_comments WHERE issue_id = ?',
-        (issue_id,)
-    ).fetchone()
-    print(f"DEBUG: Total comments in database for issue {issue_id}: {verify['count']}")
-    
+        
     return redirect(url_for('lens', slug=lens_slug) + f'#issue-{issue_id}')
 
 

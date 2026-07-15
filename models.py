@@ -712,7 +712,6 @@ def get_issues_with_data(db, lens_id):
 
         # NEW: Fetch and attach comments for this issue
         comments = get_comments_for_issue(db, issue['issue_id'])
-        print(f"DEBUG get_issues_with_data: Issue {issue['issue_id']} has {len(comments)} comments")
         issue['comments'] = comments
     
     return issues
@@ -962,21 +961,13 @@ def get_comments_for_issue(db, issue_id):
         ''',
         (issue_id,)
     ).fetchall()
-    
-    print(f"DEBUG get_comments_for_issue: Raw query returned {len(comments_raw)} comments for issue {issue_id}")
-    
+        
     # Convert to list of dicts
     comments_list = [dict(c) for c in comments_raw]
-    
-    # Debug: show what we got
-    for c in comments_list:
-        print(f"  - Comment {c['id']}: parent_comment_id={c['parent_comment_id']} (type: {type(c['parent_comment_id'])})")
-    
+        
     # Separate top-level comments from replies
     top_level = [c for c in comments_list if c['parent_comment_id'] is None]
-    
-    print(f"DEBUG get_comments_for_issue: Found {len(top_level)} top-level comments")
-    
+        
     # Nest replies under their parent comments
     for parent in top_level:
         parent['replies'] = [c for c in comments_list if c['parent_comment_id'] == parent['id']]
