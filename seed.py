@@ -439,13 +439,13 @@ def seed_energy_lens(db, system_user_id, use_postgresql):
         lens_id = cursor.fetchone()[0]
         
         issues = [
-            (lens_id, 'energy-poverty', 'Energy Poverty', 'Lack of access to affordable, reliable energy services'),
-            (lens_id, 'fossil-fuel-dependency', 'Fossil Fuel Dependency', 'Economic and infrastructural lock-in to carbon-intensive energy sources'),
+            (lens_id, 'energy-poverty', 'Energy Poverty', 'Lack of access to affordable, reliable energy services', 'Energy poverty demonstrates how access to modern, reliable power is unevenly distributed, leaving vulnerable populations dependent on expensive or unreliable sources. This highlights the systemic barrier that lack of energy access creates for education, healthcare, and economic mobility.'),
+            (lens_id, 'fossil-fuel-dependency', 'Fossil Fuel Dependency', 'Economic and infrastructural lock-in to carbon-intensive energy sources', 'Continued reliance on fossil fuels is sustained by deeply entrenched infrastructure and financial incentives that actively resist decarbonization. This reveals the structural lock-in that delays renewable energy adoption, externalizing the true costs of climate change onto frontline communities.'),
         ]
         
         for issue in issues:
             cursor.execute(
-                "INSERT INTO issues (lens_id, slug, title, description) VALUES (%s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+                "INSERT INTO issues (lens_id, slug, title, description, context) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
                 issue
             )
         db.conn.commit()
@@ -486,13 +486,13 @@ def seed_healthcare_lens(db, system_user_id, use_postgresql):
         lens_id = cursor.fetchone()[0]
         
         issues = [
-            (lens_id, 'healthcare-access', 'Healthcare Access', 'Barriers to obtaining timely, affordable, and quality medical care'),
-            (lens_id, 'pharmaceutical-pricing', 'Pharmaceutical Pricing', 'Drug pricing mechanisms that prioritize profit over patient access'),
+            (lens_id, 'healthcare-access', 'Healthcare Access', 'Barriers to obtaining timely, affordable, and quality medical care', 'Barriers to healthcare access expose fundamental inequities in systems that treat medical care as a commodity rather than a public good. This reveals how geographic, financial, and administrative hurdles systematically prevent vulnerable populations from receiving timely, life-saving interventions.'),
+            (lens_id, 'pharmaceutical-pricing', 'Pharmaceutical Pricing', 'Drug pricing mechanisms that prioritize profit over patient access', 'Pharmaceutical pricing mechanisms often prioritize shareholder returns over patient survival by leveraging patent monopolies to keep essential drug prices artificially high. This highlights the systemic tension between innovation incentives and the moral imperative to make life-saving treatments universally affordable.'),
         ]
         
         for issue in issues:
             cursor.execute(
-                "INSERT INTO issues (lens_id, slug, title, description) VALUES (%s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+                "INSERT INTO issues (lens_id, slug, title, description, context) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
                 issue
             )
         db.conn.commit()
