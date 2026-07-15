@@ -145,25 +145,44 @@ def fetch_who_obesity(db, indicator_id, issue_id, system_user_id, use_postgresql
         
         if use_postgresql:
             cursor = db.conn.cursor()
+
+            # Check if this contribution already exist
             cursor.execute(
-                "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
-                (system_user_id, 'data_point', country_code, point['value'], note_text, source_url, 'approved', indicator_id)
+                "SELECT id FROM contributions WHERE country_code = %s AND indicator_id = %s AND value = %s AND user_id = %s",
+                (country_code, indicator_id, point['value'], system_user_id)
             )
-            contribution_id = cursor.fetchone()[0]
-            cursor.execute(
-                "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
-                (contribution_id, issue_id)
-            )
-            db.conn.commit()
-            cursor.close()
+            existing = cursor.fetchone()
+
+            # Only insert if it doesn't exist
+            if not existing:
+                cursor.execute(
+                    "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
+                    (system_user_id, 'data_point', country_code, point['value'], note_text, source_url, 'approved', indicator_id)
+                )
+                contribution_id = cursor.fetchone()[0]
+                cursor.execute(
+                    "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
+                    (contribution_id, issue_id)
+                )
+                db.conn.commit()
+                cursor.close()
+
         else:
-            db.execute(
-                'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
-                (system_user_id, 'data_point', country_code, point['value'], note_text, source_url, 'approved', indicator_id)
-            )
-            contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
-            contribution_id = contribution['id']
-            db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
+            # Check if this contribution already exist
+            existing = db.execute(
+                "SELECT id FROM contributions WHERE country_code = ? AND indicator_id = ? AND value = ? AND user_id = ?",
+                (country_code, indicator_id, point['value'], system_user_id)
+            ).fetchone()
+
+            if not existing:
+                # Only insert if it doesn't exist
+                db.execute(
+                    'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
+                    (system_user_id, 'data_point', country_code, point['value'], note_text, source_url, 'approved', indicator_id)
+                )
+                contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
+                contribution_id = contribution['id']
+                db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
         
         inserted += 1
 
@@ -271,25 +290,43 @@ def fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id, use_post
         
         if use_postgresql:
             cursor = db.conn.cursor()
+
+            # Check if this contribution already exists
             cursor.execute(
-                "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
-                (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
+                "SELECT id FROM contributions WHERE country_code = %s AND indicator_id = %s AND value = %s AND user_id = %s",
+                (country_code, indicator_id, record['value'], system_user_id)
             )
-            contribution_id = cursor.fetchone()[0]
-            cursor.execute(
-                "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
-                (contribution_id, issue_id)
-            )
-            db.conn.commit()
-            cursor.close()
+            existing = cursor.fetchone()
+
+            # Only insert if it doesn't exist
+            if not existing:
+                cursor.execute(
+                    "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
+                    (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
+                )
+                contribution_id = cursor.fetchone()[0]
+                cursor.execute(
+                    "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
+                    (contribution_id, issue_id)
+                )
+                db.conn.commit()
+                cursor.close()
         else:
-            db.execute(
-                'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
-                (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
-            )
-            contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
-            contribution_id = contribution['id']
-            db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
+            # Check if this contribution already exists
+            existing = db.execute(
+                "SELECT id FROM contributions WHERE country_code = ? AND indicator_id = ? AND value = ? AND user_id = ?",
+                (country_code, indicator_id, record['value'], system_user_id)
+            ).fetchone()
+
+            # Only insert if it doesn't exist
+            if not existing:
+                db.execute(
+                    'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
+                    (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
+                )
+                contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
+                contribution_id = contribution['id']
+                db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
         
         inserted += 1
 
@@ -398,25 +435,43 @@ def fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id, use_pos
         
         if use_postgresql:
             cursor = db.conn.cursor()
+
+            # Check if this contribution already exists
             cursor.execute(
-                "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
-                (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
+                "SELECT id FROM contributions WHERE country_code = %s AND indicator_id = %s AND value = %s AND user_id = %s",
+                (country_code, indicator_id, record['value'], system_user_id)
             )
-            contribution_id = cursor.fetchone()[0]
-            cursor.execute(
-                "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
-                (contribution_id, issue_id)
-            )
-            db.conn.commit()
-            cursor.close()
+            existing = cursor.fetchone()
+
+            # Only insert if it doesn't exist
+            if not existing:
+                cursor.execute(
+                    "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
+                    (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
+                )
+                contribution_id = cursor.fetchone()[0]
+                cursor.execute(
+                    "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
+                    (contribution_id, issue_id)
+                )
+                db.conn.commit()
+                cursor.close()
         else:
-            db.execute(
-                'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
-                (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
-            )
-            contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
-            contribution_id = contribution['id']
-            db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
+            # Check if this contribution already exists
+            existing = db.execute(
+                "SELECT id FROM contributions WHERE country_code = ? AND indicator_id = ? AND value = ? AND user_id = ? ",
+                (country_code, indicator_id, record['value'], system_user_id)
+            ).fetchone()
+
+            # Only insert if it doesn't exist
+            if not existing:
+                db.execute(
+                    'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
+                    (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
+                )
+                contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
+                contribution_id = contribution['id']
+                db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
         
         inserted += 1
 
