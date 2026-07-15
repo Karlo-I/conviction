@@ -37,16 +37,14 @@
         <a href="{{ url_for('login') }}" style="font-size: 0.9rem; color: #457b9d;">Log in to spend tokens</a>
         {% endif %}
 
-        {# Collapsible Evidence & Discussion Toggle - Show if there's evidence OR if user is logged in #}
-        {% if issue.community_contributions or session.user_id %}
+        
         <button class="toggle-evidence" data-target="evidence-{{ issue.issue_id }}" 
                 style="margin-top: 1.5rem; background: #e9ecef; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; color: #457b9d; font-weight: 500; font-size: 0.9rem;">
             Show community evidence & discussion
         </button>
-        {% endif %}
+        
 
-        {# Collapsible Section (Hidden by default) #}
-        {% if issue.community_contributions or session.user_id %}
+        
         <div id="evidence-{{ issue.issue_id }}" class="community-section hidden" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e9ecef;">
             
             {# 1. Community Evidence #}
@@ -240,7 +238,6 @@
             </div>
 
         </div>
-        {% endif %}
 
     </div>
     {% endfor %}
