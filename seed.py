@@ -356,8 +356,8 @@ def seed_mobility_lens(db, system_user_id, use_postgresql):
     fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id, use_postgresql)
 
 
+#  Fetch road traffic mortality rates from World Bank API
 def fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id, use_postgresql):
-    """Fetch road traffic mortality rates from World Bank API."""
 
     target_countries = 'AUS;NOR'
     url = f'https://api.worldbank.org/v2/country/{target_countries}/indicator/SH.STA.TRAF.P5'
@@ -425,8 +425,8 @@ def fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id, use_pos
     print(f'  {inserted} new contributions inserted.')
 
 
+#  Seed the energy lens with climate and access issues
 def seed_energy_lens(db, system_user_id, use_postgresql):
-    """Seed the energy lens with climate and access issues."""
     
     if use_postgresql:
         cursor = db.conn.cursor()
@@ -449,6 +449,23 @@ def seed_energy_lens(db, system_user_id, use_postgresql):
                 issue
             )
         db.conn.commit()
+        
+        # Fetch issue IDs to link indicators
+        cursor.execute("SELECT id FROM issues WHERE slug = 'energy-poverty'")
+        energy_poverty_id = cursor.fetchone()[0]
+        cursor.execute("SELECT id FROM issues WHERE slug = 'fossil-fuel-dependency'")
+        fossil_fuel_id = cursor.fetchone()[0]
+        
+        # Insert indicators
+        cursor.execute(
+            "INSERT INTO indicators (issue_id, name, source, unit) VALUES (%s, %s, %s, %s) ON CONFLICT (issue_id, name) DO NOTHING",
+            (energy_poverty_id, 'Energy access rate', 'World Bank', '% of population')
+        )
+        cursor.execute(
+            "INSERT INTO indicators (issue_id, name, source, unit) VALUES (%s, %s, %s, %s) ON CONFLICT (issue_id, name) DO NOTHING",
+            (fossil_fuel_id, 'Renewable energy share', 'IEA', '% of total energy')
+        )
+        db.conn.commit()
         cursor.close()
     
     else:
@@ -468,12 +485,29 @@ def seed_energy_lens(db, system_user_id, use_postgresql):
         for issue in issues:
             db.execute('INSERT OR IGNORE INTO issues (lens_id, slug, title, description, context) VALUES (?, ?, ?, ?, ?)', issue)
         db.commit()
+        
+        # Fetch issue IDs to link indicators
+        energy_poverty = db.execute("SELECT id FROM issues WHERE slug = 'energy-poverty'").fetchone()
+        energy_poverty_id = energy_poverty['id']
+        fossil_fuel = db.execute("SELECT id FROM issues WHERE slug = 'fossil-fuel-dependency'").fetchone()
+        fossil_fuel_id = fossil_fuel['id']
+        
+        # Insert indicators
+        db.execute(
+            'INSERT OR IGNORE INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
+            (energy_poverty_id, 'Energy access rate', 'World Bank', '% of population')
+        )
+        db.execute(
+            'INSERT OR IGNORE INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
+            (fossil_fuel_id, 'Renewable energy share', 'IEA', '% of total energy')
+        )
+        db.commit()
     
-    print('Seeded Energy lens with 2 issues')
+    print('Seeded Energy lens with 2 issues and indicators')
 
 
+# Seed the healthcare lens with access and affordability issues
 def seed_healthcare_lens(db, system_user_id, use_postgresql):
-    """Seed the healthcare lens with access and affordability issues."""
     
     if use_postgresql:
         cursor = db.conn.cursor()
@@ -496,6 +530,23 @@ def seed_healthcare_lens(db, system_user_id, use_postgresql):
                 issue
             )
         db.conn.commit()
+        
+        # Fetch issue IDs to link indicators
+        cursor.execute("SELECT id FROM issues WHERE slug = 'healthcare-access'")
+        healthcare_access_id = cursor.fetchone()[0]
+        cursor.execute("SELECT id FROM issues WHERE slug = 'pharmaceutical-pricing'")
+        pharma_pricing_id = cursor.fetchone()[0]
+        
+        # Insert indicators
+        cursor.execute(
+            "INSERT INTO indicators (issue_id, name, source, unit) VALUES (%s, %s, %s, %s) ON CONFLICT (issue_id, name) DO NOTHING",
+            (healthcare_access_id, 'Healthcare access index', 'WHO', '0-100 scale')
+        )
+        cursor.execute(
+            "INSERT INTO indicators (issue_id, name, source, unit) VALUES (%s, %s, %s, %s) ON CONFLICT (issue_id, name) DO NOTHING",
+            (pharma_pricing_id, 'Medicine affordability', 'WHO', '% of income')
+        )
+        db.conn.commit()
         cursor.close()
     
     else:
@@ -515,12 +566,29 @@ def seed_healthcare_lens(db, system_user_id, use_postgresql):
         for issue in issues:
             db.execute('INSERT OR IGNORE INTO issues (lens_id, slug, title, description, context) VALUES (?, ?, ?, ?, ?)', issue)
         db.commit()
+        
+        # Fetch issue IDs to link indicators
+        healthcare_access = db.execute("SELECT id FROM issues WHERE slug = 'healthcare-access'").fetchone()
+        healthcare_access_id = healthcare_access['id']
+        pharma_pricing = db.execute("SELECT id FROM issues WHERE slug = 'pharmaceutical-pricing'").fetchone()
+        pharma_pricing_id = pharma_pricing['id']
+        
+        # Insert indicators
+        db.execute(
+            'INSERT OR IGNORE INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
+            (healthcare_access_id, 'Healthcare access index', 'WHO', '0-100 scale')
+        )
+        db.execute(
+            'INSERT OR IGNORE INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
+            (pharma_pricing_id, 'Medicine affordability', 'WHO', '% of income')
+        )
+        db.commit()
     
-    print('Seeded Healthcare lens with 2 issues')
+    print('Seeded Healthcare lens with 2 issues and indicators')
 
 
+# Seed the forces layer with pre-approved systemic mechanisms
 def seed_forces_layer(db, system_user_id, use_postgresql):
-    """Seed the forces layer with pre-approved systemic mechanisms."""
     
     print('Seeding Forces layer...')
     
