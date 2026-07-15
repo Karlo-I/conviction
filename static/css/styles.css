@@ -1017,3 +1017,307 @@ nav, .nav-container, .user-menu {
         transform: translateY(0);
     }
 }
+
+
+/* ============================================================
+   13. ISSUE COMMENTS & DISCUSSION
+   ============================================================ */
+   .hidden {
+    display: none !important;
+}
+
+.issue-comments {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e9ecef;
+}
+
+.issue-comments h4 {
+    margin-bottom: 1.5rem;
+    color: #1d3557;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.comment-card {
+    margin-bottom: 2rem;
+}
+
+.comment-main {
+    background: #ffffff;
+    padding: 1.25rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.comment-avatar, .reply-avatar {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.comment-avatar {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #457b9d 0%, #1d3557 100%);
+    font-size: 0.85rem;
+}
+
+.reply-avatar {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    font-size: 0.75rem;
+}
+
+.comment-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.comment-username, .reply-username {
+    font-weight: 600;
+}
+
+.comment-username {
+    color: #1d3557;
+    font-size: 0.95rem;
+}
+
+.reply-username {
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.comment-date, .reply-date {
+    color: #6c757d;
+}
+
+.comment-date { font-size: 0.8rem; }
+.reply-date { font-size: 0.75rem; }
+
+.comment-text {
+    margin: 0 0 1rem 0;
+    line-height: 1.6;
+    color: #2d3436;
+    font-size: 0.95rem;
+}
+
+.reply-text {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #2d3436;
+}
+
+.comment-source-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    color: #457b9d;
+    text-decoration: none;
+    padding: 0.25rem 0.5rem;
+    background: #f0f4f8;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+    transition: background 0.2s;
+}
+
+.comment-source-link:hover {
+    background: #e2e8f0;
+    text-decoration: none;
+}
+
+.comment-reply-btn {
+    background: none;
+    border: none;
+    color: #457b9d;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.comment-reply-btn:hover {
+    background: #f0f4f8;
+}
+
+.reply-form-container {
+    margin: 0.75rem 0 0.75rem 3.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid #457b9d;
+}
+
+.reply-form-container textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    min-height: 60px;
+    resize: vertical;
+}
+
+.reply-form-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-reply-submit {
+    background-color: #457b9d;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.btn-reply-submit:hover { background-color: #366582; }
+
+.btn-reply-cancel {
+    background-color: #e9ecef;
+    color: #495057;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+
+.btn-reply-cancel:hover { background-color: #dee2e6; }
+
+.comment-replies {
+    margin-top: 1rem;
+    padding-left: 3.5rem;
+}
+
+.reply-card {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid #dee2e6;
+}
+
+.comments-empty-state {
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-align: center;
+    border: 2px dashed #dee2e6;
+}
+
+.comments-empty-state p {
+    color: #6c757d;
+    font-style: italic;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.new-comment-form-container {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.new-comment-form-container h5 {
+    margin-bottom: 1rem;
+    color: #1d3557;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.new-comment-form-container textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    min-height: 100px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.new-comment-form-container input[type="text"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+
+.btn-comment-submit {
+    background-color: #9e8042;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.btn-comment-submit:hover { background-color: #7f1d1d; }
+
+.login-prompt-container {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+}
+
+.login-prompt-container p {
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.btn-login-prompt {
+    display: inline-block;
+    background-color: #457b9d;
+    color: white;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.btn-login-prompt:hover {
+    background-color: #366582;
+    color: white;
+    text-decoration: none;
+}

@@ -651,6 +651,7 @@ def get_issues_with_data(db, lens_id):
             i.id AS issue_id,
             i.title,
             i.description,
+            i.context,
             ind.id AS indicator_id,
             ind.name AS indicator_name,
             ind.unit
@@ -708,6 +709,11 @@ def get_issues_with_data(db, lens_id):
             processed_contributions.append(c_dict)
             
         issue['community_contributions'] = processed_contributions
+
+        # NEW: Fetch and attach comments for this issue
+        comments = get_comments_for_issue(db, issue['issue_id'])
+        print(f"DEBUG get_issues_with_data: Issue {issue['issue_id']} has {len(comments)} comments")
+        issue['comments'] = comments
     
     return issues
 
@@ -940,3 +946,59 @@ def get_pending_contributions_for_user(db, user_id):
         result.append(c_dict)
         
     return result
+
+
+# Fetch all comments for an issue, structured with top-level comments and their replies
+def get_comments_for_issue(db, issue_id):
+    """Fetch all comments for an issue, structured with top-level comments and their replies."""
+    comments_raw = db.execute(
+        '''
+        SELECT ic.id, ic.issue_id, ic.user_id, ic.parent_comment_id, ic.comment, 
+               ic.source_url, ic.created_at, u.username
+        FROM issue_comments ic
+        JOIN users u ON ic.user_id = u.id
+        WHERE ic.issue_id = ?
+        ORDER BY ic.created_at ASC
+        ''',
+        (issue_id,)
+    ).fetchall()
+    
+    print(f"DEBUG get_comments_for_issue: Raw query returned {len(comments_raw)} comments for issue {issue_id}")
+    
+    # Convert to list of dicts
+    comments_list = [dict(c) for c in comments_raw]
+    
+    # Debug: show what we got
+    for c in comments_list:
+        print(f"  - Comment {c['id']}: parent_comment_id={c['parent_comment_id']} (type: {type(c['parent_comment_id'])})")
+    
+    # Separate top-level comments from replies
+    top_level = [c for c in comments_list if c['parent_comment_id'] is None]
+    
+    print(f"DEBUG get_comments_for_issue: Found {len(top_level)} top-level comments")
+    
+    # Nest replies under their parent comments
+    for parent in top_level:
+        parent['replies'] = [c for c in comments_list if c['parent_comment_id'] == parent['id']]
+    
+    return top_level
+
+
+# Add a new comment to an issue. Returns the new comment's ID
+def add_issue_comment(db, issue_id, user_id, comment, source_url=None, parent_comment_id=None):
+    cursor = db.execute(
+        '''
+        INSERT INTO issue_comments (issue_id, user_id, parent_comment_id, comment, source_url, created_at)
+        VALUES (?, ?, ?, ?, ?, datetime('now'))
+        RETURNING id
+        ''',
+        (issue_id, user_id, parent_comment_id, comment, source_url)
+    )
+    
+    # Fetch the ID first so SQLite releases the "in progress" state
+    new_id = cursor.fetchone()['id']
+    
+    # Now it is safe to commit
+    db.commit()
+    
+    return new_id

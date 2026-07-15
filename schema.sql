@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS issues (
     slug TEXT UNIQUE NOT NULL,
     title TEXT NOT NULL,
     description TEXT,
+    context TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -143,6 +144,16 @@ CREATE TABLE IF NOT EXISTS contribution_lens_links (
     contribution_id INTEGER NOT NULL REFERENCES contributions(id),
     issue_id INTEGER NOT NULL REFERENCES issues(id),
     UNIQUE(contribution_id, issue_id)
+);
+
+CREATE TABLE IF NOT EXISTS issue_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    issue_id INTEGER NOT NULL REFERENCES issues(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    parent_comment_id INTEGER REFERENCES issue_comments(id),
+    comment TEXT NOT NULL,
+    source_url TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================

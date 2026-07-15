@@ -14,9 +14,15 @@
     <p>{{ lens.description }}</p>
 
     {% for issue in issues %}
-    <div class="issue" style="padding-bottom: 3rem; margin-bottom: 3rem; border-bottom: 2px solid #e9ecef;">
+    <div class="issue" id="issue-{{ issue.issue_id }}" style="padding-bottom: 3rem; margin-bottom: 3rem; border-bottom: 2px solid #e9ecef;">
         <h2>{{ issue.title }}</h2>
         <p>{{ issue.description }}</p>
+        
+        {% if issue.context %}
+        <p style="font-weight: bold; color: #1d3557; margin-top: 0.5rem; margin-bottom: 1.5rem; line-height: 1.5;">
+            {{ issue.context }}
+        </p>
+        {% endif %}
 
         {% if session.user_id %}
         <form method="POST" action="{{ url_for('spend') }}">
@@ -28,16 +34,36 @@
             </button>
         </form>
         {% else %}
-        <a href="{{ url_for('login') }}">Log in to spend tokens</a>
-        {% endif %}       
+        <a href="{{ url_for('login') }}" style="font-size: 0.9rem; color: #457b9d;">Log in to spend tokens</a>
+        {% endif %}
 
-        {# Community Evidence as Cards #}
-        {% if issue.community_contributions %}
-        <div class="community-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e9ecef;">
+        {# Collapsible Evidence & Discussion Toggle - Show if there's evidence OR if user is logged in #}
+        {% if issue.community_contributions or session.user_id %}
+        <button class="toggle-evidence" data-target="evidence-{{ issue.issue_id }}" 
+                style="margin-top: 1.5rem; background: #e9ecef; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; color: #457b9d; font-weight: 500; font-size: 0.9rem;">
+            Show community evidence & discussion
+        </button>
+        {% endif %}
+
+        {# Collapsible Section (Hidden by default) #}
+        {% if issue.community_contributions or session.user_id %}
+        <div id="evidence-{{ issue.issue_id }}" class="community-section hidden" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e9ecef;">
+            
+            {# 1. Community Evidence #}
+            {% if issue.community_contributions %}
             <h3 style="margin-bottom: 1rem; color: #1d3557;">Community Evidence for {{ issue.title }}</h3>
             <p style="color: #666; font-size: 0.9rem; margin-bottom: 1.5rem;">
                 Peer-validated observations and data points from our community.
             </p>
+
+            {% set values = issue.community_contributions | map(attribute='value') | reject('none') | list %}
+            {% if values %}
+                {% set max_val = values | max %}
+                {% set min_val = values | min %}
+            {% else %}
+                {% set max_val = none %}
+                {% set min_val = none %}
+            {% endif %}
 
             {% for c in issue.community_contributions %}
             <div class="validate-card" style="margin-bottom: 1.5rem; border-left: 4px solid #457b9d; padding-left: 2rem;">
@@ -59,9 +85,14 @@
                     <p style="margin-bottom: 1rem; line-height: 1.6;">{{ c.note }}</p>
                 {% endif %}
                 
-                {% if c.value %}
+                {% if c.value is not none %}
                     <p style="margin-bottom: 1rem; font-weight: bold; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; display: inline-block;">
                         Value: {{ c.value|round(1) }}{{ issue.unit }}
+                        {% if values and c.value == max_val and max_val != min_val %}
+                            <span style="display: inline-block; background: #fee2e2; color: #b91c1c; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 4px; margin-left: 0.5rem; vertical-align: middle;">Highest</span>
+                        {% elif values and c.value == min_val and max_val != min_val %}
+                            <span style="display: inline-block; background: #d1fae5; color: #047857; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 4px; margin-left: 0.5rem; vertical-align: middle;">Lowest</span>
+                        {% endif %}
                     </p>
                 {% endif %}
                 
@@ -88,36 +119,127 @@
                 {% endif %}
             </div>
             {% endfor %}
-        </div>
-        {% endif %}
-
-        {# Fallback if absolutely no data exists #}
-        {% if not issue.official_data and not issue.community_contributions %}
-        <div style="margin-top: 3rem; padding: 2.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border: 2px dashed #fecdd3; text-align: center;">
-            <div style="margin-bottom: 1rem;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#457b9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="12" y1="18" x2="12" y2="12"></line>
-                    <line x1="9" y1="15" x2="15" y2="15"></line>
-                </svg>
+            
+            {% else %}
+            {# Fallback if absolutely no data exists #}
+            <div style="margin-top: 1rem; margin-bottom: 2rem; padding: 2.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border: 2px dashed #fecdd3; text-align: center;">
+                <div style="margin-bottom: 1rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#457b9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="12" y1="18" x2="12" y2="12"></line>
+                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                    </svg>
+                </div>
+                <h3 style="color: #1d3557; margin-bottom: 0.5rem; font-size: 1.2rem;">
+                    No evidence yet
+                </h3>
+                <p style="color: #6c757d; margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+                    This issue has been identified by the community but no data has been contributed yet.
+                </p>
+                <a href="{{ url_for('contribute') }}" class="cta-button">
+                    Be the first to contribute
+                </a>
+                <p style="color: #adb5bd; margin-top: 1rem; font-size: 0.85rem;">
+                    Your evidence will help illuminate this systemic issue.
+                </p>
             </div>
-            <h3 style="color: #1d3557; margin-bottom: 0.5rem; font-size: 1.2rem;">
-                No evidence yet
-            </h3>
-            <p style="color: #6c757d; margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto;">
-                This issue has been identified by the community but no data has been contributed yet.
-            </p>
-            <a href="{{ url_for('contribute') }} " class="cta-button">
-                Be the first to contribute
-            </a>
-            <p style="color: #adb5bd; margin-top: 1rem; font-size: 0.85rem;">
-                Your evidence will help illuminate this systemic issue.
-            </p>
+
+            {% endif %}
+
+            {# 2. Community Discussion (Comments) #}
+            <div class="issue-comments">
+                <h4>Community Discussion</h4>
+                
+                {% if issue.comments %}
+                    {% for comment in issue.comments %}
+                    <div class="comment-card">
+                        <!-- Top-level comment -->
+                        <div class="comment-main">
+                            <div class="comment-header">
+                                <div class="comment-avatar">{{ comment.username[0].upper() }}</div>
+                                <div class="comment-meta">
+                                    <span class="comment-username">{{ comment.username }}</span>
+                                    <span class="comment-date">{{ comment.created_at.strftime('%b %d, %Y at %I:%M %p') if comment.created_at else 'Just now' }}</span>
+                                </div>
+                            </div>
+                            
+                            <p class="comment-text">{{ comment.comment }}</p>
+                            
+                            {% if comment.source_url %}
+                                <a href="{{ comment.source_url }}" target="_blank" rel="noopener noreferrer" class="comment-source-link">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                    Source
+                                </a>
+                            {% endif %}
+
+                            {% if session.user_id %}
+                            <button class="comment-reply-btn" onclick="toggleReply('reply-{{ comment.id }}')">Reply</button>
+                            {% endif %}
+                        </div>
+
+                        <!-- Reply Form -->
+                        {% if session.user_id %}
+                        <div id="reply-{{ comment.id }}" class="reply-form-container hidden">
+                            <form method="POST" action="{{ url_for('add_issue_comment_route', issue_id=issue.issue_id) }}">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="parent_comment_id" value="{{ comment.id }}">
+                                <input type="hidden" name="lens_slug" value="{{ lens.slug }}">
+                                <textarea name="comment" required placeholder="Write your reply..."></textarea>
+                                <div class="reply-form-actions">
+                                    <button type="submit" class="btn-reply-submit">Post reply</button>
+                                    <button type="button" class="btn-reply-cancel" onclick="toggleReply('reply-{{ comment.id }}')">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                        {% endif %}
+
+                        <!-- Replies — one level deep only -->
+                        {% if comment.replies %}
+                        <div class="comment-replies">
+                            {% for reply in comment.replies %}
+                            <div class="reply-card">
+                                <div class="comment-header">
+                                    <div class="reply-avatar">{{ reply.username[0].upper() }}</div>
+                                    <div class="comment-meta">
+                                        <span class="reply-username">{{ reply.username }}</span>
+                                        <span class="reply-date">{{ reply.created_at.strftime('%b %d, %Y at %I:%M %p') if reply.created_at else 'Just now' }}</span>
+                                    </div>
+                                </div>
+                                <p class="reply-text">{{ reply.comment }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="comments-empty-state">
+                        <p>No discussion yet. Be the first to add context or challenge this issue.</p>
+                    </div>
+                {% endif %}
+
+                <!-- New top-level comment form -->
+                {% if session.user_id %}
+                <div class="new-comment-form-container">
+                    <h5>Add your comment</h5>
+                    <form method="POST" action="{{ url_for('add_issue_comment_route', issue_id=issue.issue_id) }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="lens_slug" value="{{ lens.slug }}">
+                        <textarea name="comment" required placeholder="Add context, evidence, or challenge this issue..."></textarea>
+                        <input type="text" name="source_url" placeholder="Source URL (optional)">
+                        <button type="submit" class="btn-comment-submit">Post comment</button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="login-prompt-container">
+                    <p>Join the discussion to share your insights.</p>
+                    <a href="{{ url_for('login') }}" class="btn-login-prompt">Log in to comment</a>
+                </div>
+                {% endif %}
+            </div>
+
         </div>
-        
-        {% else %}
-        <!-- Existing data tables and cards -->
         {% endif %}
 
     </div>
@@ -127,7 +249,12 @@
     <div class="related-forces" style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #e9ecef;">
         <h2>Related forces</h2>
         {% for f in forces %}
-        <p><a href="{{ url_for('force_detail', slug=f.slug) }}">{{ f.title }}</a></p>
+        <div style="margin-bottom: 1.25rem;">
+            <a href="{{ url_for('force_detail', slug=f.slug) }}" style="font-weight: 600; color: #1d3557; text-decoration: none; font-size: 1.05rem;">{{ f.title }}</a>
+            {% if f.explanation %}
+                <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #495057; line-height: 1.4;">{{ f.explanation }}</p>
+            {% endif %}
+        </div>
         {% endfor %}
     </div>
     {% endif %}
@@ -141,4 +268,41 @@
     </div>
 
 </div>
+
+<script>
+    // 1. Auto-expand if a comment was just posted (detected via URL anchor)
+    if (window.location.hash.startsWith('#issue-')) {
+        const issueId = window.location.hash.replace('#issue-', '');
+        const evidenceBlock = document.getElementById('evidence-' + issueId);
+        if (evidenceBlock) {
+            evidenceBlock.classList.remove('hidden');
+        }
+    }
+
+    // 2. Initialize and handle Community Evidence & Discussion Toggle
+    document.querySelectorAll('.toggle-evidence').forEach(btn => {
+        const target = document.getElementById(btn.dataset.target);
+        
+        // Set initial text based on current state (which might have been unhidden by the hash above)
+        const isHidden = target.classList.contains('hidden');
+        btn.textContent = isHidden 
+            ? 'Show community evidence & discussion' 
+            : 'Hide community evidence & discussion';
+
+        // Add click listener
+        btn.addEventListener('click', () => {
+            target.classList.toggle('hidden');
+            btn.textContent = target.classList.contains('hidden')
+                ? 'Show community evidence & discussion'
+                : 'Hide community evidence & discussion';
+        });
+    });
+
+    // Toggle Reply Forms
+    function toggleReply(id) {
+        const form = document.getElementById(id);
+        form.classList.toggle('hidden');
+    }
+</script>
+
 {% endblock %}

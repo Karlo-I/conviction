@@ -15,6 +15,7 @@ import sqlite3
 import threading
 from dotenv import load_dotenv
 from flask import abort, current_app, flash, Flask, g, jsonify, render_template, redirect, request, session, url_for
+from models import add_issue_comment
 from psycopg2.extras import RealDictCursor
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -293,6 +294,81 @@ def lens(slug):
 
     return render_template('lens.html', lens=lens, issues=issues, forces=forces, approved_contributions=approved_contributions)
     
+
+# Handle comment submissions for issues
+@app.route('/issue/<int:issue_id>/comment', methods=['POST'])
+def add_issue_comment_route(issue_id):
+    if 'user_id' not in session:
+        flash('You must be logged in to comment.', 'error')
+        return redirect(url_for('login'))
+    
+    # Define the database connection for this request
+    db = get_db()
+    print(f"DEBUG: Received comment submission for issue_id={issue_id}")
+    print(f"DEBUG: Form data: comment={request.form.get('comment')}, source_url={request.form.get('source_url')}")
+    
+    # Validate issue exists and get lens_slug for redirect
+    issue = db.execute(
+        '''
+        SELECT i.id, l.slug 
+        FROM issues i
+        JOIN lenses l ON i.lens_id = l.id
+        WHERE i.id = ?
+        ''',
+        (issue_id,)
+    ).fetchone()
+    
+    if not issue:
+        flash('Issue not found.', 'error')
+        return redirect(url_for('index'))
+    
+    lens_slug = issue['slug']
+    
+    # Get form data
+    comment = request.form.get('comment', '').strip()
+    source_url = request.form.get('source_url', '').strip() or None
+    parent_comment_id = request.form.get('parent_comment_id')
+    
+    # Convert parent_comment_id to int if provided, otherwise None
+    if parent_comment_id:
+        parent_comment_id = int(parent_comment_id)
+    else:
+        parent_comment_id = None
+    
+    if not comment:
+        flash('Comment cannot be empty.', 'error')
+        return redirect(url_for('lens', slug=lens_slug) + f'#issue-{issue_id}')
+    
+    # Enforce one-level threading: if replying, verify parent has no parent
+    if parent_comment_id:
+        parent = db.execute(
+            'SELECT parent_comment_id FROM issue_comments WHERE id = ?',
+            (parent_comment_id,)
+        ).fetchone()
+        
+        if not parent or parent['parent_comment_id'] is not None:
+            flash('Cannot reply to a reply. Please reply to a top-level comment.', 'error')
+            return redirect(url_for('lens', slug=lens_slug) + f'#issue-{issue_id}')
+    
+    # Add the comment
+    add_issue_comment(
+        db, 
+        issue_id, 
+        session['user_id'], 
+        comment, 
+        source_url, 
+        parent_comment_id
+    )
+    
+    # DEBUG: Verify it was saved
+    verify = db.execute(
+        'SELECT COUNT(*) as count FROM issue_comments WHERE issue_id = ?',
+        (issue_id,)
+    ).fetchone()
+    print(f"DEBUG: Total comments in database for issue {issue_id}: {verify['count']}")
+    
+    return redirect(url_for('lens', slug=lens_slug) + f'#issue-{issue_id}')
+
 
 # Handles token spend on an issue - checks balance, writes ledger, redirects to lens
 # Calls models.get_token_balance, models.add_token_transactions; requires login

@@ -59,8 +59,8 @@ def seed_food_lens(db, system_user_id, use_postgresql):
         lens_id = cursor.fetchone()[0]
         
         cursor.execute(
-            "INSERT INTO issues (lens_id, slug, title, description) VALUES (%s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
-            (lens_id, 'ultra-processed-food', 'Ultra-Processed-Food', 'Industrial food products engineered for overconsumption, dominant in supply global chains.')
+            "INSERT INTO issues (lens_id, slug, title, description, context) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+            (lens_id, 'ultra-processed-food', 'Ultra-Processed-Food', 'Industrial food products engineered for overconsumption, dominant in supply global chains.', 'High obesity rates are not merely individual choices, but a direct consequence of food environments saturated with cheap, ultra-processed products. This reveals how global supply chains prioritize profit over human health, disproportionately impacting communities with limited access to whole foods.')
         )
         db.conn.commit()
         cursor.execute("SELECT id FROM issues WHERE slug = 'ultra-processed-food'")
@@ -74,6 +74,7 @@ def seed_food_lens(db, system_user_id, use_postgresql):
         cursor.execute("SELECT id FROM indicators WHERE name = 'Adult obesity rate'")
         indicator_id = cursor.fetchone()[0]
         cursor.close()
+
     else:
         db.execute(
             'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
@@ -84,8 +85,8 @@ def seed_food_lens(db, system_user_id, use_postgresql):
         lens_id = lens['id']
         
         db.execute(
-            'INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
-            (lens_id, 'ultra-processed-food', 'Ultra-Processed-Food', 'Industrial food products engineered for overconsumption, dominant in supply global chains.')
+            'INSERT OR IGNORE INTO issues (lens_id, slug, title, description, context) VALUES (?, ?, ?, ?, ?)',
+            (lens_id, 'ultra-processed-food', 'Ultra-Processed-Food', 'Industrial food products engineered for overconsumption, dominant in supply global chains.', 'High obesity rates are not merely individual choices, but a direct consequence of food environments saturated with cheap, ultra-processed products. This reveals how global supply chains prioritize profit over human health, disproportionately impacting communities with limited access to whole foods.')
         )
         db.commit()
         upf_issue = db.execute("SELECT id FROM issues WHERE slug = 'ultra-processed-food'").fetchone()
@@ -185,8 +186,8 @@ def seed_housing_lens(db, system_user_id, use_postgresql):
         lens_id = cursor.fetchone()[0]
         
         cursor.execute(
-            "INSERT INTO issues (lens_id, slug, title, description) VALUES (%s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
-            (lens_id, 'urban-housing-inadequacy', 'Urban Housing Inadequacy', 'The percentage of urban residents living in slum conditions without access to adequate shelter.')
+            "INSERT INTO issues (lens_id, slug, title, description, context) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+            (lens_id, 'urban-housing-inadequacy', 'Urban Housing Inadequacy', 'The percentage of urban residents living in slum conditions without access to adequate shelter.', 'The prevalence of urban slum conditions highlights a systemic failure to treat housing as a fundamental human right rather than a speculative asset. This exposes how rapid urbanization and inadequate public investment force marginalized populations into environments lacking basic sanitation and security.')
         )
         db.conn.commit()
         cursor.execute("SELECT id FROM issues WHERE slug = 'urban-housing-inadequacy'")
@@ -200,6 +201,7 @@ def seed_housing_lens(db, system_user_id, use_postgresql):
         cursor.execute("SELECT id FROM indicators WHERE name = 'Urban slum population'")
         indicator_id = cursor.fetchone()[0]
         cursor.close()
+    
     else:
         db.execute(
             'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
@@ -210,8 +212,8 @@ def seed_housing_lens(db, system_user_id, use_postgresql):
         lens_id = lens['id']
         
         db.execute(
-            'INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
-            (lens_id, 'urban-housing-inadequacy', 'Urban Housing Inadequacy', 'The percentage of urban residents living in slum conditions without access to adequate shelter.')
+            'INSERT OR IGNORE INTO issues (lens_id, slug, title, description, context) VALUES (?, ?, ?, ?, ?)',
+            (lens_id, 'urban-housing-inadequacy', 'Urban Housing Inadequacy', 'The percentage of urban residents living in slum conditions without access to adequate shelter.', 'The prevalence of urban slum conditions highlights a systemic failure to treat housing as a fundamental human right rather than a speculative asset. This exposes how rapid urbanization and inadequate public investment force marginalized populations into environments lacking basic sanitation and security.')
         )
         db.commit()
         issue = db.execute("SELECT id FROM issues WHERE slug = 'urban-housing-inadequacy'").fetchone()
@@ -310,8 +312,8 @@ def seed_mobility_lens(db, system_user_id, use_postgresql):
         lens_id = cursor.fetchone()[0]
         
         cursor.execute(
-            "INSERT INTO issues (lens_id, slug, title, description) VALUES (%s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
-            (lens_id, 'road-traffic-mortality', 'Road Traffic Mortality', 'Deaths per 100,000 population caused by road traffic crashes — a direct measure of transport system safety.')
+            "INSERT INTO issues (lens_id, slug, title, description, context) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (slug) DO NOTHING",
+            (lens_id, 'road-traffic-mortality', 'Road Traffic Mortality', 'Deaths per 100,000 population caused by road traffic crashes — a direct measure of transport system safety.', 'Traffic mortality rates are a stark measure of how transport infrastructure prioritizes vehicle throughput over human life. This reveals the hidden costs of car-centric urban planning, which disproportionately endangers pedestrians, cyclists, and lower-income neighborhoods.')
         )
         db.conn.commit()
         cursor.execute("SELECT id FROM issues WHERE slug = 'road-traffic-mortality'")
@@ -325,6 +327,7 @@ def seed_mobility_lens(db, system_user_id, use_postgresql):
         cursor.execute("SELECT id FROM indicators WHERE name = 'Road traffic mortality rate'")
         indicator_id = cursor.fetchone()[0]
         cursor.close()
+    
     else:
         db.execute(
             'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
@@ -335,8 +338,8 @@ def seed_mobility_lens(db, system_user_id, use_postgresql):
         lens_id = lens['id']
         
         db.execute(
-            'INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)',
-            (lens_id, 'road-traffic-mortality', 'Road Traffic Mortality', 'Deaths per 100,000 population caused by road traffic crashes — a direct measure of transport system safety.')
+            'INSERT OR IGNORE INTO issues (lens_id, slug, title, description, context) VALUES (?, ?, ?, ?, ?)',
+            (lens_id, 'road-traffic-mortality', 'Road Traffic Mortality', 'Deaths per 100,000 population caused by road traffic crashes — a direct measure of transport system safety.', 'Traffic mortality rates are a stark measure of how transport infrastructure prioritizes vehicle throughput over human life. This reveals the hidden costs of car-centric urban planning, which disproportionately endangers pedestrians, cyclists, and lower-income neighborhoods.')
         )
         db.commit()
         issue = db.execute("SELECT id FROM issues WHERE slug = 'road-traffic-mortality'").fetchone()
@@ -447,6 +450,7 @@ def seed_energy_lens(db, system_user_id, use_postgresql):
             )
         db.conn.commit()
         cursor.close()
+    
     else:
         db.execute(
             'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
@@ -457,12 +461,12 @@ def seed_energy_lens(db, system_user_id, use_postgresql):
         lens_id = lens['id']
         
         issues = [
-            (lens_id, 'energy-poverty', 'Energy Poverty', 'Lack of access to affordable, reliable energy services'),
-            (lens_id, 'fossil-fuel-dependency', 'Fossil Fuel Dependency', 'Economic and infrastructural lock-in to carbon-intensive energy sources'),
+            (lens_id, 'energy-poverty', 'Energy Poverty', 'Lack of access to affordable, reliable energy services', 'Energy poverty demonstrates how access to modern, reliable power is unevenly distributed, leaving vulnerable populations dependent on expensive or unreliable sources. This highlights the systemic barrier that lack of energy access creates for education, healthcare, and economic mobility.'),
+            (lens_id, 'fossil-fuel-dependency', 'Fossil Fuel Dependency', 'Economic and infrastructural lock-in to carbon-intensive energy sources', 'Continued reliance on fossil fuels is sustained by deeply entrenched infrastructure and financial incentives that actively resist decarbonization. This reveals the structural lock-in that delays renewable energy adoption, externalizing the true costs of climate change onto frontline communities.'),
         ]
         
         for issue in issues:
-            db.execute('INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)', issue)
+            db.execute('INSERT OR IGNORE INTO issues (lens_id, slug, title, description, context) VALUES (?, ?, ?, ?, ?)', issue)
         db.commit()
     
     print('Seeded Energy lens with 2 issues')
@@ -493,6 +497,7 @@ def seed_healthcare_lens(db, system_user_id, use_postgresql):
             )
         db.conn.commit()
         cursor.close()
+    
     else:
         db.execute(
             'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
@@ -503,12 +508,12 @@ def seed_healthcare_lens(db, system_user_id, use_postgresql):
         lens_id = lens['id']
         
         issues = [
-            (lens_id, 'healthcare-access', 'Healthcare Access', 'Barriers to obtaining timely, affordable, and quality medical care'),
-            (lens_id, 'pharmaceutical-pricing', 'Pharmaceutical Pricing', 'Drug pricing mechanisms that prioritize profit over patient access'),
+            (lens_id, 'healthcare-access', 'Healthcare Access', 'Barriers to obtaining timely, affordable, and quality medical care', 'Barriers to healthcare access expose fundamental inequities in systems that treat medical care as a commodity rather than a public good. This reveals how geographic, financial, and administrative hurdles systematically prevent vulnerable populations from receiving timely, life-saving interventions.'),
+            (lens_id, 'pharmaceutical-pricing', 'Pharmaceutical Pricing', 'Drug pricing mechanisms that prioritize profit over patient access', 'Pharmaceutical pricing mechanisms often prioritize shareholder returns over patient survival by leveraging patent monopolies to keep essential drug prices artificially high. This highlights the systemic tension between innovation incentives and the moral imperative to make life-saving treatments universally affordable.'),
         ]
         
         for issue in issues:
-            db.execute('INSERT OR IGNORE INTO issues (lens_id, slug, title, description) VALUES (?, ?, ?, ?)', issue)
+            db.execute('INSERT OR IGNORE INTO issues (lens_id, slug, title, description, context) VALUES (?, ?, ?, ?, ?)', issue)
         db.commit()
     
     print('Seeded Healthcare lens with 2 issues')
