@@ -4,7 +4,6 @@
 **Last Updated:** July 14, 2026 (rev 18)
 **Status:** Deployed — Live at https://conviction-20z3.onrender.com/
 
-
 ---
 
 #### Video Demo
@@ -127,9 +126,16 @@ This is the most important architectural decision. The schema is designed to be 
 
 ---
 
-## Flask Project Structure
+## Project Structure & File Descriptions
 
-Standard Flask structure: app.py (routes), models.py (database), templates/ (HTML), static/ (CSS/JS).
+- **`app.py`**: The main Flask application entry point. Handles all routing, session management, CSRF protection, and request/response flow, while delegating all database interactions to `models.py`.
+- **`models.py`**: The exclusive location for all SQL database queries. Contains organized functions for user authentication, append-only token ledger management, contribution fetching/validation, and quiz response tracking.
+- **`agent.py`**: The background AI digest agent. Triggered upon contribution submission, it analyzes the user's provided source excerpt, assesses its quality and gaps relative to the claim, and generates a plain-language summary for peer validators.
+- **`quiz.py`**: Contains the rule-based classification logic for the diagnostic quiz, scoring user responses to route them to their most relevant systemic lens.
+- **`seed.py`**: A dual-mode (SQLite/PostgreSQL) initialization script. It populates the database with the foundational structure (lenses, issues, indicators, and pre-approved forces) and a "Data Archive" system user, intentionally omitting external API data fetching to prioritize community-built evidence.
+- **`schema.sql` & `schema_postgres.sql`**: The database schema definitions for local development (SQLite) and production (PostgreSQL), respectively. They establish the unified data architecture, cross-lens force links, and append-only token economy.
+- **`templates/`**: Contains all Jinja2 HTML templates (e.g., `lens.html`, `contribute.html`, `validate.html`, `heatmap.html`) that render the user interface and dynamically display data passed from the backend.
+- **`static/`**: Contains vanilla CSS for styling and JavaScript files (e.g., `heatmap.js` for Leaflet.js map rendering, `charts.js` for data visualization) to handle frontend interactivity without heavy frameworks.
 
 ---
 
