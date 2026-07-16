@@ -12,9 +12,6 @@
     <div class="contribution-summary">
         <h2>What you submitted</h2>
         <p><strong>Country:</strong> {{ contribution.country_code }}</p>
-        {% if contribution.value %}
-        <p><strong>Value submitted:</strong> {{ contribution.value }}</p>
-        {% endif %}
         <p><strong>Claim:</strong> {{ contribution.note }}</p>
         {% if contribution.source_url %}
         <p><strong>Source:</strong> <a href="{{ contribution.source_url }}" target="_blank">{{ contribution.source_url }}</a></p>
@@ -25,7 +22,7 @@
     {% if contribution.status == 'approved' %}
         <p>Your source was added to an existing <strong>approved</strong> claim describing the same mechanism. Because the claim had already met the voting threshold, your contribution helped instantly elevate it to the Forces layer.</p>
     {% else %}
-        <p>Your source was added to an existing <strong>pending</strong> claim describing the same mechanism. Two validators need to approve the combined claim before it appears on the platform.</p>
+        <p>Your source was added to an existing <strong>pending</strong> claim describing the same mechanism. Validators will review the combined claim before it appears on the platform.</p>
     {% endif %}
     
     <div class="contribution-summary">
@@ -50,14 +47,16 @@
 
     {% if contribution.summary %}
     <div class="digest">
-        <h2>What we found</h2>
+        <h2>Evidence Assessment</h2>
 
-        {% if contribution.confidence == 'evidence found' %}
-        <p class="confidence confidence-found">Evidence found in reference sources</p>
+        {% if contribution.confidence == 'strong evidence' %}
+        <p class="confidence confidence-found">Strong evidence provided</p>
         {% elif contribution.confidence == 'partial evidence' %}
-        <p class="confidence confidence-partial">Partial evidence found</p>
+        <p class="confidence confidence-partial">Partial evidence provided</p>
+        {% elif contribution.confidence == 'weak evidence' %}
+        <p class="confidence confidence-weak">Weak evidence provided</p>
         {% else %}
-        <p class="confidence confidence-none">No data available in reference sources</p>
+        <p class="confidence confidence-none">No evidence provided</p>
         {% endif %}
 
         <p>{{ contribution.summary }}</p>

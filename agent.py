@@ -1,7 +1,6 @@
 # agent.py
 # Conviction: AI digest agent — runs once per contribution after submission.
-# Fetches evidence from pre-approved sources, summarises against the user's claim.
-# Never makes a verdict — reports what evidence exists and surfaces divergence.
+# Analyzes user-submitted evidence, never makes a verdict.
 # AI assistance: Both Claude (Anthropic) and Qwen.ai (3.7-Plus) assisted with query structure and error handling patterns.
 # Logic, decisions, and direction are the author's own.
 
@@ -33,89 +32,10 @@ def strip_markdown(text):
     return text.strip()
 
 
-def fetch_who_data(indicator_code, country_code):
-    url = f'https://ghoapi.azureedge.net/api/{indicator_code}'
-    params = {
-        '$filter': f"SpatialDim eq '{country_code}' and Dim1 eq 'SEX_BTSX'",
-        '$select': 'SpatialDim,TimeDim,NumericValue',
-        '$orderby': 'TimeDim desc',
-        '$top': 1
-    }
-
-    try:
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        records = data.get('value', [])
-        if records:
-            return {
-                'source': 'WHO Global Health Observatory',
-                'value': records[0].get('NumericValue'),
-                'year': records[0].get('TimeDim')
-            }
-    except requests.RequestException:
-        pass
-    return None
-
-
-def fetch_worldbank_data(indicator_code, country_code):
-    url = f'https://api.worldbank.org/v2/country/{country_code}/indicator/{indicator_code}'
-    params = {'format': 'json', 'mrv': 1, 'per_page': 1}
-    try:
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        if not isinstance(data, list) or len(data) < 2:
-            return None
-        records = data[1]
-        if records and records[0].get('value') is not None:
-            return {
-                'source': 'World Bank',
-                'value': records[0]['value'],
-                'year': records[0]['date']
-            }
-    except requests.RequestException:
-        pass
-    return None
-
-
-def fetch_reference_data(country_code):
-    # Lens proposals are global/systemic - no country-specific reference data needed
-    if country_code == 'GLOBAL' or not country_code:
-        return []
-    
-    reference_data = []
-
-    who_obesity = fetch_who_data('NCD_BMI_30C', country_code)
-    if who_obesity:
-        who_obesity['indicator'] = 'Adult obesity rate (%)'
-        reference_data.append(who_obesity)
-
-    wb_slum = fetch_worldbank_data('EN.POP.SLUM.UR.ZS', country_code)
-    if wb_slum:
-        wb_slum['indicator'] = 'Urban slum population (% of urban population)'
-        reference_data.append(wb_slum)
-
-    wb_traffic = fetch_worldbank_data('SH.STA.TRAF.P5', country_code)
-    if wb_traffic:
-        wb_traffic['indicator'] = 'Road traffic mortality rate (per 100,000)'
-        reference_data.append(wb_traffic)
-
-    return reference_data
-
-
-def build_prompt(contribution, reference_data, existing_lenses):
-    if reference_data:
-        lines = []
-        for d in reference_data:
-            lines.append(
-                f"- {d['indicator']}: {d['value']} ({d['source']}, {d['year']})"
-            )
-        reference_text = '\n'.join(lines)
-    else:
-        reference_text = 'No reference data found for this country and indicator combination'
-
+def build_prompt(contribution, existing_lenses):
     source_text = contribution.get('source_excerpt') or 'No source text provided'
+    country = contribution.get('country_code', 'Not specified')
+    claim = contribution.get('note', 'No claim provided')
 
     # Format the existing lenses list for the AI
     if existing_lenses:
@@ -123,35 +43,44 @@ def build_prompt(contribution, reference_data, existing_lenses):
     else:
         existing_lenses_text = "None"
 
-    prompt = f"""You are an evidence analyst for a platform that surfaces systemic issues.
+    prompt = f"""You are an evidence analyst for a platform that surfaces systemic issues through peer-validated contributions.
 
 A user has submitted the following contribution:
-Country: {contribution['country_code']}
-Claim: {contribution['note']}
-User-submitted source excerpt: {source_text}
 
-Reference data from pre-approved institutional sources:
-{reference_text}
+**Country/Context:** {country}
+**Claim:** {claim}
+**Source Excerpt:** {source_text}
 
-EXISTING LENSES IN DATABASE:
-{existing_lenses_text}
+**EXISTING LENSES IN DATABASE:** {existing_lenses_text}
 
-Your task:
-1. Summarise what the reference data shows in relation to the user's claim.
-2. If the user provided a source excerpt, note whether it aligns with or diverges from the reference data.
-3. Surface any divergence explicitly — do not resolve it in favour of either source.
-4. Do not make a verdict on whether the claim is true or false.
-5. Do not name or imply blame on any individual or organisation.
-6. End your summary with exactly one of these confidence signals on its own line:
-CONFIDENCE: evidence found
-CONFIDENCE: partial evidence
-CONFIDENCE: no data available
+---
 
-Use 'evidence found' if reference data directly relates to the claim.
-Use 'partial evidence' if reference data is related but not directly comparable.
-Use 'no data available' if no reference data was found for this country and indicator.
+YOUR TASK:
 
-Keep your summary under 150 words. Write in plain prose without markdown formatting, headers, or bullet points.
+Analyze the relationship between the user's claim and their provided source excerpt. Do NOT fact-check against external databases or make judgments about truth. Instead:
+
+1. **Assess the evidence:** Does the source excerpt directly support, partially support, or fail to address the specific claim made?
+
+2. **Identify strengths:** What does the source do well? (e.g., provides specific data, cites methodology, includes time period/location)
+
+3. **Identify gaps:** What's missing that would strengthen this claim? (e.g., sample size, date, geographic scope, conflicting evidence)
+
+4. **Note context:** Is this a primary source, news report, academic study, or advocacy document? Does that matter for interpretation?
+
+5. **Suggest improvements:** What additional evidence or clarification would make this claim more robust?
+
+6. **End with exactly one confidence signal on its own line:**
+   CONFIDENCE: strong evidence
+   CONFIDENCE: partial evidence  
+   CONFIDENCE: weak evidence
+   CONFIDENCE: no evidence provided
+
+Use 'strong evidence' if the source directly supports the claim with specific data.
+Use 'partial evidence' if the source is relevant but incomplete or indirect.
+Use 'weak evidence' if the source barely relates to the claim or lacks specifics.
+Use 'no evidence provided' if no source excerpt was submitted.
+
+Keep your summary under 150 words. Write in plain prose without markdown formatting, headers, or bullet points. Be constructive, not dismissive.
 """
 
     # --- CONDITIONAL PROMPT FOR LENS PROPOSALS ---
@@ -185,9 +114,9 @@ def parse_confidence(text):
         line = line.strip()
         if line.startswith('CONFIDENCE:'):
             value = line.replace('CONFIDENCE:', '').strip().lower()
-            if value in ('evidence found', 'partial evidence', 'no data available'):
+            if value in ('strong evidence', 'partial evidence', 'weak evidence', 'no evidence provided'):
                 return value
-    return 'no data available'
+    return 'no evidence provided'
 
 
 def run_agent(db, contribution_id, existing_lenses):
@@ -198,16 +127,13 @@ def run_agent(db, contribution_id, existing_lenses):
     if not contribution:
         return
 
-    country_code = contribution['country_code']
-    reference_data = fetch_reference_data(country_code)
-
-    # Pass the existing lenses to the prompt builder
-    prompt = build_prompt(dict(contribution), reference_data, existing_lenses)
+    # NO REFERENCE DATA FETCHING - we analyze what the user provides
+    prompt = build_prompt(dict(contribution), existing_lenses)
 
     api_key = os.environ.get('ANTHROPIC_API_KEY')
     if not api_key:
         summary = 'AI digest unavailable - API key not configured.'
-        confidence = 'no data available'
+        confidence = 'no evidence provided'
     else:
         try:
             response = requests.post(
@@ -237,17 +163,25 @@ def run_agent(db, contribution_id, existing_lenses):
             # Strip markdown formatting
             summary = strip_markdown(summary)
 
-            # Remove "Evidence Analysis" header if present
-            if summary.startswith('Evidence Analysis'):
-                # Find where the actual content starts (after the header)
-                lines = summary.split('\n')
-                if len(lines) > 1:
-                    # Skip the first line (the header) and join the rest
-                    summary = '\n'.join(lines[1:]).strip()
+            # Remove common AI-generated headers (case-insensitive)
+            lines = summary.split('\n')
+            skip_first_line = False
+            
+            if lines:
+                line_lower = lines[0].strip().lower()
+                # Skip lines that are just headers
+                if line_lower in ['analysis', 'evidence analysis', 'summary', 'assessment', 'ai analysis', 'evidence assessment']:
+                    skip_first_line = True
+                # Also skip if it starts with these headers followed by a colon
+                elif any(line_lower.startswith(prefix) for prefix in ['analysis:', 'evidence analysis:', 'summary:', 'assessment:', 'ai analysis:', 'evidence assessment:']):
+                    skip_first_line = True
+                    
+            if skip_first_line and len(lines) > 1:
+                summary = '\n'.join(lines[1:]).strip()
             
         except Exception as e:
             summary = f'AI digest failed: {str(e)}'
-            confidence = 'no data available'
+            confidence = 'no evidence provided'
 
     # --- PARSE THE JSON IF IT'S A LENS PROPOSAL ---
     extracted_json = None
@@ -263,7 +197,8 @@ def run_agent(db, contribution_id, existing_lenses):
     # -----------------------------------------------
 
     # --- PREPARE THE SOURCES PAYLOAD ---
-    sources_payload = {"reference_data": reference_data}
+    # No reference_data anymore - just the lens proposal if applicable
+    sources_payload = {}
     if extracted_json:
         try:
             sources_payload["lens_proposal"] = json.loads(extracted_json)
@@ -280,7 +215,7 @@ def run_agent(db, contribution_id, existing_lenses):
         (
             contribution_id,
             summary,
-            json.dumps(sources_payload), # saves reference data and JSON
+            json.dumps(sources_payload),
             confidence
         )
     )
@@ -331,7 +266,7 @@ Respond in JSON format ONLY:
             },
             json={
                 'model': ANTHROPIC_MODEL,
-                'max_tokens': 250, # Increased slightly for the extra text
+                'max_tokens': 250,
                 'messages': [{'role': 'user', 'content': prompt}]
             },
             timeout=15
@@ -474,4 +409,3 @@ def clean_submission_text(text):
         return data['content'][0]['text'].strip()
     except Exception:
         return text
-    

@@ -223,7 +223,7 @@ def merge_into_contribution(db, contribution_id, note, source_url, source_excerp
 
 
 def create_contribution(db, user_id, country_code, note, contribution_type='data_point',
-                        indicator_id=None, value=None, source_url=None, source_excerpt=None,
+                        indicator_id=None, source_url=None, source_excerpt=None,
                         title=None, category=None):
     issue_id = None
     if indicator_id:
@@ -262,10 +262,10 @@ def create_contribution(db, user_id, country_code, note, contribution_type='data
 
     db.execute(
         '''
-        INSERT INTO contributions (user_id, indicator_id, country_code, value, note, source_url, source_excerpt, contribution_type, title, category)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO contributions (user_id, indicator_id, country_code, note, source_url, source_excerpt, contribution_type, title, category)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''',
-        (user_id, indicator_id, country_code, value, note, source_url, source_excerpt,
+        (user_id, indicator_id, country_code, note, source_url, source_excerpt,
          contribution_type, title, category)
     )
     db.commit()

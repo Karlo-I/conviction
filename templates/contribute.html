@@ -5,9 +5,8 @@
 {% block content %}
 <div class="contribute-container">
     <h1>Submit a contribution</h1>
-    <p>Share local data, observation, or evidence that adds to or challenges what the platform shows. </p>
+    <p>Share local data, observation, or evidence that adds to or challenges what the platform shows.</p>
     <p>All contributions go through peer validation. Additionally, a force claim must match another claim in the same category before appearing in the Forces layer. When suggesting a new lens or force layer, please check first whether it already exists on the homepage or the Forces page. Note that we use AI to automatically merge claims that are closely aligned.</p>
-
 
     <form method="POST" action="{{ url_for('contribute') }}">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
@@ -197,130 +196,119 @@
                 <option value="UZB">Uzbekistan</option>
                 <option value="VEN">Venezuela</option>
                 <option value="VNM">Vietnam</option>
-                    <option value="YEM">Yemen</option>
-                    <option value="ZMB">Zambia</option>
-                    <option value="ZWE">Zimbabwe</option>
-                </select>
-            </div>
+                <option value="YEM">Yemen</option>
+                <option value="ZMB">Zambia</option>
+                <option value="ZWE">Zimbabwe</option>
+            </select>
+        </div>
 
-            <div class="form-group" id="title-group" style="display:none">
-                <label for="title" id="title-label">Force mechanism</label>
-                <input type="text" id="title" name="title" placeholder="e.g. Agricultural subsidies distort domestic food pricing">
-            </div>
-            
-            <div class="form-group force-claim-only" style="display:none">
-                <label for="category">Category</label>
-                <select id="category" name="category">
-                    <option value="">Select a category</option>
-                    <option value="access_barriers">Access barriers</option>
-                    <option value="algorithmic_exploitation">Algorithmic exploitation</option>
-                    <option value="asset_extraction">Asset extraction</option>
-                    <option value="externalised_cost">Externalised cost</option>
-                    <option value="financial_capture">Financial capture</option>
-                    <option value="information_asymmetry">Information asymmetry</option>
-                    <option value="infrastructure_deficit">Infrastructure deficit</option>
-                    <option value="labor_exploitation">Labor exploitation</option>
-                    <option value="market_concentration">Market concentration</option>
-                    <option value="regulatory_arbitrage">Regulatory arbitrage</option>
-                    <option value="regulatory_capture">Regulatory capture</option>
-                    <option value="risk_shifting">Risk shifting</option>
-                </select>
-            </div>
-
-            <div class="form-group" id="indicator-group">
-                <label for="indicator_id">Related indicator</label>
-                <select id="indicator_id" name="indicator_id">
-                    <!-- <option value="">None — this is a general observation</option> -->
-                    {% for indicator in indicators %}
-                    <option value="{{ indicator.id }}">{{ indicator.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group data-point-only">
-                <label for="value">Value (if submitting a data point)</label>
-                <input type="number" id="value" name="value" step="0.01" placeholder="e.g. 34.5">
-            </div>
-
-            <div class="form-group">
-                <label for="note" id="note-label">Your claim or observation</label>
-                <textarea id="note" name="note" rows="4" required
-                    placeholder="Describe what you observed, measured, or found. Be specific about source, location, and time period."></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="source_excerpt">Paste your source text here (primary input for AI digest)</label>
-                <textarea id="source_excerpt" name="source_excerpt" rows="4"
-                    placeholder="Paste the relevant excerpt from your source. This is what the AI agent will analyse."></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="source_url">Source URL (shown to validators as a manual check link)</label>
-                <input type="url" id="source_url" name="source_url"
-                    placeholder="https://...">
-            </div>
-
-            <button type="submit">
-                Submit contribution
-            </button>
-        </form>
-    </div>
-
-    <script>
-        const contributionType = document.getElementById('contribution_type');
-        const dataPointFields = document.querySelectorAll('.data-point-only');
-        const forceClaimFields = document.querySelectorAll('.force-claim-only');
+        <div class="form-group" id="title-group" style="display:none">
+            <label for="title" id="title-label">Force mechanism</label>
+            <input type="text" id="title" name="title" placeholder="e.g. Agricultural subsidies distort domestic food pricing">
+        </div>
         
-        const countryGroup = document.getElementById('country-group');
-        const indicatorGroup = document.getElementById('indicator-group');
-        const titleGroup = document.getElementById('title-group');
+        <div class="form-group force-claim-only" style="display:none">
+            <label for="category">Category</label>
+            <select id="category" name="category">
+                <option value="">Select a category</option>
+                <option value="access_barriers">Access barriers</option>
+                <option value="algorithmic_exploitation">Algorithmic exploitation</option>
+                <option value="asset_extraction">Asset extraction</option>
+                <option value="externalised_cost">Externalised cost</option>
+                <option value="financial_capture">Financial capture</option>
+                <option value="information_asymmetry">Information asymmetry</option>
+                <option value="infrastructure_deficit">Infrastructure deficit</option>
+                <option value="labor_exploitation">Labor exploitation</option>
+                <option value="market_concentration">Market concentration</option>
+                <option value="regulatory_arbitrage">Regulatory arbitrage</option>
+                <option value="regulatory_capture">Regulatory capture</option>
+                <option value="risk_shifting">Risk shifting</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="indicator-group">
+            <label for="indicator_id">Related indicator</label>
+            <select id="indicator_id" name="indicator_id">
+                {% for indicator in indicators %}
+                <option value="{{ indicator.id }}">{{ indicator.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="note" id="note-label">Your claim or observation</label>
+            <textarea id="note" name="note" rows="4" required
+                placeholder="Describe what you observed, measured, or found. Be specific about source, location, and time period."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="source_excerpt">Paste your source text here (primary input for AI digest)</label>
+            <textarea id="source_excerpt" name="source_excerpt" rows="4"
+                placeholder="Paste the relevant excerpt from your source. This is what the AI agent will analyse."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="source_url">Source URL (shown to validators as a manual check link)</label>
+            <input type="url" id="source_url" name="source_url" placeholder="https://...">
+        </div>
+
+        <button type="submit">Submit contribution</button>
+    </form>
+</div>
+
+<script>
+    const contributionType = document.getElementById('contribution_type');
+    const forceClaimFields = document.querySelectorAll('.force-claim-only');
+    
+    const countryGroup = document.getElementById('country-group');
+    const indicatorGroup = document.getElementById('indicator-group');
+    const titleGroup = document.getElementById('title-group');
+    
+    const titleLabel = document.getElementById('title-label');
+    const titleInput = document.getElementById('title');
+    const noteLabel = document.getElementById('note-label');
+    const noteInput = document.getElementById('note');
+
+    function toggleFields() {
+        const type = contributionType.value;
         
-        const titleLabel = document.getElementById('title-label');
-        const titleInput = document.getElementById('title');
-        const noteLabel = document.getElementById('note-label');
-        const noteInput = document.getElementById('note');
+        // 1. Show/Hide specific field groups
+        forceClaimFields.forEach(field => field.style.display = (type === 'force_claim') ? 'block' : 'none');
+        
+        // Show Title field for both Force Claim and Lens Proposal
+        titleGroup.style.display = (type === 'force_claim' || type === 'lens_proposal') ? 'block' : 'none';
 
-        function toggleFields() {
-            const type = contributionType.value;
-            
-            // 1. Show/Hide specific field groups
-            dataPointFields.forEach(field => field.style.display = (type === 'data_point') ? 'block' : 'none');
-            forceClaimFields.forEach(field => field.style.display = (type === 'force_claim') ? 'block' : 'none');
-            
-            // Show Title field for both Force Claim and Lens Proposal
-            titleGroup.style.display = (type === 'force_claim' || type === 'lens_proposal') ? 'block' : 'none';
-
-            // 2. Show/Hide Country and Indicator (Hide for Lens Proposal)
-            if (type === 'lens_proposal') {
-                countryGroup.style.display = 'none';
-                indicatorGroup.style.display = 'none';
-                document.getElementById('country_code').removeAttribute('required');
-            } else {
-                countryGroup.style.display = 'block';
-                indicatorGroup.style.display = 'block';
-                document.getElementById('country_code').setAttribute('required', 'required');
-            }
-
-            // 3. Update Labels and Placeholders dynamically
-            if (type === 'force_claim') {
-                titleLabel.textContent = 'Force mechanism';
-                titleInput.placeholder = 'e.g. Agricultural subsidies distort domestic food pricing';
-                noteLabel.textContent = 'Your claim or observation';
-                noteInput.placeholder = 'Describe what you observed, measured, or found. Be specific about source, location, and time period.';
-            } else if (type === 'lens_proposal') {
-                titleLabel.textContent = 'Proposed Lens Name';
-                titleInput.placeholder = 'e.g. Education, Environment, Public Health';
-                noteLabel.textContent = 'Why does this systemic issue need its own lens?';
-                noteInput.placeholder = 'Describe the systemic issues, data gaps, or cross-domain mechanisms that justify a new lens. The AI will help structure this into a formal proposal.';
-            } else { // data_point
-                titleLabel.textContent = 'Title (Optional)';
-                titleInput.placeholder = 'e.g. Local water quality report';
-                noteLabel.textContent = 'Your claim or observation';
-                noteInput.placeholder = 'Describe what you observed, measured, or found. Be specific about source, location, and time period.';
-            }
+        // 2. Show/Hide Country and Indicator (Hide for Lens Proposal)
+        if (type === 'lens_proposal') {
+            countryGroup.style.display = 'none';
+            indicatorGroup.style.display = 'none';
+            document.getElementById('country_code').removeAttribute('required');
+        } else {
+            countryGroup.style.display = 'block';
+            indicatorGroup.style.display = 'block';
+            document.getElementById('country_code').setAttribute('required', 'required');
         }
 
-        contributionType.addEventListener('change', toggleFields);
-        toggleFields(); // Run on page load
-    </script>
-    {% endblock %}
+        // 3. Update Labels and Placeholders dynamically
+        if (type === 'force_claim') {
+            titleLabel.textContent = 'Force mechanism';
+            titleInput.placeholder = 'e.g. Agricultural subsidies distort domestic food pricing';
+            noteLabel.textContent = 'Your claim or observation';
+            noteInput.placeholder = 'Describe what you observed, measured, or found. Be specific about source, location, and time period.';
+        } else if (type === 'lens_proposal') {
+            titleLabel.textContent = 'Proposed Lens Name';
+            titleInput.placeholder = 'e.g. Education, Environment, Public Health';
+            noteLabel.textContent = 'Why does this systemic issue need its own lens?';
+            noteInput.placeholder = 'Describe the systemic issues, data gaps, or cross-domain mechanisms that justify a new lens. The AI will help structure this into a formal proposal.';
+        } else { // data_point
+            titleLabel.textContent = 'Title (Optional)';
+            titleInput.placeholder = 'e.g. Local water quality report';
+            noteLabel.textContent = 'Your claim or observation';
+            noteInput.placeholder = 'Describe what you observed, measured, or found. Be specific about source, location, and time period.';
+        }
+    }
+
+    contributionType.addEventListener('change', toggleFields);
+    toggleFields(); // Run on page load
+</script>
+{% endblock %}

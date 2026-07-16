@@ -37,14 +37,11 @@
         <a href="{{ url_for('login') }}" style="font-size: 0.9rem; color: #457b9d;">Log in to spend tokens</a>
         {% endif %}
 
-        
         <button class="toggle-evidence" data-target="evidence-{{ issue.issue_id }}" 
                 style="margin-top: 1.5rem; background: #e9ecef; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; color: #457b9d; font-weight: 500; font-size: 0.9rem;">
             Show community evidence & discussion
         </button>
-        
 
-        
         <div id="evidence-{{ issue.issue_id }}" class="community-section hidden" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e9ecef;">
             
             {# 1. Community Evidence #}
@@ -53,15 +50,6 @@
             <p style="color: #666; font-size: 0.9rem; margin-bottom: 1.5rem;">
                 Peer-validated observations and data points from our community.
             </p>
-
-            {% set values = issue.community_contributions | map(attribute='value') | reject('none') | list %}
-            {% if values %}
-                {% set max_val = values | max %}
-                {% set min_val = values | min %}
-            {% else %}
-                {% set max_val = none %}
-                {% set min_val = none %}
-            {% endif %}
 
             {% for c in issue.community_contributions %}
             <div class="validate-card" style="margin-bottom: 1.5rem; border-left: 4px solid #457b9d; padding-left: 2rem;">
@@ -81,17 +69,6 @@
                 
                 {% if c.note %}
                     <p style="margin-bottom: 1rem; line-height: 1.6;">{{ c.note }}</p>
-                {% endif %}
-                
-                {% if c.value is not none %}
-                    <p style="margin-bottom: 1rem; font-weight: bold; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; display: inline-block;">
-                        Value: {{ c.value|round(1) }}{{ issue.unit }}
-                        {% if values and c.value == max_val and max_val != min_val %}
-                            <span style="display: inline-block; background: #fee2e2; color: #b91c1c; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 4px; margin-left: 0.5rem; vertical-align: middle;">Highest</span>
-                        {% elif values and c.value == min_val and max_val != min_val %}
-                            <span style="display: inline-block; background: #d1fae5; color: #047857; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 4px; margin-left: 0.5rem; vertical-align: middle;">Lowest</span>
-                        {% endif %}
-                    </p>
                 {% endif %}
                 
                 {% if c.source_url %}

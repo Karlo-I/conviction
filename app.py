@@ -550,7 +550,6 @@ def contribute():
         note = request.form.get('note', '').strip()
         contribution_type = request.form.get('contribution_type', 'data_point')
         indicator_id = request.form.get('indicator_id') or None
-        value = request.form.get('value') or None
         source_url = request.form.get('source_url', '').strip() or None
         source_excerpt = request.form.get('source_excerpt', '').strip() or None
 
@@ -574,10 +573,8 @@ def contribute():
         try:
             if indicator_id:
                 indicator_id = int(indicator_id)
-            if value:
-                value = float(value)
         except ValueError:
-            flash('Invalid value submitted. Please enter a number', 'error')
+            flash('Invalid indicator submitted.', 'error')
             return render_template('contribute.html',
                                    indicators=models.get_all_indicators(db))
 
@@ -585,7 +582,6 @@ def contribute():
             db, user_id, country_code, note,
             contribution_type=contribution_type,
             indicator_id=indicator_id,
-            value=value,
             source_url=source_url,
             source_excerpt=source_excerpt,
             title=title,

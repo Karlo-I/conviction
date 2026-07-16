@@ -1,11 +1,13 @@
 # seed.py
-# Conviction: seeds the database with real data from WHO and other sources
+# Conviction: seeds the database structure (lenses, issues, indicators, forces).
 # Run via web route: /seed-data
 # AI assistance: Both Claude (Anthropic) and Qwen.ai (3.7-Plus) assisted with query structure and error handling patterns.
 # Logic, decisions, and direction are the author's own
 
-import requests
 import json
+import os
+import psycopg2
+import sqlite3
 from datetime import datetime, timezone
 
 
@@ -46,8 +48,7 @@ def create_system_user(db, use_postgresql):
 
 
 def seed_food_lens(db, system_user_id, use_postgresql):
-    """Seed the food lens, its issues, indicators and WHO data points"""
-
+    """Seed the food lens, its issues, and indicators."""
     if use_postgresql:
         cursor = db.conn.cursor()
         cursor.execute(
@@ -71,10 +72,7 @@ def seed_food_lens(db, system_user_id, use_postgresql):
             (upf_issue_id, 'Adult obesity rate', 'WHO Global Health Observation', '%')
         )
         db.conn.commit()
-        cursor.execute("SELECT id FROM indicators WHERE name = 'Adult obesity rate'")
-        indicator_id = cursor.fetchone()[0]
         cursor.close()
-
     else:
         db.execute(
             'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
@@ -97,101 +95,12 @@ def seed_food_lens(db, system_user_id, use_postgresql):
             (upf_issue_id, 'Adult obesity rate', 'WHO Global Health Observation', '%')
         )
         db.commit()
-        obesity_indicator = db.execute("SELECT id FROM indicators WHERE name = 'Adult obesity rate'").fetchone()
-        indicator_id = obesity_indicator['id']
     
-    fetch_who_obesity(db, indicator_id, upf_issue_id, system_user_id, use_postgresql)
+    print('  Seeded Food lens structure.')
 
 
-# Fetch adult obesity rates from WHO GHO API and insert as contributions
-def fetch_who_obesity(db, indicator_id, issue_id, system_user_id, use_postgresql):
-    target_countries = ['CAN', 'BRA']
-    url = 'https://ghoapi.azureedge.net/api/NCD_BMI_30C'
-    country_filter = " or ".join([f"SpatialDim eq '{c}'" for c in target_countries])
-    params = {
-        '$filter': f"Dim1 eq 'SEX_BTSX' and ({country_filter})",
-        '$select': 'SpatialDim,TimeDim,NumericValue',
-    }
-
-    print('Fetching WHO obesity data...')
-
-    try:
-        response = requests.get(url, params=params, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-    except requests.RequestException as e:
-        print(f'WHO API request failed: {e}')
-        return
-    
-    records = data.get('value', [])
-    print(f'  {len(records)} records returned from WHO API')
-
-    latest = {}
-    for record in records:
-        country = record.get('SpatialDim')
-        year = record.get('TimeDim')
-        value = record.get('NumericValue')
-
-        if country not in target_countries or value is None:
-            continue
-        if country not in latest or year > latest[country]['year']:
-            latest[country] = {'year': year, 'value': value}
-
-    inserted = 0
-    for country_code, point in latest.items():
-        note_text = f"Official record: {point['value']}% in {country_code} for {point['year']}."
-        source_url = "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/bmi-30-age-standardized-estimate-adults-18-years"
-        
-        if use_postgresql:
-            cursor = db.conn.cursor()
-
-            # Check if this contribution already exist
-            cursor.execute(
-                "SELECT id FROM contributions WHERE country_code = %s AND indicator_id = %s AND user_id = %s",
-                (country_code, indicator_id, system_user_id)
-            )
-
-            # Only insert if it doesn't exist
-            if cursor.fetchone() is None:
-                cursor.execute(
-                    "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
-                    (system_user_id, 'data_point', country_code, point['value'], note_text, source_url, 'approved', indicator_id)
-                )
-                contribution_id = cursor.fetchone()[0]
-                cursor.execute(
-                    "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
-                    (contribution_id, issue_id)
-                )
-                db.conn.commit()
-                cursor.close()
-
-        else:
-            # Check if this contribution already exist
-            existing = db.execute(
-                "SELECT id FROM contributions WHERE country_code = ? AND indicator_id = ? AND value = ? AND user_id = ?",
-                (country_code, indicator_id, point['value'], system_user_id)
-            ).fetchone()
-
-            if not existing:
-                # Only insert if it doesn't exist
-                db.execute(
-                    'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
-                    (system_user_id, 'data_point', country_code, point['value'], note_text, source_url, 'approved', indicator_id)
-                )
-                contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
-                contribution_id = contribution['id']
-                db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
-        
-        inserted += 1
-
-    if not use_postgresql:
-        db.commit()
-    print(f'  {inserted} new contributions inserted.')
-
-
-# Seed the housing lens with World Bank urban slum population data
 def seed_housing_lens(db, system_user_id, use_postgresql):
-    
+    """Seed the housing lens with its issues and indicators."""
     if use_postgresql:
         cursor = db.conn.cursor()
         cursor.execute(
@@ -215,10 +124,7 @@ def seed_housing_lens(db, system_user_id, use_postgresql):
             (issue_id, 'Urban slum population', 'World Bank', '% of urban population')
         )
         db.conn.commit()
-        cursor.execute("SELECT id FROM indicators WHERE name = 'Urban slum population'")
-        indicator_id = cursor.fetchone()[0]
         cursor.close()
-    
     else:
         db.execute(
             'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
@@ -241,100 +147,12 @@ def seed_housing_lens(db, system_user_id, use_postgresql):
             (issue_id, 'Urban slum population', 'World Bank', '% of urban population')
         )
         db.commit()
-        indicator = db.execute("SELECT id FROM indicators WHERE name = 'Urban slum population'").fetchone()
-        indicator_id = indicator['id']
     
-    fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id, use_postgresql)
+    print('  Seeded Housing lens structure.')
 
 
-# Fetch urban slum population rates from World Bank API
-def fetch_worldbank_housing(db, indicator_id, issue_id, system_user_id, use_postgresql):
-    target_countries = 'ZAF;PHL'
-    url = f'https://api.worldbank.org/v2/country/{target_countries}/indicator/EN.POP.SLUM.UR.ZS'
-    params = {'format': 'json', 'per_page': 100, 'mrv': 1}
-
-    print('Fetching World Bank housing data...')
-
-    try:
-        response = requests.get(url, params=params, timeout=15)
-        response.raise_for_status()
-        data = response.json()
-    except requests.RequestException as e:
-        print(f'World Bank API request failed: {e}')
-        return
-    
-    if not isinstance(data, list) or len(data) < 2:
-        print('  World Bank API returned no data or an error.')
-        return
-
-    records = data[1]
-    if not records:
-        print('  No records returned.')
-        return
-
-    print(f'  {len(records)} records returned from World Bank API')
-
-    inserted = 0
-    for record in records:
-        if record['value'] is None:
-            continue
-        
-        country_code = record['countryiso3code']
-        year = int(record['date'])
-        value = record['value']
-        
-        note_text = f"Official record: {value}% of urban population in {country_code} for {year}."
-        source_url = "https://data.worldbank.org/indicator/EN.POP.SLUM.UR.ZS"
-        
-        if use_postgresql:
-            cursor = db.conn.cursor()
-
-            # Check if this contribution already exists
-            cursor.execute(
-                "SELECT id FROM contributions WHERE country_code = %s AND indicator_id = %s AND user_id = %s",
-                (country_code, indicator_id, system_user_id)
-            )
-
-            # Only insert if it doesn't exist
-            if cursor.fetchone() is None:
-                cursor.execute(
-                    "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
-                    (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
-                )
-                contribution_id = cursor.fetchone()[0]
-                cursor.execute(
-                    "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
-                    (contribution_id, issue_id)
-                )
-                db.conn.commit()
-                cursor.close()
-        else:
-            # Check if this contribution already exists
-            existing = db.execute(
-                "SELECT id FROM contributions WHERE country_code = ? AND indicator_id = ? AND value = ? AND user_id = ?",
-                (country_code, indicator_id, record['value'], system_user_id)
-            ).fetchone()
-
-            # Only insert if it doesn't exist
-            if not existing:
-                db.execute(
-                    'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
-                    (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
-                )
-                contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
-                contribution_id = contribution['id']
-                db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
-        
-        inserted += 1
-
-    if not use_postgresql:
-        db.commit()
-    print(f'  {inserted} new contributions inserted.')
-
-
-# Seed the mobility lens with World Bank road traffic mortality data
 def seed_mobility_lens(db, system_user_id, use_postgresql):
-
+    """Seed the mobility lens with its issues and indicators."""
     if use_postgresql:
         cursor = db.conn.cursor()
         cursor.execute(
@@ -358,10 +176,7 @@ def seed_mobility_lens(db, system_user_id, use_postgresql):
             (issue_id, 'Road traffic mortality rate', 'World Bank / WHO', 'per 100,000 population')
         )
         db.conn.commit()
-        cursor.execute("SELECT id FROM indicators WHERE name = 'Road traffic mortality rate'")
-        indicator_id = cursor.fetchone()[0]
         cursor.close()
-    
     else:
         db.execute(
             'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
@@ -384,101 +199,12 @@ def seed_mobility_lens(db, system_user_id, use_postgresql):
             (issue_id, 'Road traffic mortality rate', 'World Bank / WHO', 'per 100,000 population')
         )
         db.commit()
-        indicator = db.execute("SELECT id FROM indicators WHERE name = 'Road traffic mortality rate'").fetchone()
-        indicator_id = indicator['id']
     
-    fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id, use_postgresql)
+    print('  Seeded Mobility lens structure.')
 
 
-#  Fetch road traffic mortality rates from World Bank API
-def fetch_worldbank_mobility(db, indicator_id, issue_id, system_user_id, use_postgresql):
-
-    target_countries = 'AUS;NOR'
-    url = f'https://api.worldbank.org/v2/country/{target_countries}/indicator/SH.STA.TRAF.P5'
-    params = {'format': 'json', 'per_page': 100, 'mrv': 1}
-
-    print('Fetching World Bank mobility data...')
-
-    try:
-        response = requests.get(url, params=params, timeout=15)
-        response.raise_for_status()
-        data = response.json()
-    except requests.RequestException as e:
-        print(f'World Bank API request failed: {e}')
-        return
-    
-    if not isinstance(data, list) or len(data) < 2:
-        print('  World Bank API returned no data or an error.')
-        return
-
-    records = data[1]
-    if not records:
-        print('  No records returned.')
-        return
-
-    print(f'  {len(records)} records returned from World Bank API')
-
-    inserted = 0
-    for record in records:
-        if record['value'] is None:
-            continue
-        
-        country_code = record['countryiso3code']
-        year = int(record['date'])
-        value = record['value']
-        
-        note_text = f"Official record: {value} deaths per 100,000 in {country_code} for {year}."
-        source_url = "https://data.worldbank.org/indicator/SH.STA.TRAF.P5"
-        
-        if use_postgresql:
-            cursor = db.conn.cursor()
-
-            # Check if this contribution already exists
-            cursor.execute(
-                "SELECT id FROM contributions WHERE country_code = %s AND indicator_id = %s AND user_id = %s",
-                (country_code, indicator_id, system_user_id)
-            )
-
-            # Only insert if it doesn't exist
-            if cursor.fetchone() is None:
-                cursor.execute(
-                    "INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s) RETURNING id",
-                    (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
-                )
-                contribution_id = cursor.fetchone()[0]
-                cursor.execute(
-                    "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
-                    (contribution_id, issue_id)
-                )
-                db.conn.commit()
-                cursor.close()
-        else:
-            # Check if this contribution already exists
-            existing = db.execute(
-                "SELECT id FROM contributions WHERE country_code = ? AND indicator_id = ? AND value = ? AND user_id = ? ",
-                (country_code, indicator_id, record['value'], system_user_id)
-            ).fetchone()
-
-            # Only insert if it doesn't exist
-            if not existing:
-                db.execute(
-                    'INSERT INTO contributions (user_id, contribution_type, country_code, value, note, source_url, status, created_at, indicator_id) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'), ?)',
-                    (system_user_id, 'data_point', country_code, value, note_text, source_url, 'approved', indicator_id)
-                )
-                contribution = db.execute("SELECT last_insert_rowid() as id").fetchone()
-                contribution_id = contribution['id']
-                db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contribution_id, issue_id))
-        
-        inserted += 1
-
-    if not use_postgresql:
-        db.commit()
-    print(f'  {inserted} new contributions inserted.')
-
-
-#  Seed the energy lens with climate and access issues
 def seed_energy_lens(db, system_user_id, use_postgresql):
-    
+    """Seed the energy lens with climate and access issues."""
     if use_postgresql:
         cursor = db.conn.cursor()
         cursor.execute(
@@ -501,13 +227,11 @@ def seed_energy_lens(db, system_user_id, use_postgresql):
             )
         db.conn.commit()
         
-        # Fetch issue IDs to link indicators
         cursor.execute("SELECT id FROM issues WHERE slug = 'energy-poverty'")
         energy_poverty_id = cursor.fetchone()[0]
         cursor.execute("SELECT id FROM issues WHERE slug = 'fossil-fuel-dependency'")
         fossil_fuel_id = cursor.fetchone()[0]
         
-        # Insert indicators
         cursor.execute(
             "INSERT INTO indicators (issue_id, name, source, unit) VALUES (%s, %s, %s, %s) ON CONFLICT (issue_id, name) DO NOTHING",
             (energy_poverty_id, 'Energy access rate', 'World Bank', '% of population')
@@ -518,7 +242,6 @@ def seed_energy_lens(db, system_user_id, use_postgresql):
         )
         db.conn.commit()
         cursor.close()
-    
     else:
         db.execute(
             'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
@@ -537,13 +260,11 @@ def seed_energy_lens(db, system_user_id, use_postgresql):
             db.execute('INSERT OR IGNORE INTO issues (lens_id, slug, title, description, context) VALUES (?, ?, ?, ?, ?)', issue)
         db.commit()
         
-        # Fetch issue IDs to link indicators
         energy_poverty = db.execute("SELECT id FROM issues WHERE slug = 'energy-poverty'").fetchone()
         energy_poverty_id = energy_poverty['id']
         fossil_fuel = db.execute("SELECT id FROM issues WHERE slug = 'fossil-fuel-dependency'").fetchone()
         fossil_fuel_id = fossil_fuel['id']
         
-        # Insert indicators
         db.execute(
             'INSERT OR IGNORE INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
             (energy_poverty_id, 'Energy access rate', 'World Bank', '% of population')
@@ -554,12 +275,11 @@ def seed_energy_lens(db, system_user_id, use_postgresql):
         )
         db.commit()
     
-    print('Seeded Energy lens with 2 issues and indicators')
+    print('  Seeded Energy lens structure.')
 
 
-# Seed the healthcare lens with access and affordability issues
 def seed_healthcare_lens(db, system_user_id, use_postgresql):
-    
+    """Seed the healthcare lens with access and affordability issues."""
     if use_postgresql:
         cursor = db.conn.cursor()
         cursor.execute(
@@ -582,13 +302,11 @@ def seed_healthcare_lens(db, system_user_id, use_postgresql):
             )
         db.conn.commit()
         
-        # Fetch issue IDs to link indicators
         cursor.execute("SELECT id FROM issues WHERE slug = 'healthcare-access'")
         healthcare_access_id = cursor.fetchone()[0]
         cursor.execute("SELECT id FROM issues WHERE slug = 'pharmaceutical-pricing'")
         pharma_pricing_id = cursor.fetchone()[0]
         
-        # Insert indicators
         cursor.execute(
             "INSERT INTO indicators (issue_id, name, source, unit) VALUES (%s, %s, %s, %s) ON CONFLICT (issue_id, name) DO NOTHING",
             (healthcare_access_id, 'Healthcare access index', 'WHO', '0-100 scale')
@@ -599,7 +317,6 @@ def seed_healthcare_lens(db, system_user_id, use_postgresql):
         )
         db.conn.commit()
         cursor.close()
-    
     else:
         db.execute(
             'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
@@ -618,13 +335,11 @@ def seed_healthcare_lens(db, system_user_id, use_postgresql):
             db.execute('INSERT OR IGNORE INTO issues (lens_id, slug, title, description, context) VALUES (?, ?, ?, ?, ?)', issue)
         db.commit()
         
-        # Fetch issue IDs to link indicators
         healthcare_access = db.execute("SELECT id FROM issues WHERE slug = 'healthcare-access'").fetchone()
         healthcare_access_id = healthcare_access['id']
         pharma_pricing = db.execute("SELECT id FROM issues WHERE slug = 'pharmaceutical-pricing'").fetchone()
         pharma_pricing_id = pharma_pricing['id']
         
-        # Insert indicators
         db.execute(
             'INSERT OR IGNORE INTO indicators (issue_id, name, source, unit) VALUES (?, ?, ?, ?)',
             (healthcare_access_id, 'Healthcare access index', 'WHO', '0-100 scale')
@@ -635,12 +350,11 @@ def seed_healthcare_lens(db, system_user_id, use_postgresql):
         )
         db.commit()
     
-    print('Seeded Healthcare lens with 2 issues and indicators')
+    print('  Seeded Healthcare lens structure.')
 
 
-# Seed the forces layer with pre-approved systemic mechanisms
 def seed_forces_layer(db, system_user_id, use_postgresql):
-    
+    """Seed the forces layer with pre-approved systemic mechanisms."""
     print('Seeding Forces layer...')
     
     issues = {}
@@ -789,7 +503,7 @@ def seed_forces_layer(db, system_user_id, use_postgresql):
     
     if not use_postgresql:
         db.commit()
-    print(f'  {inserted_forces} forces inserted with cross-lens links')
+    print(f'  {inserted_forces} forces inserted with cross-lens links.')
 
 
 def seed_all(db, use_postgresql):
@@ -799,23 +513,17 @@ def seed_all(db, use_postgresql):
     seed_food_lens(db, system_user_id, use_postgresql)
     seed_housing_lens(db, system_user_id, use_postgresql)
     seed_mobility_lens(db, system_user_id, use_postgresql)
-    
     seed_energy_lens(db, system_user_id, use_postgresql)
     seed_healthcare_lens(db, system_user_id, use_postgresql)
-    
     seed_forces_layer(db, system_user_id, use_postgresql)
     
     print('\n✅ Seeding complete!')
-    print('   - 5 lenses seeded (3 with API data, 2 structure-only)')
-    print('   - 7 forces seeded with evidence chains and cross-lens links')
-    print('   - All sources properly deep-linked')
-    print('   - Ready for demo!')
+    print('   - 5 lenses seeded with issues and indicators')
+    print('   - 4 forces seeded with evidence chains and cross-lens links')
+    print('   - Ready for community contributions!')
 
-# --- PASTE THE NEW CODE RIGHT HERE (No indentation) ---
+
 if __name__ == '__main__':
-    import os
-    import psycopg2
-    
     DATABASE_URL = os.environ.get('DATABASE_URL')
     
     if DATABASE_URL:
@@ -843,10 +551,8 @@ if __name__ == '__main__':
     else:
         print('Using SQLite database...')
         use_postgresql = False
-        import sqlite3
         db_wrapper = sqlite3.connect('conviction.db')
         db_wrapper.row_factory = sqlite3.Row
     
     seed_all(db_wrapper, use_postgresql)
-    
     db_wrapper.close()
