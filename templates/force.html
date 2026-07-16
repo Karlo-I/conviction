@@ -7,6 +7,15 @@
     <p><a href="{{ url_for('forces') }}" style="font-size: 0.9rem; color: #457b9d; text-decoration: none;">← All forces</a></p>
     <h1>{{ force.title }}</h1>
 
+    {% if force.strategic_implication %}
+    <div style="margin-top: 1.5rem; margin-bottom: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #457b9d;">
+        <h3 style="margin-top: 0; margin-bottom: 0.5rem; color: #1d3557; font-size: 1.1rem;">Strategic Implication</h3>
+        <p style="margin: 0; color: #495057; line-height: 1.6; font-size: 0.95rem;">
+            {{ force.strategic_implication }}
+        </p>
+    </div>
+    {% endif %}
+
     {% if session.user_id %}
     <form method="POST" action="{{ url_for('spend_force') }}" style="margin-bottom: 2rem;">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
@@ -32,7 +41,6 @@
 
         {% if force.evidence_chain %}
             {% for entry in force.evidence_chain %}
-            {# Updated to use evidence-card class #}
             <div class="evidence-card">
                 <p style="margin-bottom: 1rem; line-height: 1.6;">{{ entry.claim }}</p>
                 {% if entry.source_url %}
@@ -49,7 +57,6 @@
 
     <div class="cross-lens-links">
         <h2>Where this appears</h2>
-        {# Updated to use lens-tag class #}
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem;">
             {% for li in force.linked_issues %}
             <a href="{{ url_for('lens', slug=li.lens_slug) }}" class="lens-tag">

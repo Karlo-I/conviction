@@ -11,8 +11,8 @@ import sqlite3
 from datetime import datetime, timezone
 
 
+# Create the Data Archive system user if it doesn't exist
 def create_system_user(db, use_postgresql):
-    """Create the Data Archive system user if it doesn't exist."""
     if use_postgresql:
         cursor = db.conn.cursor()
         cursor.execute("SELECT id FROM users WHERE username = %s", ('Data Archive',))
@@ -47,8 +47,8 @@ def create_system_user(db, use_postgresql):
     return system_user_id
 
 
+# Seed the food lens, its issues, and indicators
 def seed_food_lens(db, system_user_id, use_postgresql):
-    """Seed the food lens, its issues, and indicators."""
     if use_postgresql:
         cursor = db.conn.cursor()
         cursor.execute(
@@ -99,8 +99,8 @@ def seed_food_lens(db, system_user_id, use_postgresql):
     print('  Seeded Food lens structure.')
 
 
+# Seed the housing lens with its issues and indicators
 def seed_housing_lens(db, system_user_id, use_postgresql):
-    """Seed the housing lens with its issues and indicators."""
     if use_postgresql:
         cursor = db.conn.cursor()
         cursor.execute(
@@ -151,8 +151,8 @@ def seed_housing_lens(db, system_user_id, use_postgresql):
     print('  Seeded Housing lens structure.')
 
 
+# Seed the mobility lens with its issues and indicators
 def seed_mobility_lens(db, system_user_id, use_postgresql):
-    """Seed the mobility lens with its issues and indicators."""
     if use_postgresql:
         cursor = db.conn.cursor()
         cursor.execute(
@@ -203,8 +203,8 @@ def seed_mobility_lens(db, system_user_id, use_postgresql):
     print('  Seeded Mobility lens structure.')
 
 
+# Seed the energy lens with climate and access issues
 def seed_energy_lens(db, system_user_id, use_postgresql):
-    """Seed the energy lens with climate and access issues."""
     if use_postgresql:
         cursor = db.conn.cursor()
         cursor.execute(
@@ -278,8 +278,8 @@ def seed_energy_lens(db, system_user_id, use_postgresql):
     print('  Seeded Energy lens structure.')
 
 
+# Seed the healthcare lens with access and affordability issues
 def seed_healthcare_lens(db, system_user_id, use_postgresql):
-    """Seed the healthcare lens with access and affordability issues."""
     if use_postgresql:
         cursor = db.conn.cursor()
         cursor.execute(
@@ -353,8 +353,9 @@ def seed_healthcare_lens(db, system_user_id, use_postgresql):
     print('  Seeded Healthcare lens structure.')
 
 
+# Seed the forces layer with pre-approved systemic mechanisms
 def seed_forces_layer(db, system_user_id, use_postgresql):
-    """Seed the forces layer with pre-approved systemic mechanisms."""
+    
     print('Seeding Forces layer...')
     
     issues = {}
@@ -383,6 +384,7 @@ def seed_forces_layer(db, system_user_id, use_postgresql):
             'title': 'Private equity extraction from essential care systems',
             'category': 'financial_capture',
             'mechanism': 'Financial investors acquire healthcare providers, load them with debt, extract fees, and sell assets—prioritizing investor returns over patient care.',
+            'strategic_implication': 'This extraction model destabilizes local healthcare infrastructure, leading to reduced service quality and higher costs for patients, ultimately treating public health needs as financial assets to be stripped.',
             'evidence_chain': [
                 {
                     'claim': 'Private equity firms acquire hospitals and clinics, then charge them management fees and load them with debt.',
@@ -397,6 +399,7 @@ def seed_forces_layer(db, system_user_id, use_postgresql):
             'title': 'Fast fashion externalizes environmental costs onto communities',
             'category': 'externalised_cost',
             'mechanism': 'Clothing brands profit from cheap production while communities bear the costs of pollution, waste, and resource depletion.',
+            'strategic_implication': 'This race to the bottom degrades global ecosystems and exploits vulnerable labor pools, effectively privatizing profits while socializing the catastrophic costs of environmental cleanup and public health crises.',
             'evidence_chain': [
                 {
                     'claim': 'Textile production is responsible for 10% of global carbon emissions.',
@@ -416,6 +419,7 @@ def seed_forces_layer(db, system_user_id, use_postgresql):
             'title': 'Pharmaceutical companies extend monopolies through patent manipulation',
             'category': 'information_asymmetry',
             'mechanism': 'Drug manufacturers make minor modifications to existing medications and file new patents, blocking generic competition and maintaining high prices.',
+            'strategic_implication': 'This practice artificially extends monopolies on life-saving medications, systematically blocking affordable generic alternatives and prioritizing shareholder returns over global patient survival.',
             'evidence_chain': [
                 {
                     'claim': 'Patients pay 4-10x more for branded drugs versus generics.',
@@ -430,6 +434,7 @@ def seed_forces_layer(db, system_user_id, use_postgresql):
             'title': 'Fossil fuel subsidies create structural dependency on carbon-intensive energy',
             'category': 'regulatory_capture',
             'mechanism': 'Government subsidies for oil, gas, and coal distort markets, making renewable energy less competitive and locking in climate-damaging infrastructure.',
+            'strategic_implication': 'These artificial price distortions create an insurmountable barrier to entry for renewable energy, effectively locking global infrastructure into a carbon-intensive trajectory for decades.',
             'evidence_chain': [
                 {
                     'claim': 'Global fossil fuel subsidies exceed $7 trillion annually.',
@@ -451,12 +456,13 @@ def seed_forces_layer(db, system_user_id, use_postgresql):
         if use_postgresql:
             cursor = db.conn.cursor()
             cursor.execute(
-                "INSERT INTO forces (slug, title, category, mechanism, evidence_chain, created_at) VALUES (%s, %s, %s, %s, %s, NOW()) ON CONFLICT (slug) DO NOTHING",
+                "INSERT INTO forces (slug, title, category, mechanism, strategic_implication, evidence_chain, created_at) VALUES (%s, %s, %s, %s, %s, %s, NOW()) ON CONFLICT (slug) DO NOTHING",
                 (
                     force_data['slug'],
                     force_data['title'],
                     force_data['category'],
                     force_data['mechanism'],
+                    force_data['strategic_implication'],
                     json.dumps(force_data['evidence_chain'])
                 )
             )
@@ -478,12 +484,13 @@ def seed_forces_layer(db, system_user_id, use_postgresql):
             cursor.close()
         else:
             db.execute(
-                'INSERT OR IGNORE INTO forces (slug, title, category, mechanism, evidence_chain, created_at) VALUES (?, ?, ?, ?, ?, datetime(\'now\'))',
+                'INSERT OR IGNORE INTO forces (slug, title, category, mechanism, strategic_implication, evidence_chain, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))',
                 (
                     force_data['slug'],
                     force_data['title'],
                     force_data['category'],
                     force_data['mechanism'],
+                    force_data['strategic_implication'],
                     json.dumps(force_data['evidence_chain'])
                 )
             )
@@ -503,11 +510,11 @@ def seed_forces_layer(db, system_user_id, use_postgresql):
     
     if not use_postgresql:
         db.commit()
-    print(f'  {inserted_forces} forces inserted with cross-lens links.')
+    print(f'  {inserted_forces} forces inserted with cross-lens links')
 
 
+# Run all seed functions
 def seed_all(db, use_postgresql):
-    """Run all seed functions."""
     system_user_id = create_system_user(db, use_postgresql)
     
     seed_food_lens(db, system_user_id, use_postgresql)

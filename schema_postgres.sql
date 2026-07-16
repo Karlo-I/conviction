@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS forces (
     title TEXT NOT NULL,
     category TEXT NOT NULL,
     mechanism TEXT NOT NULL,
+    strategic_implication TEXT NOT NULL,
     evidence_chain JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

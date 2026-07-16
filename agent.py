@@ -19,6 +19,12 @@ def strip_markdown(text):
     if not text:
         return text
     
+    # Remove markdown code blocks
+    if text.startswith("```"):
+        text = text.split("```")[1]
+        if text.startswith("json"):
+            text = text[4:]
+    
     # Remove bold/italic markers
     text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)  # **bold**
     text = re.sub(r'\*(.*?)\*', r'\1', text)      # *italic*
@@ -288,7 +294,7 @@ Respond in JSON format ONLY:
 
 # Synthesize multiple contributor-submitted mechanism descriptions into one
 # country-agnostic sentence. Called by elevate_force_claim in models.py at elevation time
-# Returns None on any failure — caller must not elevate without a valid result
+# Returns a dictionary with 'mechanism' and 'strategic_implication' on success, None on failure.
 def refine_mechanism(claims):
     if not claims:
         return None
@@ -300,16 +306,22 @@ def refine_mechanism(claims):
 Multiple contributors independently described the same underlying mechanism, in different countries:
 {claims_text}
 
-Task: Write ONE sentence describing the shared mechanism itself, generalized across all the claims above.
+Task: 
+1. Write ONE sentence describing the shared mechanism itself, generalized across all the claims above.
+2. Write ONE sentence explaining the strategic implication — what systemic consequence does this mechanism create?
 
 Rules:
 - Do not name any country, region, or specific place.
 - Do not name any individual or organisation.
 - Do not copy any single claim verbatim — synthesize the pattern they share.
-- **Use standard sentence capitalization and correct spelling. Do not copy user typos or erratic casing (e.g., fix "finanCIAalisation" to "financialization").**
-- One sentence only, maximum 25 words.
+- Use standard sentence capitalization and correct spelling.
+- One sentence only for each output, maximum 25 words each.
 
-Answer with only the sentence. No other text."""
+Return ONLY a JSON object with exactly these two fields:
+{{
+    "mechanism": "<the synthesized mechanism sentence>",
+    "strategic_implication": "<the systemic consequence sentence>"
+}}"""
 
     api_key = os.environ.get('ANTHROPIC_API_KEY')
     if not api_key:
@@ -325,7 +337,7 @@ Answer with only the sentence. No other text."""
             },
             json={
                 'model': ANTHROPIC_MODEL,
-                'max_tokens': 60,
+                'max_tokens': 150,  # Increased from 60 to accommodate JSON output
                 'messages': [{'role': 'user', 'content': prompt}]
             },
             timeout=15
@@ -333,8 +345,18 @@ Answer with only the sentence. No other text."""
         response.raise_for_status()
         data = response.json()
         result = data['content'][0]['text'].strip()
-        return result if result else None
-    except Exception:
+
+        # Strip markdown formatting (handles code blocks, bold, etc.)
+        result = strip_markdown(result)
+        
+        # Parse the JSON response
+        result_json = json.loads(result)
+        return {
+            'mechanism': result_json.get('mechanism'),
+            'strategic_implication': result_json.get('strategic_implication')
+        }
+    except Exception as e:
+        print(f"Error in refine_mechanism: {e}")
         return None
     
 

@@ -357,9 +357,17 @@ def elevate_force_claim(db, contribution_id):
     all_claims = [contribution['title'] or contribution['note']]
     all_claims += [s['note'] or '' for s in additional_sources if s['note']]
 
-    refined_title = agent.refine_mechanism(all_claims)
+    # 1. Call the agent (now returns a dictionary)
+    refined_data = agent.refine_mechanism(all_claims)
 
-    if refined_title is None:
+    if refined_data is None:
+        return False
+
+    # 2. Extract the fields from the dictionary
+    mechanism = refined_data.get('mechanism')
+    strategic_implication = refined_data.get('strategic_implication')
+
+    if not mechanism:
         return False
 
     evidence_chain = []
@@ -372,7 +380,8 @@ def elevate_force_claim(db, contribution_id):
 
     category = contribution['category'] or 'information_asymmetry'
     
-    existing_force_id = find_duplicate_force(db, category, refined_title)
+    # Use mechanism to check for duplicates (since it acts as the title)
+    existing_force_id = find_duplicate_force(db, category, mechanism)
     
     if existing_force_id:
         force_id = existing_force_id
@@ -392,10 +401,11 @@ def elevate_force_claim(db, contribution_id):
             (json.dumps(existing_chain), force_id)
         )
     else:
-        slug = f"{slugify(refined_title)}-{contribution_id}"
+        # 3. Create slug and insert into database with the new strategic_implication column
+        slug = f"{slugify(mechanism)}-{contribution_id}"
         db.execute(
-            'INSERT INTO forces (slug, title, category, mechanism, evidence_chain) VALUES (?, ?, ?, ?, ?)',
-            (slug, refined_title, category, refined_title, json.dumps(evidence_chain))
+            'INSERT INTO forces (slug, title, category, mechanism, strategic_implication, evidence_chain) VALUES (?, ?, ?, ?, ?, ?)',
+            (slug, mechanism, category, mechanism, strategic_implication, json.dumps(evidence_chain))
         )
         force = db.execute('SELECT id FROM forces WHERE slug = ?', (slug,)).fetchone()
         force_id = force['id']
@@ -408,7 +418,7 @@ def elevate_force_claim(db, contribution_id):
     for li in linked_issues:
         db.execute(
             'INSERT INTO force_issue_links (force_id, issue_id, explanation) VALUES (?, ?, ?) ON CONFLICT (force_id, issue_id) DO NOTHING',
-            (force_id, li['issue_id'], refined_title)
+            (force_id, li['issue_id'], mechanism)
         )
 
     db.commit()
@@ -980,13 +990,13 @@ def add_issue_comment(db, issue_id, user_id, comment, source_url=None, parent_co
     cursor = db.execute(
         '''
         INSERT INTO issue_comments (issue_id, user_id, parent_comment_id, comment, source_url, created_at)
-        VALUES (?, ?, ?, ?, ?, datetime('now'))
+        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         RETURNING id
         ''',
         (issue_id, user_id, parent_comment_id, comment, source_url)
     )
     
-    # Fetch the ID first so SQLite releases the "in progress" state
+    # Fetch the ID first so SQLite/Postgres releases the "in progress" state
     new_id = cursor.fetchone()['id']
     
     # Now it is safe to commit

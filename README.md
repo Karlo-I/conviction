@@ -49,7 +49,6 @@ The platform's commitments to truth, transparency, epistemic humility, and non-d
 | Frontend | Vanilla JavaScript | No framework — keeps scope tight |
 | Mapping | Leaflet.js | Free, open source, handles global heatmap |
 | Charts | Chart.js | Data visualisation per lens |
-| Activity | Strava API (free tier) | OAuth 2.0, activity sync for token rewards — post-submission pipeline |
 | AI Agent | claude-haiku-4-5-20251001 | Contribution digest generation |
 | Hosting | Render (free tier) | Live at https://conviction-20z3.onrender.com/ |
 
@@ -160,15 +159,15 @@ When a user submits a contribution, `agent.py` is called once. It does the follo
 5. Writes the analytical summary and confidence signal to the `contribution_digests` table.
 6. Additionally, the AI cleans obvious typos and erratic capitalization from the user's submission before it is saved to the database, improving readability without altering the original meaning or context. The digest is then displayed to all peer validators on `validate.html`.
 
-**3. Design principle:** 
+**3. Design principle** 
 
 The AI presents evidence. Humans decide. User-submitted sources are analyzed for context, methodology, and internal consistency — not judged against privileged institutional databases. Where a source lacks specificity or presents a unique local perspective, the digest surfaces those details explicitly. The friction between different community perspectives is the insight. This is consistent with the platform's thesis that information asymmetry is itself a force worth documenting.
 
-**4. Cost estimate:** 
+**4. Cost estimate** 
 
 ~$0.002–$0.01 per contribution at current model pricing. Under $1 for the first 100 contributions.
 
-**5. Variability in user-submitted evidence:** 
+**5. Variability in user-submitted evidence** 
 
 Community sources may vary in quality, specificity, or methodological grounding. The AI digest is designed to explicitly flag these gaps rather than hide them, maintaining epistemic humility.
 
