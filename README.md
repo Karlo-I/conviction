@@ -16,7 +16,7 @@ Conviction is a web application that helps people trace the line between what th
 
 Most people see symptoms. This app surfaces the machinery — and the forces operating that machinery.
 
-Users explore five systemic lenses — **Food**, **Housing**, **Mobility**, **Energy**, and **Healthcare** — through real global data drawn from sources including the WHO and World Bank. But the data alone is incomplete. Behind each lens sits a fourth layer: the **underlying forces** — financial capture, regulatory arbitrage, externalised cost, information asymmetry — that operate across all domains simultaneously. The same mechanism that keeps ultra-processed food dominant in dietary policy also keeps housing treated as an investment asset and car dependency entrenched in urban planning. The platform makes that cross-domain pattern visible.
+Users explore five systemic lenses to begin with — **Food**, **Housing**, **Mobility**, **Energy**, and **Healthcare** — which will increase as more users propose new lenses that matters. But the data alone is incomplete. Behind each lens sits a fourth layer: the **underlying forces** — financial capture, regulatory arbitrage, externalised cost, information asymmetry — that operate across all domains simultaneously. The same mechanism that keeps ultra-processed food dominant in dietary policy also keeps housing treated as an investment asset and car dependency entrenched in urban planning. The platform makes that cross-domain pattern visible.
 
 Users take a short diagnostic quiz that personalises which lens they see first, then move through the evidence at their own depth. They register, receive tokens, and spend them on the issues they believe matter most. Their conviction aggregates into a global heatmap showing where collective concern is concentrating.
 
@@ -49,7 +49,6 @@ The platform's commitments to truth, transparency, epistemic humility, and non-d
 | Activity | Strava API (free tier) | OAuth 2.0, activity sync for token rewards — post-submission pipeline |
 | AI Agent | claude-haiku-4-5-20251001 | Contribution digest generation — runs once per contribution |
 | Hosting | Render (free tier) | Live at https://conviction-20z3.onrender.com/ |
-| Data Sources | WHO, World Bank | Free APIs; seeded via `seed.py` into unified `contributions` table |
 
 **Cost target: Near-zero**
 The only ongoing cost is the AI agent call triggered when a user submits a contribution. Using a lightweight model (claude-haiku or gpt-4o-mini), each call costs approximately $0.002–$0.01. At low traffic — say 100 contributions in the first few months — total cost is under $1. Cost scales with contributions submitted, not with page views or users. This is the right scaling relationship. All other components remain free.
@@ -330,9 +329,8 @@ project/
                             # ON CONFLICT DO NOTHING instead of INSERT OR IGNORE, no PRAGMA.
 ├── Procfile                # Tells Render to serve via gunicorn: 'web: gunicorn app:app'
 ├── seed.py                 # Seeds the database with real global data. Creates a "Data Archive"
-                            # system user, then seeds five lenses: Food (WHO obesity data),
-                            # Housing (World Bank urban slum data), Mobility (World Bank road
-                            # traffic mortality), Energy, and Healthcare. Also seeds the forces
+                            # system user, then seeds five lenses: Food,
+                            # Housing, Mobility, Energy, and Healthcare. Also seeds the forces
                             # layer with four pre-approved systemic mechanisms and cross-lens
                             # links. Dual-mode: detects PostgreSQL vs SQLite via DATABASE_URL.
                             # Triggered via web route /seed-data in production.
@@ -359,10 +357,10 @@ project/
     ├── validate.html       # Peer validation queue — shows digest, approve/reject buttons
     ├── register.html
     ├── login.html
+    ├── commitments.html    # Our commitments - to truth, transparency, epistemic humility, and non-discrimination
     ├── privacy.html        # Privacy policy — data collected, retention, deletion request
     ├── terms.html          # Terms of use — contribution liability, content policy
-    ├── how_it_works.html   # AI disclosure — agent role, model used, limitations
-    └── strava.html         # Strava connection and activity summary (post-submission)
+    └── how_it_works.html   # AI disclosure — agent role, model used, limitations
 ```
 
 ---
@@ -379,17 +377,16 @@ A weighted scoring system that classifies user responses to 5–7 questions into
 
 When a user submits a contribution, `agent.py` is called once. It does the following in sequence:
 
-1. Constructs a search query from the contribution's claim, country, and indicator
-2. Fetches relevant data from pre-approved free sources (WHO API, World Bank API, Our World in Data CSVs)
-3. Sends the retrieved data plus the original claim to a lightweight LLM (claude-haiku or gpt-4o-mini) with a tightly constrained prompt
-4. The prompt instructs the model to summarise what the evidence says relative to the claim — not to make a verdict
-5. Returns a `confidence` signal: `'evidence found'`, `'partial evidence'`, or `'no data available'`
-6. Writes the summary and sources to `contribution_digests`
-7. For better UI/UX design, AI also cleans any obvious grammatical errors without changing the context provided by the users in their submissions
+1. Extracts the user's claim, country, and the source excerpt they provided.
+2. Sends this information to a lightweight LLM (claude-haiku) with a tightly constrained prompt.
+3. The prompt instructs the model to act as an evidence analyst: it assesses the quality, strengths, and gaps of the user's provided source relative to their claim, without making a final verdict on whether the claim is true or false.
+4. Returns a confidence signal based on the quality of the provided evidence: `strong evidence`, `partial evidence`, `weak evidence`, or `no evidence provided`.
+5. Writes the analytical summary and confidence signal to the `contribution_digests` table.
+6. Additionally, the AI cleans obvious typos and erratic capitalization from the user's submission before it is saved to the database, improving readability without altering the original meaning or context."
 
 The digest is then displayed to all peer validators on `validate.html`. The AI runs once; all validators see the same output. This keeps API cost proportional to contributions submitted, not to user count or page views.
 
-**Design principle:** The AI presents evidence. Humans decide. Pre-approved sources — WHO, World Bank, FAO, Our World in Data — are reference points for comparison, not arbiters of truth. Where a user-submitted source diverges from institutional data, the digest surfaces that divergence explicitly. The conflict is the insight. This is consistent with the platform's thesis that information asymmetry is itself a force worth documenting.
+**Design principle:** The AI presents evidence. Humans decide. User-submitted sources are analyzed for context, methodology, and internal consistency — not judged against privileged institutional databases. Where a source lacks specificity or presents a unique local perspective, the digest surfaces those details explicitly. The friction between different community perspectives is the insight. This is consistent with the platform's thesis that information asymmetry is itself a force worth documenting."
 
 **Cost estimate:** ~$0.002–$0.01 per contribution at current model pricing. Under $1 for the first 100 contributions.
 
@@ -405,24 +402,11 @@ The digest is then displayed to all peer validators on `validate.html`. The AI r
 | 2 | June 26–Jul 2 | Three lenses with real data, token spend system, diagnostic quiz | ✓ |
 | 3 | Jul 3–9 | Heatmap, contribution flow, agent.py digest, peer validation, token earning | ✓ |
 | 4 | Jul 10–16 | Polish: conditional fields in contribute.html, legal pages, CSS polish, PostgreSQL migration, deployment to Render | ✓ |
-| Post-submission | Jul 17+ | Strava OAuth integration, real-time heatmap via WebSockets, ML quiz upgrade | ☐ |
+| Post-submission | Jul 17+ | real-time heatmap via WebSockets, ML quiz upgrade | ☐ |
 
 ---
 
-## Data Sources
-
-| Layer | Dataset | Source | Format |
-|---|---|---|---|
-| Food lens | Adult obesity rates | WHO Global Health Observatory | API |
-| Housing lens | Urban slum population | World Bank | API |
-| Mobility lens | Road traffic mortality rate | World Bank / WHO | API |
-| Energy lens | Structure seeded — community-built | — | — |
-| Healthcare lens | Structure seeded — community-built | — | — |
-| Forces layer | Lobbying expenditure, patent data, subsidy figures, environmental externalities | Academic papers, WHO, IMF, IEA, Ellen MacArthur Foundation | Manual curation → seed.py |
-
-**Note on reference sources:** WHO and World Bank are used as reference points for comparison — not as golden sources or arbiters of truth. Each has documented institutional context, funding relationships, and coverage limitations. Where user-contributed evidence diverges from these sources, the divergence is surfaced explicitly in the AI digest rather than resolved in favour of the institutional source.
-
-**Note on Energy and Healthcare lenses:** These lenses are seeded with structure (lens, issues) but no institutional API data. They are designed to be community-built — users contribute data points through the contribution flow. This is a deliberate design choice: it demonstrates the platform's architecture can support new domains without code changes, and it invites community participation from day one.
+**Note on lenses:** The 5 lenses are seeded with structure (lens, issues) but no institutional API data. They are designed to be community-built — users contribute data points through the contribution flow. This is a deliberate design choice: it demonstrates the platform's architecture can support new domains without code changes, and it invites community participation from day one.
 
 **Food lens thesis:** The argument is not about raw price comparison across countries — everyone already knows food costs more in Oslo than Nairobi. The argument is about affordability relative to income, and what that affordability gap does to food choices. In many lower-income countries, ultra-processed food has become cheaper relative to local wages than fresh whole food — not because it is inherently cheap, but because it has been made artificially cheap through agricultural subsidies, supply chain consolidation, and regulatory environments shaped by the food industry. The result is that poor nutrition has become the economically rational choice for billions of people. That is not individual failure. It is a designed outcome. The health consequences — obesity, diabetes, cardiovascular disease — are measurable and global. The food lens surfaces the mechanism behind the affordability gap, not just the gap itself.
 
@@ -482,7 +466,7 @@ The heatmap toggle between "highest conviction" and "least heard" actively direc
 The cross-lens links in `force_issue_links` are the strongest echo chamber prevention in the architecture. A user deep in the food lens who sees that the same financial capture force also drives the housing crisis is pulled out of their silo by the evidence itself — not by a recommendation algorithm, but by the structure of the data.
 
 **Forces layer community standards**
-The forces layer is built by the community through an elevated validation threshold (`force_approval_threshold` in `platform_config`, default 5 approvals). For a force claim to be elevated, it must meet three criteria enforced by validators, not a platform editor: the mechanism is described in plain language without characterising intent; at least two independent sources are cited in the evidence chain; and the cross-lens links span at least two different lenses. Single-lens forces are issues, not forces — the distinction matters.
+The forces layer is built by the community through an elevated validation threshold (`force_approval_threshold` in `platform_config`, default 5 votes, at least 3 approvals). For a force claim to be elevated, it must meet three criteria enforced by validators, not a platform editor: the mechanism is described in plain language without characterising intent; at least two independent sources are cited in the evidence chain; and the cross-lens links span at least two different lenses. Single-lens forces are issues, not forces — the distinction matters.
 
 ---
 
