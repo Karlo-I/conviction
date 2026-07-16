@@ -1,7 +1,9 @@
 # Conviction
 ### CS50x Final Project — Living Project Brief
+**AI Assistance Disclosure:** This `README.md` file was developed with the assistance of AI language models (Claude and Qwen) to refine phrasing, improve formatting, and ensure clarity. All project architecture, design decisions, feature logic, and technical direction are strictly the author's own.
 **Last Updated:** July 14, 2026 (rev 18)
 **Status:** Deployed — Live at https://conviction-20z3.onrender.com/
+
 
 ---
 
