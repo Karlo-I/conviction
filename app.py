@@ -804,30 +804,34 @@ def seed_data():
             return f"Error: {schema_file} not found!"
 
         if USE_POSTGRESQL:
-            cursor = db.conn.cursor()
-            
-            # CRITICAL FIX: Enable autocommit to prevent transaction abortion cascades
-            db.conn.autocommit = True
-            
-            statements = [s.strip() for s in sql_script.split(';') if s.strip()]
-            errors = []
-            
-            for statement in statements:
-                # Skip pure comment blocks to avoid syntax errors
-                if statement.startswith('--'):
-                    continue
-                try:
-                    cursor.execute(statement)
-                except Exception as e:
-                    errors.append(f"FAILED: {statement[:50]}... -> {str(e)}")
-            
-            # Reset autocommit back to default
-            db.conn.autocommit = False
-            
-            if errors:
-                return "Error initializing database:<br><br>" + "<br><br>".join(errors)
+            # Access the underlying psycopg2 connection properly
+            if hasattr(db, 'conn'):
+                cursor = db.conn.cursor()
+                
+                # CRITICAL FIX: Enable autocommit to prevent transaction abortion cascades
+                db.conn.autocommit = True
+                
+                statements = [s.strip() for s in sql_script.split(';') if s.strip()]
+                errors = []
+                
+                for statement in statements:
+                    # Skip pure comment blocks to avoid syntax errors
+                    if statement.startswith('--'):
+                        continue
+                    try:
+                        cursor.execute(statement)
+                    except Exception as e:
+                        errors.append(f"FAILED: {statement[:50]}... -> {str(e)}")
+                
+                # Reset autocommit back to default
+                db.conn.autocommit = False
+                
+                if errors:
+                    return "Error initializing database:<br><br>" + "<br><br>".join(errors)
+                else:
+                    print("✅ Database schema auto-initialized")
             else:
-                print("✅ Database schema auto-initialized")
+                return "Error: Database connection not properly initialized"
         else:
             db.execute(sql_script)
             db.commit()
@@ -839,7 +843,6 @@ def seed_data():
         return "✅ Seeding complete! Your database is ready for community contributions."
     except Exception as e:
         return f"Error during seeding: {str(e)}"
-    
 
 # IMPORTANT: Delete these two lines when the project moves to PROD
 if __name__ == '__main__':
