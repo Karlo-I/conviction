@@ -1,5 +1,5 @@
 -- schema.sql
--- Conviction: database schema
+-- Conviction: database schema when running in a local environment
 -- Run once to initialise the database: flask --app app init-db
 -- AI assistance: Both Claude (Anthropic) and Qwen.ai (3.7-Plus) assisted with query structure and error handling patterns.
 -- Logic, structure, and decisions are the author's own.

@@ -230,7 +230,7 @@
             <div class="form-group" id="indicator-group">
                 <label for="indicator_id">Related indicator</label>
                 <select id="indicator_id" name="indicator_id">
-                    <option value="">None — this is a general observation</option>
+                    <!-- <option value="">None — this is a general observation</option> -->
                     {% for indicator in indicators %}
                     <option value="{{ indicator.id }}">{{ indicator.name }}</option>
                     {% endfor %}
