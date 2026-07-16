@@ -789,9 +789,46 @@ def seed_data():
     import seed
     
     db = get_db()
+    
+    # Auto-initialize if tables don't exist
+    try:
+        db.execute("SELECT 1 FROM users LIMIT 1")
+        db.commit()
+    except Exception:
+        # Tables don't exist - initialize them
+        schema_file = 'schema_postgres.sql' if USE_POSTGRESQL else 'schema.sql'
+        try:
+            with open(schema_file) as f:
+                sql_script = f.read()
+        except FileNotFoundError:
+            return f"Error: {schema_file} not found!"
+
+        if USE_POSTGRESQL:
+            cursor = db.conn.cursor()
+            statements = [s.strip() for s in sql_script.split(';') if s.strip()]
+            errors = []
+            
+            for statement in statements:
+                try:
+                    cursor.execute(statement)
+                except Exception as e:
+                    errors.append(f"FAILED: {statement[:50]}... -> {str(e)}")
+            
+            if errors:
+                db.conn.rollback()
+                return f"Error initializing database:<br><br>" + "<br><br>".join(errors)
+            else:
+                db.conn.commit()
+                print("✅ Database schema auto-initialized")
+        else:
+            db.execute(sql_script)
+            db.commit()
+            print("✅ SQLite Database auto-initialized")
+    
+    # Now run the seed
     try:
         seed.seed_all(db, USE_POSTGRESQL)
-        return "✅ Seeding complete! Check your database for the new data."
+        return "✅ Seeding complete! Your database is ready for community contributions."
     except Exception as e:
         return f"Error during seeding: {str(e)}"
     
