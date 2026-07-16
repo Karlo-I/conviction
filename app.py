@@ -805,20 +805,28 @@ def seed_data():
 
         if USE_POSTGRESQL:
             cursor = db.conn.cursor()
+            
+            # CRITICAL FIX: Enable autocommit to prevent transaction abortion cascades
+            db.conn.autocommit = True
+            
             statements = [s.strip() for s in sql_script.split(';') if s.strip()]
             errors = []
             
             for statement in statements:
+                # Skip pure comment blocks to avoid syntax errors
+                if statement.startswith('--'):
+                    continue
                 try:
                     cursor.execute(statement)
                 except Exception as e:
                     errors.append(f"FAILED: {statement[:50]}... -> {str(e)}")
             
+            # Reset autocommit back to default
+            db.conn.autocommit = False
+            
             if errors:
-                db.conn.rollback()
-                return f"Error initializing database:<br><br>" + "<br><br>".join(errors)
+                return "Error initializing database:<br><br>" + "<br><br>".join(errors)
             else:
-                db.conn.commit()
                 print("✅ Database schema auto-initialized")
         else:
             db.execute(sql_script)
