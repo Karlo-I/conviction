@@ -791,12 +791,17 @@ def seed_data():
     
     db = get_db()
     
-    # Auto-initialize if tables don't exist
+    # Check if tables exist
+    tables_exist = False
     try:
         db.execute("SELECT 1 FROM users LIMIT 1")
         db.commit()
+        tables_exist = True
     except Exception:
-        # Tables don't exist - initialize them
+        # Important: Rollback to clear the bad transaction state on the Flask wrapper
+        db.rollback()
+        
+    if not tables_exist:
         schema_file = 'schema_postgres.sql' if USE_POSTGRESQL else 'schema.sql'
         try:
             with open(schema_file) as f:
@@ -805,9 +810,8 @@ def seed_data():
             return f"Error: {schema_file} not found!"
 
         if USE_POSTGRESQL:
-            # Create a fresh connection to avoid transaction state issues
+            # Create a fresh connection to avoid Flask wrapper transaction state issues
             init_conn = psycopg2.connect(DATABASE_URL)
-            init_conn.autocommit = True
             cursor = init_conn.cursor()
             
             statements = [s.strip() for s in sql_script.split(';') if s.strip()]
@@ -817,16 +821,21 @@ def seed_data():
                 # Skip pure comment blocks to avoid syntax errors
                 if statement.startswith('--'):
                     continue
+                    
                 try:
                     cursor.execute(statement)
                 except Exception as e:
                     errors.append(f"FAILED: {statement[:50]}... -> {str(e)}")
-            
-            init_conn.close()
+                    # Rollback immediately so the next statement doesn't fail due to aborted transaction
+                    init_conn.rollback() 
+                    break # Stop executing if one fails
             
             if errors:
+                init_conn.close()
                 return "Error initializing database:<br><br>" + "<br><br>".join(errors)
             else:
+                init_conn.commit()
+                init_conn.close()
                 print("✅ Database schema auto-initialized")
         else:
             db.execute(sql_script)
