@@ -798,7 +798,7 @@ def seed_data():
         db.commit()
         tables_exist = True
     except Exception:
-        # Important: Rollback to clear the bad transaction state on the Flask wrapper
+        # Important: Rollback to clear the bad transaction state
         db.rollback()
         
     if not tables_exist:
@@ -810,37 +810,31 @@ def seed_data():
             return f"Error: {schema_file} not found!"
 
         if USE_POSTGRESQL:
-            # Create a fresh connection to avoid Flask wrapper transaction state issues
+            # Create a fresh connection
             init_conn = psycopg2.connect(DATABASE_URL)
             cursor = init_conn.cursor()
             
+            # Split by semicolon and process each statement
             statements = [s.strip() for s in sql_script.split(';') if s.strip()]
-            errors = []
             
             for statement in statements:
-                # Skip pure comment blocks to avoid syntax errors
-                if statement.startswith('--'):
+                # Skip ONLY if the statement is purely comments (no SQL commands)
+                has_sql_command = any(keyword in statement.upper() for keyword in ['CREATE', 'INSERT', 'ALTER', 'DROP', 'SELECT'])
+                
+                if not has_sql_command:
                     continue
                     
                 try:
                     cursor.execute(statement)
                 except Exception as e:
-                    errors.append(f"FAILED: {statement[:50]}... -> {str(e)}")
-                    # Rollback immediately so the next statement doesn't fail due to aborted transaction
-                    init_conn.rollback() 
-                    break # Stop executing if one fails
+                    init_conn.rollback()
+                    init_conn.close()
+                    return f"Error initializing database:<br><br>FAILED: {statement[:100]}...<br><br>Error: {str(e)}"
             
-            if errors:
-                init_conn.close()
-                return "Error initializing database:<br><br>" + "<br><br>".join(errors)
-            else:
-                init_conn.commit()
-                init_conn.close()
-                print("✅ Database schema auto-initialized")
-        else:
-            db.execute(sql_script)
-            db.commit()
-            print("✅ SQLite Database auto-initialized")
+            # Commit all changes
+            init_conn.commit()
+            init_conn.close()
+            print("✅ Database schema auto-initialized")
     
     # Now run the seed
     try:
@@ -848,7 +842,6 @@ def seed_data():
         return "✅ Seeding complete! Your database is ready for community contributions."
     except Exception as e:
         return f"Error during seeding: {str(e)}"
-    
 
 # IMPORTANT: Delete these two lines when the project moves to PROD
 if __name__ == '__main__':
