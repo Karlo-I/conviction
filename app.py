@@ -776,34 +776,6 @@ def commitments():
     return render_template('commitments.html')
 
 
-# TEMP: To be deleted once render db is updated
-@app.route('/update-schema')
-def update_schema():
-    """One-time route to add contribution_id to token_transactions"""
-    db = get_db()
-    try:
-        if USE_POSTGRESQL:
-            # Try to add the column (PostgreSQL will error if it exists)
-            db.execute("""
-                ALTER TABLE token_transactions 
-                ADD COLUMN IF NOT EXISTS contribution_id INTEGER REFERENCES contributions(id)
-            """)
-        else:
-            # SQLite doesn't support IF NOT EXISTS for ADD COLUMN
-            # Check if column exists first
-            columns = db.execute("PRAGMA table_info(token_transactions)").fetchall()
-            column_names = [col[1] for col in columns]
-            if 'contribution_id' not in column_names:
-                db.execute("ALTER TABLE token_transactions ADD COLUMN contribution_id INTEGER REFERENCES contributions(id)")
-        
-        db.commit()
-        return "✅ Schema updated successfully! Added contribution_id to token_transactions."
-        
-    except Exception as e:
-        db.rollback()
-        return f"Error updating schema: {str(e)}"
-
-
 # Prevent browser caching to ensure back button always shows current auth state
 # Critical for security after logout
 @app.after_request
