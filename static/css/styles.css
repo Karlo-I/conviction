@@ -1321,3 +1321,112 @@ nav, .nav-container, .user-menu {
     color: white;
     text-decoration: none;
 }
+
+/* ============================================================
+   14. CONTRIBUTION CONFIRMATION - SIMPLE & CLEAN
+   ============================================================ */
+.confirm-page {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0rem 1rem;
+}
+
+.success-banner {
+    background: rgba(127, 29, 29, 0.85);
+    backdrop-filter: blur(12px);
+    color: white;
+    padding: 2rem;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.success-banner h1 {
+    margin: 0 0 0.5rem 0;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.success-banner p {
+    margin: 0;
+    opacity: 0.95;
+}
+
+.contribution-digest {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.contribution-digest section {
+    margin-bottom: 2rem;
+}
+
+.contribution-digest section:last-child {
+    margin-bottom: 0;
+}
+
+.contribution-digest h2 {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    color: #1d3557;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Justified text, no hyphens */
+.contribution-digest p {
+    margin: 0 0 0.75rem 0;
+    line-height: 1.6;
+    text-align: justify;
+    hyphens: none;
+    -webkit-hyphens: none;
+    -ms-hyphens: none;
+    overflow-wrap: break-word; /* Only breaks long URLs if absolutely necessary */
+}
+
+.contribution-digest a {
+    color: #457b9d;
+    word-break: break-all;
+}
+
+.confidence {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.confidence.strong { background: #d1fae5; color: #065f46; }
+.confidence.partial { background: #fef3c7; color: #92400e; }
+.confidence.weak { background: #fee2e2; color: #991b1b; }
+.confidence.none { background: #f3f4f6; color: #4b5563; }
+
+.evidence {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 6px;
+    border-left: 3px solid #457b9d;
+}
+
+.actions {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.actions a {
+    margin: 0 1rem;
+    color: #457b9d;
+    text-decoration: none;
+}
+
+.actions a:hover {
+    text-decoration: underline;
+}
+
+.evidence p {
+    font-family: 'Source Sans Pro', system-ui, sans-serif;
+}
