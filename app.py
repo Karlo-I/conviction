@@ -783,17 +783,30 @@ def update_schema():
     db = get_db()
     try:
         # Check if column already exists
-        db.execute("SELECT contribution_id FROM token_transactions LIMIT 1")
+        if USE_POSTGRESQL:
+            result = db.execute("""
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'token_transactions' 
+                    AND column_name = 'contribution_id'
+                )
+            """).fetchone()
+            if result[0]:  # Column exists
+                return "✅ Schema is already up to date - contribution_id column exists."
+        else:
+            # SQLite check
+            result = db.execute("PRAGMA table_info(token_transactions)").fetchall()
+            if any(row[1] == 'contribution_id' for row in result):
+                return "✅ Schema is already up to date - contribution_id column exists."
+        
+        # Column doesn't exist - add it
+        db.execute("ALTER TABLE token_transactions ADD COLUMN contribution_id INTEGER REFERENCES contributions(id)")
         db.commit()
-        return "✅ Schema is already up to date."
-    except Exception:
-        try:
-            # Add the column (works in both SQLite and PostgreSQL)
-            db.execute("ALTER TABLE token_transactions ADD COLUMN contribution_id INTEGER REFERENCES contributions(id)")
-            db.commit()
-            return "✅ Schema updated successfully! Added contribution_id to token_transactions."
-        except Exception as e:
-            return f"Error updating schema: {str(e)}"
+        return "✅ Schema updated successfully! Added contribution_id to token_transactions."
+        
+    except Exception as e:
+        db.rollback()  # CRITICAL: Rollback on error
+        return f"Error updating schema: {str(e)}"
 
 
 # Prevent browser caching to ensure back button always shows current auth state
