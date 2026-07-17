@@ -7,6 +7,7 @@
 import json
 import os
 import psycopg2
+import psycopg2.extras
 import sqlite3
 from datetime import datetime, timezone
 

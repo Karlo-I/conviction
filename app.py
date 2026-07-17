@@ -156,11 +156,6 @@ def index():
             if models.can_retake_quiz(db, user_id):
                 show_quiz_prompt = True
                 quiz_button_text = "Retake the Diagnostic Quiz"
-
-    return render_template('index.html', 
-                           lenses=lenses,  # Pass lenses to template
-                           show_quiz_prompt=show_quiz_prompt, 
-                           quiz_button_text=quiz_button_text)
     
     # Default values for guests
     show_quiz_prompt = False
@@ -181,9 +176,10 @@ def index():
                 quiz_button_text = "Retake the Diagnostic Quiz"
             # If can_retake_quiz is False, show_quiz_prompt remains False (hidden)
 
-    return render_template('index.html', 
-                           show_quiz_prompt=show_quiz_prompt, 
-                           quiz_button_text=quiz_button_text)
+    return render_template('index.html',
+    lenses=lenses,
+    show_quiz_prompt=show_quiz_prompt,
+    quiz_button_text=quiz_button_text)
 
 
 # Registers a new user: validates from input, hashes password, creates user and session
@@ -874,4 +870,5 @@ def seed_data():
 
 # IMPORTANT: Delete these two lines when the project moves to PROD
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
