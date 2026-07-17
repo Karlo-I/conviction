@@ -97,7 +97,9 @@
 
                     marker.bindTooltip(`
                         <strong>${data.name}</strong><br>
-                        ${mode === 'conviction' ? 'Token spend: ' + point.value : 'Data points: ' + point.value}
+                        ${mode === 'conviction' 
+                            ? `Token spend: ${point.value}<br>Top Issue: ${point.top_issue || 'N/A'}` 
+                            : `Data points: ${point.value}`}
                     `, {
                         permanent: false,
                         direction: 'top',

@@ -47,7 +47,7 @@ def create_system_user(db, use_postgresql):
     return system_user_id
 
 
-# Seed the food lens, its issues, and indicators
+# Seed the food lens, its issues, indicators and initial evidence
 def seed_food_lens(db, system_user_id, use_postgresql):
     if use_postgresql:
         cursor = db.conn.cursor()
@@ -72,7 +72,24 @@ def seed_food_lens(db, system_user_id, use_postgresql):
             (upf_issue_id, 'Adult obesity rate', 'WHO Global Health Observation', '%')
         )
         db.conn.commit()
+        
+        # Fetch the indicator ID so we can link the evidence to it
+        cursor.execute("SELECT id FROM indicators WHERE name = 'Adult obesity rate' AND issue_id = %s", (upf_issue_id,))
+        indicator_id = cursor.fetchone()[0]
+        
+        # Evidence seed
+        cursor.execute(
+            "INSERT INTO contributions (user_id, indicator_id, country_code, note, source_url, status, created_at) VALUES (%s, %s, %s, %s, %s, %s, NOW()) RETURNING id",
+            (system_user_id, indicator_id, 'MEX', 'In Mexico, the prevalence of obesity among adults has reached critical levels, driven largely by the dominance of ultra-processed food products in the national diet and limited access to fresh, nutritious alternatives in marginalized areas.', 'https://www.who.int/mexico/news/detail/obesity-report-mexico', 'approved')
+        )
+        contrib_id = cursor.fetchone()[0]
+        cursor.execute(
+            "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
+            (contrib_id, upf_issue_id)
+        )
+        db.conn.commit()
         cursor.close()
+        
     else:
         db.execute(
             'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
@@ -95,8 +112,21 @@ def seed_food_lens(db, system_user_id, use_postgresql):
             (upf_issue_id, 'Adult obesity rate', 'WHO Global Health Observation', '%')
         )
         db.commit()
+        
+        # Fetch the indicator ID so we can link the evidence to it
+        indicator = db.execute("SELECT id FROM indicators WHERE name = 'Adult obesity rate' AND issue_id = ?", (upf_issue_id,)).fetchone()
+        indicator_id = indicator['id']
+        
+        # Evidence seed
+        db.execute(
+            'INSERT INTO contributions (user_id, indicator_id, country_code, note, source_url, status, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))',
+            (system_user_id, indicator_id, 'MEX', 'In Mexico, the prevalence of obesity among adults has reached critical levels, driven largely by the dominance of ultra-processed food products in the national diet and limited access to fresh, nutritious alternatives in marginalized areas.', 'https://www.who.int/mexico/news/detail/obesity-report-mexico', 'approved')
+        )
+        contrib = db.execute("SELECT last_insert_rowid() as id").fetchone()
+        db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contrib['id'], upf_issue_id))
+        db.commit()
     
-    print('  Seeded Food lens structure.')
+    print('  Seeded Food lens structure and initial evidence.')
 
 
 # Seed the housing lens with its issues and indicators
@@ -151,7 +181,7 @@ def seed_housing_lens(db, system_user_id, use_postgresql):
     print('  Seeded Housing lens structure.')
 
 
-# Seed the mobility lens with its issues and indicators
+# Seed the mobility lens with its issues, indicators, and initial evidence
 def seed_mobility_lens(db, system_user_id, use_postgresql):
     if use_postgresql:
         cursor = db.conn.cursor()
@@ -176,7 +206,24 @@ def seed_mobility_lens(db, system_user_id, use_postgresql):
             (issue_id, 'Road traffic mortality rate', 'World Bank / WHO', 'per 100,000 population')
         )
         db.conn.commit()
+        
+        # Fetch the indicator ID
+        cursor.execute("SELECT id FROM indicators WHERE name = 'Road traffic mortality rate' AND issue_id = %s", (issue_id,))
+        indicator_id = cursor.fetchone()[0]
+        
+        # Seed evidence
+        cursor.execute(
+            "INSERT INTO contributions (user_id, indicator_id, country_code, note, source_url, status, created_at) VALUES (%s, %s, %s, %s, %s, %s, NOW()) RETURNING id",
+            (system_user_id, indicator_id, 'MEX', 'Mexico faces a severe road traffic mortality crisis, with vulnerable road users—particularly pedestrians and cyclists—bearing the brunt of traffic fatalities. Inadequate street design, lack of protected infrastructure, and weak enforcement of traffic laws contribute to disproportionately high death rates in urban areas.', 'https://www.who.int/news-room/fact-sheets/detail/road-traffic-injuries', 'approved')
+        )
+        contrib_id = cursor.fetchone()[0]
+        cursor.execute(
+            "INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (%s, %s)",
+            (contrib_id, issue_id)
+        )
+        db.conn.commit()
         cursor.close()
+        
     else:
         db.execute(
             'INSERT OR IGNORE INTO lenses (slug, title, description) VALUES (?, ?, ?)',
@@ -199,8 +246,21 @@ def seed_mobility_lens(db, system_user_id, use_postgresql):
             (issue_id, 'Road traffic mortality rate', 'World Bank / WHO', 'per 100,000 population')
         )
         db.commit()
+        
+        # Fetch the indicator ID
+        indicator = db.execute("SELECT id FROM indicators WHERE name = 'Road traffic mortality rate' AND issue_id = ?", (issue_id,)).fetchone()
+        indicator_id = indicator['id']
+        
+        # Seed evidence
+        db.execute(
+            'INSERT INTO contributions (user_id, indicator_id, country_code, note, source_url, status, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))',
+            (system_user_id, indicator_id, 'MEX', 'Mexico faces a severe road traffic mortality crisis, with vulnerable road users—particularly pedestrians and cyclists—bearing the brunt of traffic fatalities. Inadequate street design, lack of protected infrastructure, and weak enforcement of traffic laws contribute to disproportionately high death rates in urban areas.', 'https://www.who.int/news-room/fact-sheets/detail/road-traffic-injuries', 'approved')
+        )
+        contrib = db.execute("SELECT last_insert_rowid() as id").fetchone()
+        db.execute('INSERT INTO contribution_lens_links (contribution_id, issue_id) VALUES (?, ?)', (contrib['id'], issue_id))
+        db.commit()
     
-    print('  Seeded Mobility lens structure.')
+    print('  Seeded Mobility lens structure and initial evidence.')
 
 
 # Seed the energy lens with climate and access issues

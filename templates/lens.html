@@ -24,19 +24,6 @@
         </p>
         {% endif %}
 
-        {% if session.user_id %}
-        <form method="POST" action="{{ url_for('spend') }}">
-            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="issue_id" value="{{ issue.issue_id }}">
-            <input type="hidden" name="lens_slug" value="{{ lens.slug }}">
-            <button type="submit" name="vote" value="reject" style="background-color: #f8f9fa; color: #457b9d; border: 1px solid #457b9d; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                Spend token
-            </button>
-        </form>
-        {% else %}
-        <a href="{{ url_for('login') }}" style="font-size: 0.9rem; color: #457b9d;">Log in to spend tokens</a>
-        {% endif %}
-
         <button class="toggle-evidence" data-target="evidence-{{ issue.issue_id }}" 
                 style="margin-top: 1.5rem; background: #e9ecef; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; color: #457b9d; font-weight: 500; font-size: 0.9rem;">
             Show community evidence & discussion
@@ -78,6 +65,27 @@
                             {{ c.source_url }}
                         </a>
                     </p>
+                {% endif %}
+
+                <!-- Token Count Badge (subtle, top) -->
+                <div style="margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.85rem; color: #6c757d; font-weight: 500;">
+                        {{ c.token_spend }} token{{ 's' if c.token_spend != 1 else '' }} spent
+                    </span>
+                </div>
+
+                <!-- Spend Button (aligned left, clean) -->
+                {% if session.user_id %}
+                <form method="POST" action="{{ url_for('spend') }}" style="margin-top: 0.5rem; margin-bottom: 0;">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="contribution_id" value="{{ c.id }}">
+                    <input type="hidden" name="lens_slug" value="{{ lens.slug }}">
+                    <button type="submit" style="background-color: #457b9d; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                        Spend token
+                    </button>
+                </form>
+                {% else %}
+                <a href="{{ url_for('login') }}" style="font-size: 0.85rem; color: #457b9d; margin-top: 0.5rem; display: inline-block;">Log in to spend a token</a>
                 {% endif %}
                 
                 {% if c.ai_summary %}
@@ -250,14 +258,26 @@
         const evidenceBlock = document.getElementById('evidence-' + issueId);
         if (evidenceBlock) {
             evidenceBlock.classList.remove('hidden');
+            updateToggleButton(evidenceBlock);
+        }
+    }
+    
+    // 2. Check URL parameter for issue to keep open (from spend action)
+    const urlParams = new URLSearchParams(window.location.search);
+    const issueId = urlParams.get('issue_id');
+    if (issueId) {
+        const evidenceBlock = document.getElementById('evidence-' + issueId);
+        if (evidenceBlock) {
+            evidenceBlock.classList.remove('hidden');
+            updateToggleButton(evidenceBlock);
         }
     }
 
-    // 2. Initialize and handle Community Evidence & Discussion Toggle
+    // 3. Initialize and handle Community Evidence & Discussion Toggle
     document.querySelectorAll('.toggle-evidence').forEach(btn => {
         const target = document.getElementById(btn.dataset.target);
         
-        // Set initial text based on current state (which might have been unhidden by the hash above)
+        // Set initial text based on current state
         const isHidden = target.classList.contains('hidden');
         btn.textContent = isHidden 
             ? 'Show community evidence & discussion' 
@@ -271,11 +291,13 @@
                 : 'Hide community evidence & discussion';
         });
     });
-
-    // Toggle Reply Forms
-    function toggleReply(id) {
-        const form = document.getElementById(id);
-        form.classList.toggle('hidden');
+    
+    // Helper function to update toggle button text
+    function updateToggleButton(evidenceBlock) {
+        const toggleBtn = document.querySelector(`[data-target="${evidenceBlock.id}"]`);
+        if (toggleBtn) {
+            toggleBtn.textContent = 'Hide community evidence & discussion';
+        }
     }
 </script>
 

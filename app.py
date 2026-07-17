@@ -289,9 +289,6 @@ def lens(slug):
     forces = models.get_forces_for_lens(db, lens['id'])
     approved_contributions = models.get_approved_contributions_for_lens(db, lens['id'])
 
-    # ADD THIS PRINT STATEMENT:
-    print(f"DEBUG: Found {len(approved_contributions)} approved contributions for {lens['title']}")
-
     return render_template('lens.html', lens=lens, issues=issues, forces=forces, approved_contributions=approved_contributions)
     
 
@@ -371,33 +368,34 @@ def spend():
     
     db = get_db()
     user_id = session['user_id']
-    issue_id = request.form.get('issue_id', type=int)
+    contribution_id = request.form.get('contribution_id', type=int)
     lens_slug = request.form.get('lens_slug', '')
 
-    if not issue_id or not lens_slug:
+    if not contribution_id or not lens_slug:
         flash('Invalid request.', 'error')
         return redirect(url_for('index'))
     
-    # First check
+    # Check balance
     balance = models.get_token_balance(db, user_id)
-
     if balance < 1:
         flash('Insufficient tokens', 'error')
         return redirect(url_for('lens', slug=lens_slug))
     
-    # Prevent a malicious user from intercepting POST request and change the issue_id 
-    # to an issue in a different lens, or an ID that doesn't exist, corrupting the ledger
-    issue = db.execute(
+    # Verify the contribution exists, is approved, and belongs to this lens
+    contribution = db.execute(
         '''
-        SELECT i.id FROM issues i
+        SELECT c.id, c.country_code, l.slug as lens_slug
+        FROM contributions c
+        JOIN contribution_lens_links cll ON c.id = cll.contribution_id
+        JOIN issues i ON cll.issue_id = i.id
         JOIN lenses l ON i.lens_id = l.id
-        WHERE i.id = ? AND l.slug = ?
+        WHERE c.id = ? AND l.slug = ? AND c.status = 'approved'
         ''',
-        (issue_id, lens_slug)
+        (contribution_id, lens_slug)
     ).fetchone()
 
-    if issue is None:
-        flash('Invalid issue.', 'error')
+    if contribution is None:
+        flash('Invalid contribution.', 'error')
         return redirect(url_for('index'))
     
     # Double-check balance right before transaction to prevent race conditions
@@ -406,13 +404,24 @@ def spend():
         flash('Insufficient tokens', 'error')
         return redirect(url_for('lens', slug=lens_slug))
     
-    models.add_token_transactions(db, user_id, -1, 'spend', issue_id=issue_id)
+    # Record the spend against the specific contribution
+    models.add_token_transactions(db, user_id, -1, 'spend', contribution_id=contribution_id)
     
     # Re-sync the session with the actual database ledger
     session['token_balance'] = models.reconcile_token_balance(db, user_id)
     
-    flash('Token spent.', 'success')
-    return redirect(url_for('lens', slug=lens_slug))
+    # Get the issue_id from the contribution
+    issue = db.execute(
+        '''
+        SELECT i.id FROM issues i
+        JOIN contribution_lens_links cll ON cll.issue_id = i.id
+        WHERE cll.contribution_id = ?
+        ''',
+        (contribution_id,)
+    ).fetchone()
+    
+    flash('Token spent on this evidence.', 'success')
+    return redirect(url_for('lens', slug=lens_slug) + f'?issue_id={issue["id"]}#issue-{issue["id"]}')
 
 
 # Handles token spend on a Force - mirrors the /spend route for issues
@@ -522,13 +531,12 @@ def heatmap_data():
                  'spend': r['total_spend']} for r in rows]
         
     else:
+        # Conviction mode: delegates to the updated models.py function
         rows = models.get_heatmap_data(db)
         data = [{'country': r['country_code'],
                  'value': r['total_spend'],
-                 'spend': r['total_spend']} for r in rows] 
-        
-        print("DEBUG CONVICTION DATA:", data)
-        
+                 'top_issue': r['top_issue_title']} for r in rows] 
+                
     return jsonify({'mode': mode, 'data': data})
 
 
@@ -772,6 +780,26 @@ def commitments():
     return render_template('commitments.html')
 
 
+# TEMP: To be deleted once render db is updated
+@app.route('/update-schema')
+def update_schema():
+    """One-time route to add contribution_id to token_transactions"""
+    db = get_db()
+    try:
+        # Check if column already exists
+        db.execute("SELECT contribution_id FROM token_transactions LIMIT 1")
+        db.commit()
+        return "✅ Schema is already up to date."
+    except Exception:
+        try:
+            # Add the column (works in both SQLite and PostgreSQL)
+            db.execute("ALTER TABLE token_transactions ADD COLUMN contribution_id INTEGER REFERENCES contributions(id)")
+            db.commit()
+            return "✅ Schema updated successfully! Added contribution_id to token_transactions."
+        except Exception as e:
+            return f"Error updating schema: {str(e)}"
+
+
 # Prevent browser caching to ensure back button always shows current auth state
 # Critical for security after logout
 @app.after_request
@@ -842,6 +870,7 @@ def seed_data():
         return "✅ Seeding complete! Your database is ready for community contributions."
     except Exception as e:
         return f"Error during seeding: {str(e)}"
+    
 
 # IMPORTANT: Delete these two lines when the project moves to PROD
 if __name__ == '__main__':

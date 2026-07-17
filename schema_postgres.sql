@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS token_transactions (
     reason TEXT NOT NULL,
     issue_id INTEGER REFERENCES issues(id),
     force_id INTEGER REFERENCES forces(id),
+    contribution_id INTEGER REFERENCES contributions(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

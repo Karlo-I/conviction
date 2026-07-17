@@ -105,13 +105,13 @@ def reconcile_token_balance(db, user_id):
     return result['balance'] or 0
 
 
-def add_token_transactions(db, user_id, amount, reason, issue_id=None, force_id=None):
+def add_token_transactions(db, user_id, amount, reason, issue_id=None, force_id=None, contribution_id=None):
     db.execute(
         '''
-        INSERT INTO token_transactions (user_id, amount, reason, issue_id, force_id)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO token_transactions (user_id, amount, reason, issue_id, force_id, contribution_id)
+        VALUES (?, ?, ?, ?, ?, ?)
         ''',
-        (user_id, amount, reason, issue_id, force_id)
+        (user_id, amount, reason, issue_id, force_id, contribution_id)
     )
     db.execute(
         'UPDATE users SET token_balance = token_balance + ? WHERE id = ?',
@@ -689,7 +689,8 @@ def get_issues_with_data(db, lens_id):
                 u.username,
                 (SELECT cd.summary FROM contribution_digests cd 
                  WHERE cd.contribution_id = c.id 
-                 ORDER BY cd.id DESC LIMIT 1) AS ai_summary
+                 ORDER BY cd.id DESC LIMIT 1) AS ai_summary,
+                 (SELECT COALESCE(SUM(ABS(amount)), 0) FROM token_transactions WHERE contribution_id = c.id AND reason = 'spend') as token_spend
             FROM contributions c
             JOIN users u ON c.user_id = u.id
             JOIN contribution_lens_links cll ON cll.contribution_id = c.id
@@ -732,12 +733,20 @@ def get_issues_with_data(db, lens_id):
 def get_heatmap_data(db):
     return db.execute('''
         SELECT 
-            c.country_code, 
-            SUM(ABS(tt.amount)) as total_spend
+            c.country_code,
+            SUM(ABS(tt.amount)) as total_spend,
+            (SELECT i.title 
+             FROM token_transactions tt2 
+             JOIN contributions c2 ON tt2.contribution_id = c2.id 
+             JOIN contribution_lens_links cll ON c2.id = cll.contribution_id 
+             JOIN issues i ON cll.issue_id = i.id 
+             WHERE c2.country_code = c.country_code AND tt2.reason = 'spend'
+             GROUP BY i.title 
+             ORDER BY SUM(ABS(tt2.amount)) DESC, RANDOM() 
+             LIMIT 1) as top_issue_title
         FROM contributions c
-        JOIN contribution_lens_links cll ON c.id = cll.contribution_id
-        JOIN token_transactions tt ON cll.issue_id = tt.issue_id
-        WHERE c.status = 'approved'
+        JOIN token_transactions tt ON c.id = tt.contribution_id
+        WHERE tt.reason = 'spend'
         GROUP BY c.country_code
         ORDER BY total_spend DESC
     ''').fetchall()
