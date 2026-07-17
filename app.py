@@ -782,30 +782,25 @@ def update_schema():
     """One-time route to add contribution_id to token_transactions"""
     db = get_db()
     try:
-        # Check if column already exists
         if USE_POSTGRESQL:
-            result = db.execute("""
-                SELECT EXISTS (
-                    SELECT 1 FROM information_schema.columns 
-                    WHERE table_name = 'token_transactions' 
-                    AND column_name = 'contribution_id'
-                )
-            """).fetchone()
-            if result[0]:  # Column exists
-                return "✅ Schema is already up to date - contribution_id column exists."
+            # Try to add the column (PostgreSQL will error if it exists)
+            db.execute("""
+                ALTER TABLE token_transactions 
+                ADD COLUMN IF NOT EXISTS contribution_id INTEGER REFERENCES contributions(id)
+            """)
         else:
-            # SQLite check
-            result = db.execute("PRAGMA table_info(token_transactions)").fetchall()
-            if any(row[1] == 'contribution_id' for row in result):
-                return "✅ Schema is already up to date - contribution_id column exists."
+            # SQLite doesn't support IF NOT EXISTS for ADD COLUMN
+            # Check if column exists first
+            columns = db.execute("PRAGMA table_info(token_transactions)").fetchall()
+            column_names = [col[1] for col in columns]
+            if 'contribution_id' not in column_names:
+                db.execute("ALTER TABLE token_transactions ADD COLUMN contribution_id INTEGER REFERENCES contributions(id)")
         
-        # Column doesn't exist - add it
-        db.execute("ALTER TABLE token_transactions ADD COLUMN contribution_id INTEGER REFERENCES contributions(id)")
         db.commit()
         return "✅ Schema updated successfully! Added contribution_id to token_transactions."
         
     except Exception as e:
-        db.rollback()  # CRITICAL: Rollback on error
+        db.rollback()
         return f"Error updating schema: {str(e)}"
 
 
