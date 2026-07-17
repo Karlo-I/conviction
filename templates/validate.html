@@ -28,7 +28,7 @@
         </h2>
         
         {% for c in lens_proposals %}
-        <div class="validate-card">
+        <div class="validate-card" style="border-left: 4px solid #457b9d; padding-left: 1.5rem;">
             <p><strong>Proposed Lens Name:</strong> {{ c.title or 'Untitled' }}</p>
             <p><strong>Submitted by:</strong> {{ c.username }}</p> 
             <p><strong>Claim:</strong> {{ c.note }}</p>
@@ -36,26 +36,7 @@
             <p><strong>Source:</strong> <a href="{{ c.source_url }}" target="_blank">Verify source</a></p>
             {% endif %}
 
-            <!-- AI DIGEST DISPLAY -->
-            {% if c.summary %}
-            <div class="digest" style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-left: 4px solid #457b9d;">
-                <h3 style="margin-bottom: 0.5rem;">AI Evidence Digest</h3>
-                
-                {% if c.confidence == 'evidence found' %}
-                    <p class="confidence confidence-found">Evidence found in reference sources</p>
-                {% elif c.confidence == 'partial evidence' %}
-                    <p class="confidence confidence-partial">Partial evidence found</p>
-                {% else %}
-                    <p class="confidence confidence-none">No data available in reference sources</p>
-                {% endif %}
-
-                <p style="margin-top: 0.5rem;">{{ c.summary }}</p>
-            </div>
-            {% else %}
-            <p style="margin: 1rem 0; font-style: italic; color: #666;">AI digest is still generating. Please check back shortly.</p>
-            {% endif %}
-
-            <div class="vote-counts" id="votes-{{ c.id }}">
+            <div class="vote-counts" id="votes-{{ c.id }}" style="margin-top: 1.5rem;">
                 <!-- Approve Button/Counter -->
                 <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
@@ -79,6 +60,34 @@
                     </button>
                 </form>
             </div>
+
+            <!-- Toggle Button - DEFAULT CLOSED -->
+            <div style="margin-top: 1.5rem;">
+                <button class="toggle-ai-digest" onclick="toggleDigest(this)" 
+                        style="background: none; border: none; color: #457b9d; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.7rem;">▶</span>
+                    View AI Evidence Digest
+                </button>
+            </div>
+            
+            <!-- AI Digest Content - HIDDEN BY DEFAULT -->
+            <div class="ai-digest-content" style="display: none; margin-top: 1rem; margin-left: 0.5rem; padding: 1.25rem; background: #f8f9fa; border-left: 3px solid #457b9d; border-radius: 8px;">
+                {% if c.summary %}
+                <h4 style="margin: 0 0 0.75rem 0; font-size: 1.05rem; color: #1d3557; font-weight: 600; font-family: 'Lora', serif;">AI Evidence Digest</h4>
+                
+                {% if c.confidence == 'evidence found' %}
+                    <p style="margin: 0 0 1rem 0; font-size: 0.9rem; font-weight: 600; color: #065f46;">Evidence found in reference sources</p>
+                {% elif c.confidence == 'partial evidence' %}
+                    <p style="margin: 0 0 1rem 0; font-size: 0.9rem; font-weight: 600; color: #92400e;">Partial evidence found</p>
+                {% else %}
+                    <p style="margin: 0 0 1rem 0; font-size: 0.9rem; font-weight: 600; color: #4b5563;">No data available in reference sources</p>
+                {% endif %}
+
+                <p style="margin: 0; font-size: 0.9rem; line-height: 1.6;">{{ c.summary }}</p>
+                {% else %}
+                <p style="margin: 0; font-style: italic; color: #6c757d; font-family: 'Source Sans Pro', system-ui, sans-serif;">AI digest is still generating. Please check back shortly.</p>
+                {% endif %}
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -89,12 +98,12 @@
     {% if force_claims %}
     <div class="validation-group" style="margin-bottom: 3rem;">
         <h2 style="color: #1d3557; border-bottom: 2px solid #457b9d; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">
-            📂 Force Claims 
+             Force Claims 
             <span style="font-size: 0.7rem; color: #6c757d; font-weight: normal;">(evidence of a systemic mechanism)</span>
         </h2>
         
         {% for c in force_claims %}
-        <div class="validate-card">
+        <div class="validate-card" style="border-left: 4px solid #457b9d; padding-left: 1.5rem;">
             <p><strong>Claim:</strong> {{ c.note }}</p>
             <p><strong>Submitted by:</strong> {{ c.username }}</p>
             <p><strong>Country:</strong> {{ c.country_code }}</p>
@@ -108,26 +117,7 @@
             <p><em>This claim combines {{ c.source_count }} sources from multiple contributors.</em></p>
             {% endif %}
 
-            <!-- AI DIGEST DISPLAY -->
-            {% if c.summary %}
-            <div class="digest" style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-left: 4px solid #457b9d;">
-                <h3 style="margin-bottom: 0.5rem;">AI Evidence Digest</h3>
-                
-                {% if c.confidence == 'evidence found' %}
-                    <p class="confidence confidence-found">Evidence found in reference sources</p>
-                {% elif c.confidence == 'partial evidence' %}
-                    <p class="confidence confidence-partial">Partial evidence found</p>
-                {% else %}
-                    <p class="confidence confidence-none">No data available in reference sources</p>
-                {% endif %}
-
-                <p style="margin-top: 0.5rem;">{{ c.summary }}</p>
-            </div>
-            {% else %}
-            <p style="margin: 1rem 0; font-style: italic; color: #666;">AI digest is still generating. Please check back shortly.</p>
-            {% endif %}
-
-            <div class="vote-counts" id="votes-{{ c.id }}">
+            <div class="vote-counts" id="votes-{{ c.id }}" style="margin-top: 1.5rem;">
                 <!-- Approve Button/Counter -->
                 <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
@@ -150,6 +140,34 @@
                         <span class="vote-number">{{ c.reject_count or 0 }}</span>
                     </button>
                 </form>
+            </div>
+
+            <!-- Toggle Button - DEFAULT CLOSED -->
+            <div style="margin-top: 1.5rem;">
+                <button class="toggle-ai-digest" onclick="toggleDigest(this)" 
+                        style="background: none; border: none; color: #457b9d; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.7rem;">▶</span>
+                    View AI Evidence Digest
+                </button>
+            </div>
+            
+            <!-- AI Digest Content - HIDDEN BY DEFAULT -->
+            <div class="ai-digest-content" style="display: none; margin-top: 1rem; margin-left: 0.5rem; padding: 1.25rem; background: #f8f9fa; border-left: 3px solid #457b9d; border-radius: 8px;">
+                {% if c.summary %}
+                <h4 style="margin: 0 0 0.75rem 0; font-size: 1.05rem; color: #1d3557; font-weight: 600; font-family: 'Lora', serif;">AI Evidence Digest</h4>
+                
+                {% if c.confidence == 'evidence found' %}
+                    <p style="margin: 0 0 1rem 0; font-size: 0.9rem; font-weight: 600; color: #065f46;">Evidence found in reference sources</p>
+                {% elif c.confidence == 'partial evidence' %}
+                    <p style="margin: 0 0 1rem 0; font-size: 0.9rem; font-weight: 600; color: #92400e;">Partial evidence found</p>
+                {% else %}
+                    <p style="margin: 0 0 1rem 0; font-size: 0.9rem; font-weight: 600; color: #4b5563;">No data available in reference sources</p>
+                {% endif %}
+
+                <p style="margin: 0; font-size: 0.9rem; line-height: 1.6;">{{ c.summary }}</p>
+                {% else %}
+                <p style="margin: 0; font-style: italic; color: #6c757d; font-family: 'Source Sans Pro', system-ui, sans-serif;">AI digest is still generating. Please check back shortly.</p>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
@@ -166,7 +184,7 @@
         </h2>
         
         {% for c in data_points %}
-        <div class="validate-card">
+        <div class="validate-card" style="border-left: 4px solid #457b9d; padding-left: 1.5rem;">
             <p><strong>Claim:</strong> {{ c.note }}</p>
             <p><strong>Submitted by:</strong> {{ c.username }}</p>
             <p><strong>Country:</strong> {{ c.country_code }}</p>
@@ -177,26 +195,7 @@
             <p><strong>Source:</strong> <a href="{{ c.source_url }}" target="_blank">Verify source</a></p>
             {% endif %}
 
-            <!-- AI DIGEST DISPLAY -->
-            {% if c.summary %}
-            <div class="digest" style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-left: 4px solid #457b9d;">
-                <h3 style="margin-bottom: 0.5rem;">AI Evidence Digest</h3>
-                
-                {% if c.confidence == 'evidence found' %}
-                    <p class="confidence confidence-found">Evidence found in reference sources</p>
-                {% elif c.confidence == 'partial evidence' %}
-                    <p class="confidence confidence-partial">Partial evidence found</p>
-                {% else %}
-                    <p class="confidence confidence-none">No data available in reference sources</p>
-                {% endif %}
-
-                <p style="margin-top: 0.5rem;">{{ c.summary }}</p>
-            </div>
-            {% else %}
-            <p style="margin: 1rem 0; font-style: italic; color: #666;">AI digest is still generating. Please check back shortly.</p>
-            {% endif %}
-
-            <div class="vote-counts" id="votes-{{ c.id }}">
+            <div class="vote-counts" id="votes-{{ c.id }}" style="margin-top: 1.5rem;">
                 <!-- Approve Button/Counter -->
                 <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
@@ -219,6 +218,34 @@
                         <span class="vote-number">{{ c.reject_count or 0 }}</span>
                     </button>
                 </form>
+            </div>
+
+            <!-- Toggle Button - DEFAULT CLOSED -->
+            <div style="margin-top: 1.5rem;">
+                <button class="toggle-ai-digest" onclick="toggleDigest(this)" 
+                        style="background: none; border: none; color: #457b9d; font-weight: 500; font-size: 0.95rem; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.7rem;">▶</span>
+                    View AI Evidence Digest
+                </button>
+            </div>
+            
+            <!-- AI Digest Content - HIDDEN BY DEFAULT -->
+            <div class="ai-digest-content" style="display: none; margin-top: 1rem; margin-left: 0.5rem; padding: 1.25rem; background: #f8f9fa; border-left: 3px solid #457b9d; border-radius: 8px;">
+                {% if c.summary %}
+                <h4 style="margin: 0 0 0.75rem 0; font-size: 1.05rem; color: #1d3557; font-weight: 600; font-family: 'Lora', serif;">AI Evidence Digest</h4>
+                
+                {% if c.confidence == 'evidence found' %}
+                    <p style="margin: 0 0 1rem 0; font-size: 0.9rem; font-weight: 600; color: #065f46;">Evidence found in reference sources</p>
+                {% elif c.confidence == 'partial evidence' %}
+                    <p style="margin: 0 0 1rem 0; font-size: 0.9rem; font-weight: 600; color: #92400e;">Partial evidence found</p>
+                {% else %}
+                    <p style="margin: 0 0 1rem 0; font-size: 0.9rem; font-weight: 600; color: #4b5563;">No data available in reference sources</p>
+                {% endif %}
+
+                <p style="margin: 0; font-size: 0.9rem; line-height: 1.6;">{{ c.summary }}</p>
+                {% else %}
+                <p style="margin: 0; font-style: italic; color: #6c757d; font-family: 'Source Sans Pro', system-ui, sans-serif;">AI digest is still generating. Please check back shortly.</p>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
@@ -236,6 +263,21 @@
 </div>
 
 <script>
+// Toggle AI Evidence Digest visibility
+function toggleDigest(button) {
+    const digestContent = button.closest('div[style*="margin-top: 1.5rem"]').nextElementSibling;
+    const isHidden = digestContent.style.display === 'none';
+    
+    // Toggle visibility
+    if (isHidden) {
+        digestContent.style.display = 'block';
+        button.innerHTML = '<span style="font-size: 0.7rem;">▼</span> Hide AI Evidence Digest';
+    } else {
+        digestContent.style.display = 'none';
+        button.innerHTML = '<span style="font-size: 0.7rem;">▶</span> View AI Evidence Digest';
+    }
+}
+
 // Update vote counts every 5 seconds for all visible cards
 function updateVoteCounts() {
     document.querySelectorAll('.vote-counts').forEach(counter => {
