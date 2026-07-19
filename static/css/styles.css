@@ -581,7 +581,7 @@ main {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1.5rem;
-    margin-top: 2rem;
+    margin-top: 1rem;
 }
 
 .force-card-grid {
@@ -589,11 +589,13 @@ main {
     border: 1px solid #fecdd3;
     border-radius: 8px;
     padding: 1.5rem;
+    padding-top: 1rem;
+    padding-bottom: .5rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     transition: all 0.2s ease;
-    min-height: 150px;
+    min-height: 120px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
