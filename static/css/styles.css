@@ -322,7 +322,7 @@ nav a.active {
     border: 1px solid #ced4da; /* Neutral gray border */
     border-radius: 6px;
     font-size: 1rem;
-    font-family: inherit;
+    font-family: Arial, Helvetica, sans-serif;
     background-color: #ffffff;
     transition: all 0.2s ease;
 }
@@ -334,7 +334,7 @@ nav a.active {
     border: 1px solid #ced4da; /* Neutral gray border */
     border-radius: 6px;
     font-size: 1rem;
-    font-family: inherit;
+    font-family: Arial, Helvetica, sans-serif;
     background-color: #ffffff;
     resize: vertical;
     min-height: 100px;
