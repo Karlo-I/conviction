@@ -79,7 +79,7 @@ function drawSunburst(data, container) {
         const halfPi = Math.PI / 2;
         const angles = [d.x0 - halfPi, d.x1 - halfPi];
         const r = ((d.y0 + d.y1) / 2) * radius;
-        
+
         const middleAngle = (angles[1] + angles[0]) / 2;
         const invertDirection = middleAngle > 0 && middleAngle < Math.PI;
         if (invertDirection) { angles.reverse(); }
@@ -89,14 +89,21 @@ function drawSunburst(data, container) {
         return path.toString();
     };
 
-    const textFits = (d, coords) => {
-        const c = coords || d;
+    // Truncates a label to the character count that actually fits its arc's
+    // real pixel length. SVG <textPath> has no line-wrap, so truncation-to-fit
+    // (same idea as renderTitle's word-wrap, single-line version) is the
+    // standard alternative to hiding text outright or letting it overflow
+    // into a neighboring wedge.
+    function fitArcText(name, coords) {
         const CHAR_SPACE = 2;
-        const deltaAngle = c.x1 - c.x0;
-        const r = ((c.y0 + c.y1) / 2) * radius;
+        const deltaAngle = coords.x1 - coords.x0;
+        const r = ((coords.y0 + coords.y1) / 2) * radius;
         const perimeter = r * deltaAngle;
-        return d.data.name.length * CHAR_SPACE < perimeter;
-    };
+        const maxChars = Math.floor(perimeter / CHAR_SPACE);
+        if (name.length <= maxChars) return name;
+        if (maxChars < 4) return '';   // truly too narrow for even "…" to help
+        return name.substring(0, maxChars - 1) + '…';
+    }
 
     // Create hidden arcs
     g.append("g")
@@ -116,8 +123,7 @@ function drawSunburst(data, container) {
         .selectAll("g")
         .data(root.descendants().slice(1))
         .join("g")
-        .attr("opacity", d => arcVisible(d.current) && textFits(d, d.current) ? 1 : 0);
-
+        .attr("opacity", d => arcVisible(d.current) ? 1 : 0);   // CHANGED — no longer gated by textFits; fitArcText handles overflow instead
 
     // Actual text
     label.append("text")
@@ -126,7 +132,7 @@ function drawSunburst(data, container) {
         .append("textPath")
         .attr("startOffset", "50%")
         .attr("xlink:href", (d, i) => `#hiddenArc${i}`)
-        .text(d => d.data.name)
+        .text(d => fitArcText(d.data.name, d.current))   // CHANGED — truncate instead of showing raw name
         .style("fill", "#1d3557")
         .style("font-size", "6.8px")
         .style("font-weight", "200");
@@ -145,7 +151,7 @@ function drawSunburst(data, container) {
     // break into readable lines instead of overflowing the circle.
     function renderTitle(name, depth) {
         const fontSize = depth > 0 ? 16 : 20;
-        const avgCharWidth = fontSize * 0.55; // rough estimate, same heuristic style as estimateMaxChars
+        const avgCharWidth = fontSize * 0.55; // rough estimate, same heuristic style as fitArcText
         const maxLineWidthPx = radius * 1.5;   // keep text within the donut hole, not touching the inner ring
         const maxCharsPerLine = Math.max(4, Math.floor(maxLineWidthPx / avgCharWidth));
 
@@ -222,9 +228,12 @@ function drawSunburst(data, container) {
             .transition(t)
             .attrTween("d", d => () => middleArcLine(d.target));
 
-        // Update text visibility
+        // Update text visibility and content
         label.transition(t)
-            .attr("opacity", d => arcVisible(d.target) && textFits(d, d.target) ? 1 : 0);
+            .attr("opacity", d => arcVisible(d.target) ? 1 : 0);
+
+        label.select("textPath")
+            .text(d => fitArcText(d.data.name, d.target));   // NEW — re-truncate against target geometry after zoom
 
         renderTitle(p.depth === 0 ? "Mechanisms" : p.data.name, p.depth);
     }
