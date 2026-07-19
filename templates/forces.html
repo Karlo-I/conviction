@@ -45,6 +45,7 @@
     .forces-content-wrapper {
         width: 40%;
         padding-left: 2rem;
+        padding-top: 2rem;
     }
     
     .forces-grid {
@@ -89,6 +90,34 @@
         }
     }
 
+    .scrollable-forces-box {
+        max-height: 600px; /* Adjust this height as needed (e.g., 500px, 70vh) */
+        overflow-y: auto;  /* Enables vertical scrolling when content exceeds max-height */
+        
+        /* Styling for the "box frame" look */
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 1rem;
+        background-color: #fafafa; /* Optional: slight background to distinguish the box */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Optional: subtle shadow */
+    }
+
+    /* Optional: Make the scrollbar look nicer (Webkit browsers like Chrome/Safari) */
+    .scrollable-forces-box::-webkit-scrollbar {
+        width: 8px;
+    }
+    .scrollable-forces-box::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    .scrollable-forces-box::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    .scrollable-forces-box::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
 </style>
 {% endblock %}
 
@@ -108,18 +137,22 @@
         </div>
 
         <div class="forces-content-wrapper">
-            <div class="forces-grid">
-                {% for category, forces in grouped_forces.items() %}
-                    {% for force in forces %}
-                    <div class="force-card-grid">
-                        <div>
-                            <span class="force-category-tag">{{ category.replace('_', ' ').title() }}</span>
-                            <h3><a href="{{ url_for('force_detail', slug=force.slug) }}">{{ force.title }}</a></h3>
+            <!-- Scrollable Box Frame -->
+            <div class="scrollable-forces-box">
+                <div class="forces-grid">
+                    {% for category, forces in grouped_forces.items() %}
+                        {% for force in forces %}
+                        <div class="force-card-grid">
+                            <div>
+                                <span class="force-category-tag">{{ category.replace('_', ' ').title() }}</span>
+                                <h3><a href="{{ url_for('force_detail', slug=force.slug) }}">{{ force.title }}</a></h3>
+                            </div>
                         </div>
-                    </div>
+                        {% endfor %}
                     {% endfor %}
-                {% endfor %}
+                </div>
             </div>
+            <!-- Scrollable Box Frame -->
         </div>
 
     </div>
