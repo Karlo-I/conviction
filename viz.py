@@ -21,7 +21,7 @@ def get_sunburst_data(db):
         LEFT JOIN contribution_lens_links cll ON cll.issue_id = i.id
         LEFT JOIN contributions c ON c.id = cll.contribution_id
         LEFT JOIN token_transactions tt ON c.id = tt.contribution_id AND tt.reason = 'spend'
-        GROUP BY f.category, f.title, l.title, i.title, c.country_code
+        GROUP BY f.id, f.category, f.title, l.title, i.title, c.country_code
         ORDER BY total_spend DESC
     ''').fetchall()
 
