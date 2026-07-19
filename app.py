@@ -13,6 +13,7 @@ import quiz
 import secrets
 import sqlite3
 import threading
+import viz
 from dotenv import load_dotenv
 from flask import abort, current_app, flash, Flask, g, jsonify, render_template, redirect, request, session, url_for
 from models import add_issue_comment
@@ -774,6 +775,15 @@ def how_it_works():
 @app.route('/commitments')
 def commitments():
     return render_template('commitments.html')
+
+
+# Zoomable sunburst
+@app.route('/api/sunburst')
+def sunburst_data():
+    db = get_db()
+    # Return a JSON string 
+    json_data = viz.get_sunburst_data(db)
+    return json_data, 200, {'Content-Type': 'application/json'}
 
 
 # Prevent browser caching to ensure back button always shows current auth state

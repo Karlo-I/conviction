@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+
+{% block title %}Forces{% endblock %}
+
+{% block content %}
+<div class="forces-container">
+    <h1>The Forces Layer</h1>
+    <p>Cross-domain mechanisms that operate beneath food, housing, and other lens issues simultaneously.</p>
+
+    {# NEW: Grid Layout for Forces #}
+    <div class="forces-grid">
+        {% for category, forces in grouped_forces.items() %}
+            {% for force in forces %}
+            <div class="force-card-grid">
+                <div>
+                    <span class="force-category-tag">{{ category.replace('_', ' ').title() }}</span>
+                    <h3><a href="{{ url_for('force_detail', slug=force.slug) }}">{{ force.title }}</a></h3>
+                </div>
+            </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+
+    {% if not grouped_forces %}
+    <p>No forces have been elevated yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
