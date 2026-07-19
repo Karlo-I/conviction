@@ -48,7 +48,7 @@ The platform's commitments to truth, transparency, epistemic humility, and non-d
 | Compatibility | `Psycopg2Wrapper` in `app.py` | Auto-converts SQLite `?` to PostgreSQL `%s`; `models.py` unchanged |
 | Frontend | Vanilla JavaScript | No framework — keeps scope tight |
 | Mapping | Leaflet.js | Free, open source, handles global heatmap |
-| Charts | Chart.js | Data visualisation per lens |
+| Visual | D3 Zoomable sunburst | Data visualisation for force mechanisms |
 | AI Agent | claude-haiku-4-5-20251001 | Contribution digest generation |
 | Hosting | Render (free tier) | Live at https://conviction-20z3.onrender.com/ |
 
