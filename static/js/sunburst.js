@@ -118,20 +118,6 @@ function drawSunburst(data, container) {
         .join("g")
         .attr("opacity", d => arcVisible(d.current) && textFits(d, d.current) ? 1 : 0);
 
-    // White stroke contour
-    label.append("text")
-        .attr("text-anchor", "middle")
-        .style("pointer-events", "none")
-        .append("textPath")
-        .attr("startOffset", "50%")
-        .attr("xlink:href", (d, i) => `#hiddenArc${i}`)
-        .text(d => d.data.name)
-        .style("fill", "none")
-        .style("stroke", "#fff")
-        .style("stroke-width", "4px")
-        .style("stroke-linejoin", "round")
-        .style("font-size", "6.8px")
-        .style("font-weight", "500");
 
     // Actual text
     label.append("text")
