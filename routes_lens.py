@@ -2,6 +2,7 @@
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 from db import get_db
 import models
+import time
 from models import add_issue_comment
 
 # Create a Blueprint named 'lens'

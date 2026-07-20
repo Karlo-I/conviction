@@ -550,7 +550,15 @@ def get_all_forces(db):
 
 def get_force_by_slug(db, slug):
     force = db.execute(
-        'SELECT * FROM forces WHERE slug = ?', (slug,)
+        '''
+        SELECT f.*, 
+               (SELECT COALESCE(SUM(ABS(amount)), 0) 
+                FROM token_transactions 
+                WHERE force_id = f.id AND reason = 'spend') as token_spend
+        FROM forces f 
+        WHERE f.slug = ?
+        ''', 
+        (slug,)
     ).fetchone()
 
     if force is None:
