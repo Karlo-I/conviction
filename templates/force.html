@@ -17,7 +17,7 @@
         <!-- Spend Token Button (moved inside the box) -->
         <div style="margin-top: 1.5rem;">
             {% if session.user_id %}
-            <form method="POST" action="{{ url_for('spend_force') }}" style="margin: 0;">
+            <form method="POST" action="{{ url_for('lens.spend_force') }}" style="margin: 0;">
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="force_id" value="{{ force.id }}">
                 <input type="hidden" name="force_slug" value="{{ force.slug }}">
@@ -26,7 +26,7 @@
                 </button>
             </form>
             {% else %}
-            <a href="{{ url_for('login') }}" style="font-size: 0.85rem; color: #457b9d; font-weight: 500;">Log in to spend a token</a>
+            <a href="{{ url_for('auth.login') }}" style="font-size: 0.85rem; color: #457b9d; font-weight: 500;">Log in to spend a token</a>
             {% endif %}
         </div>
     </div>
@@ -62,7 +62,7 @@
         <h2>Where this appears</h2>
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem;">
             {% for li in force.linked_issues %}
-            <a href="{{ url_for('lens', slug=li.lens_slug) }}" class="lens-tag">
+            <a href="{{ url_for('lens.lens', slug=li.lens_slug) }}" class="lens-tag">
                 {{ li.lens_title }} — {{ li.issue_title }}
             </a>
             {% endfor %}

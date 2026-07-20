@@ -76,7 +76,7 @@
 
                 <!-- Spend Button (aligned left, clean) -->
                 {% if session.user_id %}
-                <form method="POST" action="{{ url_for('spend') }}" style="margin-top: 0.5rem; margin-bottom: 0;">
+                <form method="POST" action="{{ url_for('lens.spend') }}" style="margin-top: 0.5rem; margin-bottom: 0;">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="contribution_id" value="{{ c.id }}">
                     <input type="hidden" name="lens_slug" value="{{ lens.slug }}">
@@ -85,7 +85,7 @@
                     </button>
                 </form>
                 {% else %}
-                <a href="{{ url_for('login') }}" style="font-size: 0.85rem; color: #457b9d; margin-top: 0.5rem; display: inline-block;">Log in to spend a token</a>
+                <a href="{{ url_for('auth.login') }}" style="font-size: 0.85rem; color: #457b9d; margin-top: 0.5rem; display: inline-block;">Log in to spend a token</a>
                 {% endif %}
                 
                 {% if c.ai_summary %}
@@ -164,7 +164,7 @@
                         <!-- Reply Form -->
                         {% if session.user_id %}
                         <div id="reply-{{ comment.id }}" class="reply-form-container hidden">
-                            <form method="POST" action="{{ url_for('add_issue_comment_route', issue_id=issue.issue_id) }}">
+                            <form method="POST" action="{{ url_for('lens.add_issue_comment_route', issue_id=issue.issue_id) }}">
                                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="parent_comment_id" value="{{ comment.id }}">
                                 <input type="hidden" name="lens_slug" value="{{ lens.slug }}">
@@ -206,7 +206,7 @@
                 {% if session.user_id %}
                 <div class="new-comment-form-container">
                     <h5>Add your comment</h5>
-                    <form method="POST" action="{{ url_for('add_issue_comment_route', issue_id=issue.issue_id) }}">
+                    <form method="POST" action="{{ url_for('lens.add_issue_comment_route', issue_id=issue.issue_id) }}">
                         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="lens_slug" value="{{ lens.slug }}">
                         <textarea name="comment" required placeholder="Add context, evidence, or challenge this issue..."></textarea>
@@ -217,7 +217,7 @@
                 {% else %}
                 <div class="login-prompt-container">
                     <p>Join the discussion to share your insights.</p>
-                    <a href="{{ url_for('login') }}" class="btn-login-prompt">Log in to comment</a>
+                    <a href="{{ url_for('auth.login') }}" class="btn-login-prompt">Log in to comment</a>
                 </div>
                 {% endif %}
             </div>

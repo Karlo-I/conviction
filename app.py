@@ -4,21 +4,22 @@
 # Logic, decisions, and direction are the author's own.
 
 import agent
-import click
 import json
 import models
 import os
 import psycopg2
-import quiz
+import routes_quiz
 import secrets
-import sqlite3
 import threading
 import viz
+from background import start_agent_thread
+from db import get_db, close_db, init_db, USE_POSTGRESQL, DATABASE_URL
 from dotenv import load_dotenv
 from flask import abort, current_app, flash, Flask, g, jsonify, render_template, redirect, request, session, url_for
-from models import add_issue_comment
-from psycopg2.extras import RealDictCursor
-from werkzeug.security import generate_password_hash, check_password_hash
+from routes_auth import auth_bp
+from routes_info import info_bp
+from routes_lens import lens_bp
+
 
 load_dotenv()
 
@@ -53,83 +54,18 @@ def csrf_protect():
             abort(403)
 
 
-# Wrapper class to make psycopg2 behave like sqlite3
-class Psycopg2Wrapper:
-    def __init__(self, conn):
-        self.conn = conn
-        
-    def execute(self, query, params=None):
-        # Auto-convert SQLite ? placeholders to PostgreSQL %s
-        query = query.replace('?', '%s')
-        # Auto-convert SQLite datetime function to PostgreSQL NOW()
-        query = query.replace("datetime('now')", "NOW()")
-        
-        # CRITICAL FIX: Use RealDictCursor so fetchone() returns a dictionary like {'id': 1}
-        cursor = self.conn.cursor(cursor_factory=RealDictCursor)
-        
-        if params:
-            cursor.execute(query, params)
-        else:
-            cursor.execute(query)
-        return cursor
-        
-    def commit(self):
-        self.conn.commit()
-        
-    def rollback(self):
-        self.conn.rollback()
-        
-    def close(self):
-        self.conn.close()
-        
-    def cursor(self):
-        return self.conn.cursor(cursor_factory=RealDictCursor)
+# Register blueprints
+app.register_blueprint(auth_bp)
+app.register_blueprint(info_bp)
+app.register_blueprint(lens_bp)
 
 
-# Database configuration between SQLite (local) and PostgreSQL (Render)
-DATABASE_URL = os.environ.get('DATABASE_URL')
-
-if DATABASE_URL:
-    # Production: PostgreSQL on Render
-    DATABASE = DATABASE_URL
-    USE_POSTGRESQL = True
-else:
-    # Development: SQLite locally
-    DATABASE = 'conviction.db'
-    USE_POSTGRESQL = False
-
-def get_db(): 
-    if 'db' not in g:
-        if USE_POSTGRESQL:
-            conn = psycopg2.connect(DATABASE)
-            g.db = Psycopg2Wrapper(conn)
-        else:
-            g.db = sqlite3.connect(
-                DATABASE,
-                detect_types=sqlite3.PARSE_DECLTYPES,
-                timeout=10
-            )
-            g.db.row_factory = sqlite3.Row
-    return g.db
+# Register database teardown
+app.teardown_appcontext(close_db)
 
 
-# Runs automatically after every request to close the database connection if one was opened
-# Registered via @app.teardown_appcontext; connects to get_db and Flask's rquest lifecycle
-@app.teardown_appcontext
-def close_db(error):
-    db = g.pop('db', None)
-    if db is not None:
-        db.close()
-
-
-# CLI command to initialise the database by executing schema.sql
-# Run once with 'flask --app app init-db' in terminal; connects to schema.sql and get_db
-@app.cli.command('init-db')
-def init_db():
-    db = get_db()
-    with current_app.open_resource('schema.sql') as f:
-        db.executescript(f.read().decode('utf8'))
-    click.echo('Database initialised.')
+# Register the init-db CLI command
+app.cli.add_command(init_db)
 
 
 ## ROUTES ##
@@ -183,298 +119,13 @@ def index():
     quiz_button_text=quiz_button_text)
 
 
-# Registers a new user: validates from input, hashes password, creates user and session
-# Calls models.create_user and get_db; on success writes to session and redirects to index
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    # If already logged in, kick them to the home page
-    if 'user_id' in session:
-        return redirect(url_for('index'))
-    
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
-        consent = request.form.get('consent')
-
-        if not username or not password:
-            flash('Username and password are required.', 'error')
-            return render_template('register.html')
-        
-        if password != confirm_password:
-            flash('Password do not match. Please try again.', 'error')
-            return render_template('register.html')
-        
-        if len(password) < 8:
-            flash('Password must be at least 8 characters.', 'error')
-            return render_template('register.html')
-        
-        if not consent:
-            flash('You must accept the terms to register.', 'error')
-            return render_template('register.html')
-        
-        password_hash = generate_password_hash(password)
-        user = models.create_user(get_db(), username, password_hash)
-
-        if user is None:
-            flash('Username is already taken.', 'error')
-            return render_template('register.html')
-        
-        session['user_id'] = user['id']
-        session['username'] = user['username']
-
-        # Fetch the starting balance so the navbar updates instantly
-        session['token_balance'] = models.get_token_balance(get_db(), user['id'])
-
-        return redirect(url_for('index'))
-
-    return render_template('register.html')
-
-
-# Authenticates an existing user: checks username and password agaisnt the database
-# Calls models.get_user_by_username and get_db; on success writes to session and redirects to index
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    # If already logged in, kick them to the home page
-    if 'user_id' in session:
-        return redirect(url_for('index'))
-    
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-
-        if not username or not password:
-            flash('Username and password are required.', 'error')
-            return render_template('login.html')
-        
-        user = models.get_user_by_username(get_db(), username)
-
-        if user is None or not check_password_hash(user['password_hash'], password):
-            flash('Incorrect username or password.', 'error')
-            return render_template('login.html')
-        
-        session['user_id'] = user['id']
-        session['username'] = user['username']
-
-        # Fetch and save the token balance to the session
-        session['token_balance'] = models.get_token_balance(get_db(), user['id'])
-
-        return redirect(url_for('index'))
-    
-    return render_template('login.html')
-
-
-# Clears the session cookie, effectively logging the user out
-# No database interaction - session state lives in the cookie, not the database
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('index'))
-
-
-# Renders the lens for a given slug (food, housing, mobility)
-# Calls models.get_lens_by_slug and models.get_issues_by_lens; passes data to lens.html
-@app.route('/lens/<slug>')
-def lens(slug):
-    db = get_db()
-    lens = models.get_lens_by_slug(db, slug)
-
-    if lens is None:
-        return redirect(url_for('index'))
-    
-    issues = models.get_issues_with_data(db, lens['id'])    
-    forces = models.get_forces_for_lens(db, lens['id'])
-    approved_contributions = models.get_approved_contributions_for_lens(db, lens['id'])
-
-    return render_template('lens.html', lens=lens, issues=issues, forces=forces, approved_contributions=approved_contributions)
-    
-
-# Handle comment submissions for issues
-@app.route('/issue/<int:issue_id>/comment', methods=['POST'])
-def add_issue_comment_route(issue_id):
-    if 'user_id' not in session:
-        flash('You must be logged in to comment.', 'error')
-        return redirect(url_for('login'))
-    
-    # Define the database connection for this request
-    db = get_db()
-    
-    # Validate issue exists and get lens_slug for redirect
-    issue = db.execute(
-        '''
-        SELECT i.id, l.slug 
-        FROM issues i
-        JOIN lenses l ON i.lens_id = l.id
-        WHERE i.id = ?
-        ''',
-        (issue_id,)
-    ).fetchone()
-    
-    if not issue:
-        flash('Issue not found.', 'error')
-        return redirect(url_for('index'))
-    
-    lens_slug = issue['slug']
-    
-    # Get form data
-    comment = request.form.get('comment', '').strip()
-    source_url = request.form.get('source_url', '').strip() or None
-    parent_comment_id = request.form.get('parent_comment_id')
-    
-    # Convert parent_comment_id to int if provided, otherwise None
-    if parent_comment_id:
-        parent_comment_id = int(parent_comment_id)
-    else:
-        parent_comment_id = None
-    
-    if not comment:
-        flash('Comment cannot be empty.', 'error')
-        return redirect(url_for('lens', slug=lens_slug) + f'#issue-{issue_id}')
-    
-    # Enforce one-level threading: if replying, verify parent has no parent
-    if parent_comment_id:
-        parent = db.execute(
-            'SELECT parent_comment_id FROM issue_comments WHERE id = ?',
-            (parent_comment_id,)
-        ).fetchone()
-        
-        if not parent or parent['parent_comment_id'] is not None:
-            flash('Cannot reply to a reply. Please reply to a top-level comment.', 'error')
-            return redirect(url_for('lens', slug=lens_slug) + f'#issue-{issue_id}')
-    
-    # Add the comment
-    add_issue_comment(
-        db, 
-        issue_id, 
-        session['user_id'], 
-        comment, 
-        source_url, 
-        parent_comment_id
-    )
-        
-    return redirect(url_for('lens', slug=lens_slug) + f'#issue-{issue_id}')
-
-
-# Handles token spend on an issue - checks balance, writes ledger, redirects to lens
-# Calls models.get_token_balance, models.add_token_transactions; requires login
-@app.route('/spend', methods=['POST'])
-def spend():
-    if 'user_id' not in session:
-        flash('You need to be logged in to spend tokens.', 'error')
-        return redirect(url_for('login'))
-    
-    db = get_db()
-    user_id = session['user_id']
-    contribution_id = request.form.get('contribution_id', type=int)
-    lens_slug = request.form.get('lens_slug', '')
-
-    if not contribution_id or not lens_slug:
-        flash('Invalid request.', 'error')
-        return redirect(url_for('index'))
-    
-    # Check balance
-    balance = models.get_token_balance(db, user_id)
-    if balance < 1:
-        flash('Insufficient tokens', 'error')
-        return redirect(url_for('lens', slug=lens_slug))
-    
-    # Verify the contribution exists, is approved, and belongs to this lens
-    contribution = db.execute(
-        '''
-        SELECT c.id, c.country_code, l.slug as lens_slug
-        FROM contributions c
-        JOIN contribution_lens_links cll ON c.id = cll.contribution_id
-        JOIN issues i ON cll.issue_id = i.id
-        JOIN lenses l ON i.lens_id = l.id
-        WHERE c.id = ? AND l.slug = ? AND c.status = 'approved'
-        ''',
-        (contribution_id, lens_slug)
-    ).fetchone()
-
-    if contribution is None:
-        flash('Invalid contribution.', 'error')
-        return redirect(url_for('index'))
-    
-    # Double-check balance right before transaction to prevent race conditions
-    current_balance = models.get_token_balance(db, user_id)
-    if current_balance < 1:
-        flash('Insufficient tokens', 'error')
-        return redirect(url_for('lens', slug=lens_slug))
-    
-    # Record the spend against the specific contribution
-    models.add_token_transactions(db, user_id, -1, 'spend', contribution_id=contribution_id)
-    
-    # Re-sync the session with the actual database ledger
-    session['token_balance'] = models.reconcile_token_balance(db, user_id)
-    
-    # Get the issue_id from the contribution
-    issue = db.execute(
-        '''
-        SELECT i.id FROM issues i
-        JOIN contribution_lens_links cll ON cll.issue_id = i.id
-        WHERE cll.contribution_id = ?
-        ''',
-        (contribution_id,)
-    ).fetchone()
-    
-    flash('Token spent on this evidence.', 'success')
-    return redirect(url_for('lens', slug=lens_slug) + f'?issue_id={issue["id"]}#issue-{issue["id"]}')
-
-
-# Handles token spend on a Force - mirrors the /spend route for issues
-@app.route('/spend-force', methods=['POST'])
-def spend_force():
-    if 'user_id' not in session:
-        flash('You need to be logged in to spend tokens.', 'error')
-        return redirect(url_for('login'))
-    
-    db = get_db()
-    user_id = session['user_id']
-    force_id = request.form.get('force_id', type=int)
-    force_slug = request.form.get('force_slug', '')
-
-    if not force_id or not force_slug:
-        flash('Invalid request.', 'error')
-        return redirect(url_for('forces'))
-    
-    # First check
-    balance = models.get_token_balance(db, user_id)
-    if balance < 1:
-        flash('Insufficient tokens', 'error')
-        return redirect(url_for('force_detail', slug=force_slug))
-    
-    # Verify the force exists
-    force = db.execute(
-        'SELECT id FROM forces WHERE id = ? AND slug = ?',
-        (force_id, force_slug)
-    ).fetchone()
-
-    if force is None:
-        flash('Invalid force.', 'error')
-        return redirect(url_for('forces'))
-    
-    # Double-check balance right before transaction
-    current_balance = models.get_token_balance(db, user_id)
-    if current_balance < 1:
-        flash('Insufficient tokens', 'error')
-        return redirect(url_for('force_detail', slug=force_slug))
-    
-    models.add_token_transactions(db, user_id, -1, 'spend', force_id=force_id)
-    
-    # Re-sync the session with the actual database ledger
-    session['token_balance'] = models.reconcile_token_balance(db, user_id)
-    
-    flash('Token spent.', 'success')
-    return redirect(url_for('force_detail', slug=force_slug))
-
-
 # Renders quiz on GET, scores responses and redirects to recommend lens on POST
 # Calls quiz.get_questions, quiz.score_responses, models.save_quiz_response, models.can_retake_quiz
 @app.route('/quiz', methods=['GET', 'POST'])
 def quiz_route():
     if 'user_id' not in session:
         flash('You need to be logged in to take the quiz.', 'error')
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     db = get_db()
     user_id = session['user_id']
@@ -485,17 +136,17 @@ def quiz_route():
         return redirect(url_for('index'))
     
     if request.method == 'POST':
-        responses = {q['id']: request.form.get(q['id']) for q in quiz.get_questions()}
+        responses = {q['id']: request.form.get(q['id']) for q in routes_quiz.get_questions()}
 
         if any(v is None for v in responses.values()):
             flash('Please answer all questions.', 'error')
-            return render_template('quiz.html', questions=quiz.get_questions())
+            return render_template('quiz.html', questions=routes_quiz.get_questions())
         
-        recommended_slug = quiz.score_response(responses)
+        recommended_slug = routes_quiz.score_response(responses)
 
         if recommended_slug is None:
             flash('Invalid quiz submission. Please try again.', 'error')
-            return render_template('quiz.html', questions=quiz.get_questions())
+            return render_template('quiz.html', questions=routes_quiz.get_questions())
 
         lens = models.get_lens_by_slug(db, recommended_slug)
         models.save_quiz_response(db, user_id, responses, lens['id'])
@@ -504,7 +155,7 @@ def quiz_route():
         flash(f'Based on your answers, we recommend starting with the {lens["title"]} lens.', 'success')
         return redirect(url_for('lens', slug=recommended_slug))
     
-    return render_template('quiz.html', questions=quiz.get_questions())
+    return render_template('quiz.html', questions=routes_quiz.get_questions())
 
 
 # Serve the heatmap page
@@ -543,7 +194,7 @@ def heatmap_data():
 def contribute():
     if 'user_id' not in session:
         flash('You need to be logged in to contribute.', 'error')
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     db = get_db()
 
@@ -595,26 +246,8 @@ def contribute():
 
         contribution_id = contribution['id']
 
-        def run_agent_background(contrib_id):
-            import sqlite3
-            # We MUST create a new database connection for the background thread.
-            # SQLite connections cannot be safely shared across threads.
-            if os.environ.get('DATABASE_URL'):
-                conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-                conn.cursor_factory = RealDictCursor
-                bg_db = Psycopg2Wrapper(conn)  # Use the wrapper that provides .execute()
-            else:
-                bg_db = sqlite3.connect(DATABASE)
-                bg_db.row_factory = sqlite3.Row
-            try:
-                # Fetch existing lenses to pass to the AI agent
-                existing_lenses = bg_db.execute('SELECT title FROM lenses').fetchall()
-                agent.run_agent(bg_db, contrib_id, existing_lenses)
-            finally:
-                bg_db.close()
-
-        thread = threading.Thread(target=run_agent_background, args=(contribution_id,))
-        thread.start()
+        # Start the AI agent in a background thread
+        start_agent_thread(contribution_id)
 
         return redirect(url_for('contribute_confirm', contribution_id=contribution_id))
 
@@ -627,7 +260,7 @@ def contribute():
 @app.route('/contribute/confirm/<int:contribution_id>')
 def contribute_confirm(contribution_id):
     if 'user_id' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     db = get_db()
     contribution = models.get_contribution_with_digest(db, contribution_id)
@@ -650,7 +283,7 @@ def contribute_confirm(contribution_id):
 def validate():
     if 'user_id' not in session:
         flash('You need to be logged in to validate contributions.', 'error')
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     db = get_db()
     user_id = session['user_id']
@@ -671,7 +304,7 @@ def validate():
 def cast_vote(contribution_id):
     if 'user_id' not in session:
         flash('You need to be logged in to vote.', 'error')
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     db = get_db()
     user_id = session['user_id']
@@ -756,25 +389,6 @@ def force_detail(slug):
         return redirect(url_for('forces'))
     
     return render_template('force.html', force=force)
-
-
-@app.route('/privacy')
-def privacy():
-    return render_template('privacy.html')
-
-
-@app.route('/terms')
-def terms():
-    return render_template('terms.html')
-
-
-@app.route('/how_it_works')
-def how_it_works():
-    return render_template('how_it_works.html')
-
-@app.route('/commitments')
-def commitments():
-    return render_template('commitments.html')
 
 
 # Zoomable sunburst

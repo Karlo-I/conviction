@@ -6,7 +6,7 @@
 <div class="auth-container">
     <h1>Log in</h1>
 
-    <form method="POST" action="{{ url_for('login') }}">
+    <form method="POST" action="{{ url_for('auth.login') }}">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
         <div class="form-group">
@@ -25,6 +25,6 @@
 
     </form>
 
-    <p>No account yet? <a href="{{ url_for('register') }}">Register</a></p>
+    <p>No account yet? <a href="{{ url_for('auth.register') }}">Register</a></p>
 </div>
 {% endblock %}

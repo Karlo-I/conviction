@@ -9,7 +9,7 @@
 
     <div class="lens-links">
         {% for lens in lenses %}
-            <a href="{{ url_for('lens', slug=lens.slug) }}"><span class="lens-title">{{ lens.title }}</span></a>
+            <a href="{{ url_for('lens.lens', slug=lens.slug) }}"><span class="lens-title">{{ lens.title }}</span></a>
         {% endfor %}
     </div>
 
@@ -29,7 +29,7 @@
     <!-- Existing "Get started" button for guests -->
     {% if not session.user_id %}
     <div style="margin-top: 3rem; text-align: center;">
-        <a href="{{ url_for('register') }}" class="cta-button">
+        <a href="{{ url_for('auth.register') }}" class="cta-button">
             Get started
         </a>
     </div>

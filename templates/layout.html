@@ -65,10 +65,10 @@
                     </span>
                     
                     <span class="username-display">{{ session.username }}</span>
-                    <a href="{{ url_for('logout') }}">Log out</a>
+                    <a href="{{ url_for('auth.logout') }}">Log out</a>
                 {% else %}
-                    <a href="{{ url_for('login') }}">Log in</a>
-                    <a href="{{ url_for('register') }}">Register</a>
+                    <a href="{{ url_for('auth.login') }}">Log in</a>
+                    <a href="{{ url_for('auth.register') }}">Register</a>
                 {% endif %}
             </div>
         </div>
@@ -88,10 +88,10 @@
 
     <footer>
         <p>
-            <a href="{{ url_for('privacy') }}">Privacy</a>
-            <a href="{{ url_for('commitments') }}">Our Commitments</a>
-            <a href="{{ url_for('how_it_works') }}">How It Works</a>
-            <a href="{{ url_for('terms') }}">Terms</a>
+            <a href="{{ url_for('info.privacy') }}">Privacy</a>
+            <a href="{{ url_for('info.commitments') }}">Our Commitments</a>
+            <a href="{{ url_for('info.how_it_works') }}">How It Works</a>
+            <a href="{{ url_for('info.terms') }}">Terms</a>
         </p>
         <p class="copyright">© 2026 Karlo Igloria | All Rights Reserved</p>
     </footer>
