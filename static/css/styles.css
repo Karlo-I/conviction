@@ -2,9 +2,34 @@
 /* Conviction: Refactored and organized styles */
 
 /* ============================================================
+   0. DESIGN TOKENS
+   ============================================================ */
+:root {
+    /* Your Original Colors */
+    --color-burgundy: #7f1d1d;
+    --color-burgundy-light: rgba(127, 29, 29, 0.85);
+    --color-gold: #9e8042;
+    --color-rose-gold: #fecdd3;
+    --color-rose-gold-hover: #fda4af;
+    
+    /* Neutrals */
+    --color-text-primary: #1d3557;
+    --color-text-secondary: #4b5563;
+    --color-bg-darker-white: #f8f9fa;
+    --color-bg-white: #ffffff;
+    --color-border: #e9ecef;
+    
+    /* Effects */
+    --glass-bg: rgba(127, 29, 29, 0.85);
+    --glass-blur: 12px;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================================
    1. RESET & BASE
    ============================================================ */
-   *, *::before, *::after {
+*, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -18,8 +43,8 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    color: #1d3557;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #f8f9fa 100%);
+    color: var(--color-text-primary);
+    background: linear-gradient(135deg, var(--color-bg-darker-white) 0%, var(--color-border) 50%, var(--color-border) 100%);
     background-attachment: fixed; 
 }
 
@@ -37,7 +62,7 @@ h1 {
     font-weight: 600;
     line-height: 1.4;
     margin-bottom: 1rem;
-    color: #1d3557;
+    color: var(--color-text-primary);
 }
 
 h2 {
@@ -46,52 +71,15 @@ h2 {
     font-weight: 600;
     margin-top: 2rem;
     margin-bottom: 1rem;
-    color: #1d3557;
+    color: var(--color-text-primary);
 }
 
 p {
     margin-bottom: 1rem;
 }
 
-/* Deep burgundy glassmorphism footer to match navigation */
-footer {
-    margin-top: auto;
-    padding-top: .8rem;
-    padding-bottom: 0rem;
-    
-    /* Matching the glassmorphism effect */
-    background: rgba(127, 29, 29, 0.85); /* 85% opacity burgundy */
-    backdrop-filter: blur(12px); /* Blurs the background behind it */
-    -webkit-backdrop-filter: blur(12px);
-    
-    color: #f8f9fa;
-    text-align: center;
-    font-size: 0.875rem;
-    
-    /* Borders and shadows to match the nav */
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1); /* Upward shadow for floating effect */
-}
-
-footer a {
-    color: #a8dadc;
-    margin: 0 0.5rem;
-    text-decoration: underline;
-}
-
-footer a:hover {
-    color: #ffffff;
-}
-
-.copyright {
-    color: #ffffff;
-    text-decoration: none;
-    font-size: 0.65rem;
-    font-weight: 700;
-}
-
 /* ============================================================
-   2. NAVIGATION (Sticky)
+   2. NAVIGATION (Glassmorphism - Burgundy)
    ============================================================ */
 nav {
     position: fixed;
@@ -103,15 +91,12 @@ nav {
     align-items: center;
     height: 64px;
     padding: 0 2rem;
-    
-    /* The Glassmorphism Fade */
-    background: rgba(127, 29, 29, 0.85); /* 85% opacity burgundy */
-    backdrop-filter: blur(12px); /* Blurs the page content behind it */
-    -webkit-backdrop-filter: blur(12px); /* For Safari support */
-    
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Softer, neutral shadow */
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     z-index: 1000;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtle edge line */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .logo {
@@ -152,11 +137,13 @@ nav a {
     text-decoration: none;
     color: #e9ecef;
     font-weight: 500;
-    transition: color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 nav a:hover {
-    color: #ffffff;
+    color: #ffffff; /* Shifts to pure white */
+    text-decoration: underline;
+    text-underline-offset: 4px; /* Pushes the underline down slightly for a cleaner look */
 }
 
 nav a.active {
@@ -191,7 +178,41 @@ nav a.active {
 }
 
 /* ============================================================
-   3. LAYOUT & CONTAINERS
+   3. FOOTER (Glassmorphism - Burgundy)
+   ============================================================ */
+footer {
+    margin-top: auto;
+    padding-top: .8rem;
+    padding-bottom: 0rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #f8f9fa;
+    text-align: center;
+    font-size: 0.875rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+footer a {
+    color: #a8dadc;
+    margin: 0 0.5rem;
+    text-decoration: underline;
+}
+
+footer a:hover {
+    color: #ffffff;
+}
+
+.copyright {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+
+/* ============================================================
+   4. LAYOUT & CONTAINERS
    ============================================================ */
 .heatmap-container {
     width: 100vw;
@@ -213,7 +234,7 @@ nav a.active {
 .legal-container h2 {
     margin-top: 2rem;
     margin-bottom: 1rem;
-    color: #1d3557;
+    color: var(--color-text-primary);
 }
 
 .legal-container ul {
@@ -244,12 +265,12 @@ nav a.active {
 
 .lens-links a {
     background: #ffffff;
-    border: 1px solid #fecdd3;
+    border: 1px solid var(--color-rose-gold);
     border-radius: 12px;
     padding: 2rem 1.5rem;
     text-align: center;
     text-decoration: none;
-    color: #1d3557;
+    color: var(--color-text-primary);
     font-weight: 600;
     font-size: 1.1rem;
     transition: all 0.3s ease;
@@ -262,10 +283,10 @@ nav a.active {
 
 .lens-links a:hover {
     background: #fff1f2;
-    border-color: #fda4af;
+    border-color: var(--color-rose-gold-hover);
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(159, 18, 57, 0.08);
-    color: #1d3557;
+    color: var(--color-text-primary);
     text-decoration: none;
 }
 
@@ -284,7 +305,7 @@ nav a.active {
     backdrop-filter: blur(10px);
     padding: 2rem;
     border-radius: 8px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--color-border);
     box-shadow: 0 4px 12px rgba(0,0,0,0.03);
     margin-bottom: 2rem;
 }
@@ -298,7 +319,7 @@ nav a.active {
 }
 
 /* ============================================================
-   4. FORMS & BUTTONS
+   5. FORMS & BUTTONS
    ============================================================ */
 .form-group {
     margin-bottom: 1.5rem;
@@ -308,7 +329,7 @@ nav a.active {
     display: block;
     font-weight: 600;
     margin-bottom: 0.5rem;
-    color: #1d3557;
+    color: var(--color-text-primary);
 }
 
 .form-group input[type="text"],
@@ -319,7 +340,7 @@ nav a.active {
     width: 100%;
     max-width: 450px;
     padding: 0.75rem;
-    border: 1px solid #ced4da; /* Neutral gray border */
+    border: 1px solid #ced4da;
     border-radius: 6px;
     font-size: .9rem;
     font-family: 'Lora', serif;
@@ -331,7 +352,7 @@ nav a.active {
     width: 100%;
     max-width: 100%; 
     padding: 0.75rem;
-    border: 1px solid #ced4da; /* Neutral gray border */
+    border: 1px solid #ced4da;
     border-radius: 6px;
     font-size: .9rem;
     font-family: 'Lora', serif;
@@ -341,16 +362,14 @@ nav a.active {
     transition: all 0.2s ease;
 }
 
-/* Focus states - subtle blue accent */
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #457b9d; /* Blue on focus */
+    border-color: #457b9d;
     box-shadow: 0 0 0 3px rgba(69, 123, 157, 0.15);
 }
 
-/* Registration form - checkbox */
 .form-group.checkbox {
     display: flex;
     align-items: flex-start;
@@ -363,24 +382,22 @@ nav a.active {
     font-size: 0.85rem;
 }
 
-/* Contribute form container with rose gold border */
 .contribute-container {
     max-width: 800px;
     margin: 0 auto;
     background: #ffffff;
     padding: 2.5rem;
     border-radius: 12px;
-    border: 1px solid #fecdd3; /* Soft rose gold border */
-    box-shadow: 0 4px 16px rgba(254, 205, 211, 0.2); /* Soft rose shadow */
+    border: 1px solid var(--color-rose-gold);
+    box-shadow: 0 4px 16px rgba(254, 205, 211, 0.2);
     margin-bottom: 2rem;
 }
 
-/* Quiz and Contribute form submit button */
 .quiz-container button[type="submit"],
 .contribute-container button[type="submit"] {
-    background-color: #9e8042;
+    background-color: var(--color-gold);
     color: #ffffff;
-    border: 1px solid #9e8042;
+    border: 1px solid var(--color-gold);
     padding: 0.75rem 2rem;
     border-radius: 6px;
     font-size: 1rem;
@@ -392,28 +409,26 @@ nav a.active {
 
 .quiz-container button[type="submit"]:hover,
 .contribute-container button[type="submit"]:hover {
-    background-color: #7f1d1d; /* Deep burgundy to match nav/footer */
-    border-color: #7f1d1d;
+    background-color: var(--color-burgundy);
+    border-color: var(--color-burgundy);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(127, 29, 29, 0.2); /* Burgundy shadow */
+    box-shadow: 0 4px 12px rgba(127, 29, 29, 0.2);
 }
 
-/* Registration form */
 .auth-container {
     max-width: 450px;
     margin: 0 auto;
     background: rgba(255, 255, 255, 0.95);
     padding: 2.5rem;
     border-radius: 12px;
-    border: 1px solid #fecdd3;
+    border: 1px solid var(--color-rose-gold);
     box-shadow: 0 4px 16px rgba(254, 205, 211, 0.2);
 }
 
-/* Registration form - Create account button */
 .auth-submit-button {
-    background-color: #9e8042;
+    background-color: var(--color-gold);
     color: #ffffff;
-    border: 1px solid #9e8042;
+    border: 1px solid var(--color-gold);
     padding: 0.6rem 1.5rem;
     border-radius: 6px;
     font-size: 0.9rem;
@@ -423,12 +438,11 @@ nav a.active {
 }
 
 .auth-submit-button:hover {
-    background-color: #7f1d1d;
-    border-color: #7f1d1d;
+    background-color: var(--color-burgundy);
+    border-color: var(--color-burgundy);
     color: #ffffff;
 }
 
-/* Registration form - Login line */
 .auth-container > p:last-child {
     margin-top: 1.5rem;
     font-size: 0.9rem;
@@ -436,7 +450,7 @@ nav a.active {
 }
 
 .auth-container > p:last-child a {
-    color: #7f1d1d;
+    color: var(--color-burgundy);
     font-weight: 600;
     text-decoration: none;
 }
@@ -446,7 +460,7 @@ nav a.active {
 }
 
 /* ============================================================
-   5. QUIZ STYLES
+   6. QUIZ STYLES
    ============================================================ */
 .quiz-question {
     margin-bottom: 2.5rem;
@@ -487,7 +501,7 @@ nav a.active {
 
 .quiz-option-label input[type="radio"]:checked + span {
     font-weight: 600;
-    color: #1d3557;
+    color: var(--color-text-primary);
 }
 
 .quiz-option-label:has(input[type="radio"]:checked) {
@@ -507,13 +521,12 @@ nav a.active {
     background: rgba(255, 255, 255, 0.95);
     padding: 2rem;
     border-radius: 12px;
-    border: 1px solid #fecdd3; /* Soft rose gold border */
-    box-shadow: 0 4px 16px rgba(254, 205, 211, 0.2); /* Soft rose shadow */
+    border: 1px solid var(--color-rose-gold);
+    box-shadow: 0 4px 16px rgba(254, 205, 211, 0.2);
 }
 
-/* Diagnostic Quiz CTA Button */
 .quiz-cta-button {
-    background-color: #9e8042; /* default */
+    background-color: var(--color-gold);
     color: #ffffff;
     display: inline-block;
     padding: 0.8rem 2.5rem;
@@ -522,34 +535,33 @@ nav a.active {
     font-size: 1.05rem;
     text-decoration: none;
     transition: all 0.3s ease;
-    border: 1px solid #9e8042;
+    border: 1px solid var(--color-gold);
 }
 
 .quiz-cta-button:hover {
-    background-color: #7f1d1d; /* Deep burgundy on hover */
-    border-color: #7f1d1d;
+    background-color: var(--color-burgundy);
+    border-color: var(--color-burgundy);
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(127, 29, 29, 0.3);
     color: #ffffff;
     text-decoration: none;
 }
 
-/* General CTA Button (e.g., Get Started) */
 .cta-button {
     display: inline-block;
-    background-color: #9e8042;
+    background-color: var(--color-gold);
     color: white;
     padding: 0.8rem 2rem;
     border-radius: 6px;
     text-decoration: none;
     font-weight: 600;
     transition: all 0.3s ease;
-    border: 1px solid #9e8042;
+    border: 1px solid var(--color-gold);
 }
 
 .cta-button:hover {
-    background-color: #7f1d1d; /* Deep burgundy on hover */
-    border-color: #7f1d1d;
+    background-color: var(--color-burgundy);
+    border-color: var(--color-burgundy);
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(127, 29, 29, 0.3);
     color: white;
@@ -557,7 +569,7 @@ nav a.active {
 }
 
 /* ============================================================
-   6. SMOOTH PAGE TRANSITION
+   7. SMOOTH PAGE TRANSITION
    ============================================================ */
 @keyframes smoothFadeIn {
     from { 
@@ -575,7 +587,7 @@ main {
 }
 
 /* ============================================================
-   7. FORCES PAGE - GRID LAYOUT
+   8. FORCES PAGE - GRID LAYOUT
    ============================================================ */
 .forces-grid {
     display: grid;
@@ -586,7 +598,7 @@ main {
 
 .force-card-grid {
     background: #ffffff;
-    border: 1px solid #fecdd3;
+    border: 1px solid var(--color-rose-gold);
     border-radius: 8px;
     padding: 1.5rem;
     padding-top: 1rem;
@@ -601,7 +613,7 @@ main {
 
 .force-card-grid:hover {
     background: #fff1f2;
-    border-color: #fda4af;
+    border-color: var(--color-rose-gold-hover);
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(159, 18, 57, 0.08);
 }
@@ -620,12 +632,12 @@ main {
     font-size: 1.1rem;
     margin-bottom: 0rem;
     line-height: 1.4;
-    color: #1d3557;
+    color: var(--color-text-primary);
 }
 
 .force-card-grid a {
     text-decoration: none;
-    color: #1d3557;
+    color: var(--color-text-primary);
 }
 
 .force-card-grid a:hover {
@@ -651,12 +663,12 @@ main {
     font-weight: 600;
     margin: 0.25rem 0.5rem 0.25rem 0;
     transition: all 0.2s ease;
-    border: 1px solid #fecdd3;
+    border: 1px solid var(--color-rose-gold);
 }
 
 .lens-tag:hover {
     background: #ffe4e6;
-    border-color: #fda4af;
+    border-color: var(--color-rose-gold-hover);
     color: #881337;
     transform: translateY(-2px);
     text-decoration: none;
@@ -664,7 +676,7 @@ main {
 }
 
 /* ============================================================
-   8. RESPONSIVE NAVIGATION
+   9. RESPONSIVE NAVIGATION
    ============================================================ */
 .nav-container {
     display: flex;
@@ -726,7 +738,7 @@ main {
     }
     
     .nav-links a {
-        color: #1d3557 !important;
+        color: var(--color-text-primary) !important;
     }
     .nav-links a:hover {
         color: #457b9d !important;
@@ -770,7 +782,7 @@ main {
 }
 
 /* ============================================================
-   9. TOKEN BADGE TOOLTIP
+   10. TOKEN BADGE TOOLTIP
    ============================================================ */
 nav, .nav-container, .user-menu {
     overflow: visible !important;
@@ -806,7 +818,7 @@ nav, .nav-container, .user-menu {
     visibility: hidden;
     opacity: 0;
     width: 260px;
-    background-color: #7f1d1d;
+    background-color: var(--color-burgundy);
     color: #fff;
     text-align: center;
     border-radius: 6px;
@@ -832,7 +844,7 @@ nav, .nav-container, .user-menu {
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: transparent transparent #7f1d1d transparent;
+    border-color: transparent transparent var(--color-burgundy) transparent;
 }
 
 .token-badge:hover .tooltip-text {
@@ -841,7 +853,7 @@ nav, .nav-container, .user-menu {
 }
 
 /* ============================================================
-   10. REAL-TIME VOTE COUNTERS & BUTTONS
+   11. REAL-TIME VOTE COUNTERS & BUTTONS
    ============================================================ */
 .vote-counts {
     display: flex;
@@ -918,11 +930,11 @@ nav, .nav-container, .user-menu {
 }
 
 /* ============================================================
-   11. EMPTY STATE CARD STYLING
+   12. EMPTY STATE CARD STYLING
    ============================================================ */
 .empty-state-card {
     background: #ffffff;
-    border: 1px solid #fecdd3;
+    border: 1px solid var(--color-rose-gold);
     border-radius: 12px;
     padding: 3rem 2rem;
     text-align: center;
@@ -963,7 +975,7 @@ nav, .nav-container, .user-menu {
 }
 
 /* ============================================================
-   12. FLASH MESSAGES (Validation Prompts)
+   13. FLASH MESSAGES
    ============================================================ */
 .flash {
     padding: 1.25rem 1.5rem;
@@ -976,28 +988,24 @@ nav, .nav-container, .user-menu {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* Success messages (approvals, elevations) - Rose/Burgundy theme */
 .flash.success {
     background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
     border-left-color: #9f1239;
-    color: #7f1d1d;
+    color: var(--color-burgundy);
 }
 
-/* Info messages (general notifications) - Soft blue */
 .flash.info {
     background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
     border-left-color: #0284c7;
     color: #0c4a6e;
 }
 
-/* Warning messages - Soft amber */
 .flash.warning {
     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
     border-left-color: #d97706;
     color: #92400e;
 }
 
-/* Error messages (rejections) - Soft red */
 .flash.error {
     background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
     border-left-color: #dc2626;
@@ -1008,7 +1016,6 @@ nav, .nav-container, .user-menu {
     font-weight: 700;
 }
 
-/* Smooth slide-in animation */
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -1020,11 +1027,10 @@ nav, .nav-container, .user-menu {
     }
 }
 
-
 /* ============================================================
-   13. ISSUE COMMENTS & DISCUSSION
+   14. ISSUE COMMENTS & DISCUSSION
    ============================================================ */
-   .hidden {
+.hidden {
     display: none !important;
 }
 
@@ -1036,7 +1042,7 @@ nav, .nav-container, .user-menu {
 
 .issue-comments h4 {
     margin-bottom: 1.5rem;
-    color: #1d3557;
+    color: var(--color-text-primary);
     font-size: 1.1rem;
     font-weight: 600;
 }
@@ -1073,7 +1079,7 @@ nav, .nav-container, .user-menu {
 .comment-avatar {
     width: 32px;
     height: 32px;
-    background: linear-gradient(135deg, #457b9d 0%, #1d3557 100%);
+    background: linear-gradient(135deg, #457b9d 0%, var(--color-text-primary) 100%);
     font-size: 0.85rem;
 }
 
@@ -1094,7 +1100,7 @@ nav, .nav-container, .user-menu {
 }
 
 .comment-username {
-    color: #1d3557;
+    color: var(--color-text-primary);
     font-size: 0.95rem;
 }
 
@@ -1160,11 +1166,11 @@ nav, .nav-container, .user-menu {
 }
 
 .reply-form-container {
-    margin: 0.75rem 0 0.75rem 3.5rem;
-    padding: 1rem;
+    border-left: none !important; /* Removes the blue accent */
     background: #f8f9fa;
     border-radius: 8px;
-    border-left: 3px solid #457b9d;
+    padding: 1rem;
+    margin: 0.75rem 0 0.75rem 3rem;
 }
 
 .reply-form-container textarea {
@@ -1185,31 +1191,37 @@ nav, .nav-container, .user-menu {
 }
 
 .btn-reply-submit {
-    background-color: #457b9d;
-    color: white;
+    background-color: var(--color-gold) !important; /* Gold background */
+    color: white !important;
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
     cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
 }
 
-.btn-reply-submit:hover { background-color: #366582; }
+.btn-reply-submit:hover {
+    background-color: var(--color-burgundy) !important; /* Burgundy on hover */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(127, 29, 29, 0.2);
+}
 
 .btn-reply-cancel {
     background-color: #e9ecef;
     color: #495057;
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-weight: 500;
     transition: background 0.2s;
 }
 
-.btn-reply-cancel:hover { background-color: #dee2e6; }
+.btn-reply-cancel:hover {
+    background-color: #dee2e6;
+}
 
 .comment-replies {
     margin-top: 1rem;
@@ -1250,7 +1262,7 @@ nav, .nav-container, .user-menu {
 
 .new-comment-form-container h5 {
     margin-bottom: 1rem;
-    color: #1d3557;
+    color: var(--color-text-primary);
     font-size: 0.95rem;
     font-weight: 600;
 }
@@ -1280,7 +1292,7 @@ nav, .nav-container, .user-menu {
 }
 
 .btn-comment-submit {
-    background-color: #9e8042;
+    background-color: var(--color-gold);
     color: white;
     border: none;
     padding: 0.75rem 1.5rem;
@@ -1291,7 +1303,7 @@ nav, .nav-container, .user-menu {
     transition: background 0.2s;
 }
 
-.btn-comment-submit:hover { background-color: #7f1d1d; }
+.btn-comment-submit:hover { background-color: var(--color-burgundy); }
 
 .login-prompt-container {
     margin-top: 2rem;
@@ -1325,110 +1337,281 @@ nav, .nav-container, .user-menu {
 }
 
 /* ============================================================
-   14. CONTRIBUTION CONFIRMATION - SIMPLE & CLEAN
+   15. UNIFIED CARD SYSTEM - Consistency Across All Pages
    ============================================================ */
-.confirm-page {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 0rem 1rem;
+
+/* Base card style - use this for all card-like containers */
+.card,
+.lens-links a,
+.empty-state-card,
+.validate-card,
+.force-card-grid,
+.quiz-container,
+.auth-container,
+.contribute-container {
+    background: #ffffff;
+    border: 1px solid rgba(254, 205, 211, 0.5); /* Consistent rose-gold border */
+    border-radius: 12px; /* Consistent rounded corners */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); /* Subtle shadow */
+    transition: all 0.2s ease;
 }
 
-.success-banner {
-    background: rgba(127, 29, 29, 0.85);
-    backdrop-filter: blur(12px);
-    color: white;
-    padding: 2rem;
-    border-radius: 4px;
-    margin-bottom: 2rem;
+/* Hover states - consistent across all cards */
+.lens-links a:hover,
+.empty-state-card:hover,
+.validate-card:hover,
+.force-card-grid:hover {
+    border-color: rgba(254, 205, 211, 0.8);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+/* Diagnostic Quiz Box - Match the card system */
+.quiz-cta-container,
+.quiz-cta-box {
+    background: #ffffff;
+    border: 1px solid rgba(158, 128, 66, 0.3); /* Gold border for emphasis */
+    border-radius: 12px;
+    padding: 2.5rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Empty state cards - ensure they match */
+.empty-state-card {
+    padding: 3rem 2rem;
     text-align: center;
 }
 
-.success-banner h1 {
-    margin: 0 0 0.5rem 0;
-    color: white;
+.empty-state-card h3 {
+    color: var(--color-burgundy);
     font-size: 1.5rem;
-}
-
-.success-banner p {
-    margin: 0;
-    opacity: 0.95;
-}
-
-.contribution-digest {
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-.contribution-digest section {
-    margin-bottom: 2rem;
-}
-
-.contribution-digest section:last-child {
-    margin-bottom: 0;
-}
-
-.contribution-digest h2 {
-    margin: 0 0 1rem 0;
-    font-size: 1.2rem;
-    color: #1d3557;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #e9ecef;
-}
-
-/* Justified text, no hyphens */
-.contribution-digest p {
-    margin: 0 0 0.75rem 0;
-    line-height: 1.6;
-    text-align: justify;
-    hyphens: none;
-    -webkit-hyphens: none;
-    -ms-hyphens: none;
-    overflow-wrap: break-word; /* Only breaks long URLs if absolutely necessary */
-}
-
-.contribution-digest a {
-    color: #457b9d;
-    word-break: break-all;
-}
-
-.confidence {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    font-weight: 600;
     margin-bottom: 1rem;
 }
 
-.confidence.strong { background: #d1fae5; color: #065f46; }
-.confidence.partial { background: #fef3c7; color: #92400e; }
-.confidence.weak { background: #fee2e2; color: #991b1b; }
-.confidence.none { background: #f3f4f6; color: #4b5563; }
+.empty-state-card p {
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
 
-.evidence {
-    background: #f8f9fa;
+/* Ensure all headings use consistent styling */
+h1, h2, h3 {
+    font-family: 'Lora', serif;
+    color: var(--color-text-primary);
+}
+
+/* Ensure all buttons use consistent styling */
+button,
+.cta-button,
+.quiz-cta-button,
+.auth-submit-button {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+/* ============================================================
+   15. LENS PAGE - ISSUE CARDS & RELATED FORCES
+   ============================================================ */
+
+/* Main Lens Container */
+.lens-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Individual Issue Cards - Clear separation */
+.issue {
+    background: #ffffff;
+    border: 1px solid rgba(254, 205, 211, 0.5);
+    border-radius: 12px;
+    padding: 2.5rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+}
+
+.issue:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+/* Issue heading */
+.issue h2 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    color: var(--color-text-primary);
+    font-size: 1.6rem;
+}
+
+/* Issue description */
+.issue > p:first-of-type {
+    color: var(--color-text-secondary);
+    font-size: 1.05rem;
+    margin-bottom: 1rem;
+}
+
+/* Issue Context - Highlighted box */
+.issue p[style*="font-weight: bold"] {
+    background: linear-gradient(135deg, rgba(127, 29, 29, 0.05) 0%, rgba(158, 128, 66, 0.03) 100%);
     padding: 1.5rem;
-    border-radius: 6px;
-    border-left: 3px solid #457b9d;
+    border-left: 4px solid var(--color-burgundy);
+    border-radius: 0 8px 8px 0;
+    margin-top: 1.5rem !important;
+    margin-bottom: 2rem !important;
+    font-weight: 600 !important;
+    color: var(--color-text-primary) !important;
+    line-height: 1.6;
 }
 
-.actions {
-    margin-top: 2rem;
+/* Toggle Evidence Button */
+.toggle-evidence {
+    background: rgba(69, 123, 157, 0.1) !important;
+    border: 1px solid rgba(69, 123, 157, 0.2) !important;
+    padding: 0.75rem 1.25rem !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    color: #457b9d !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    transition: all 0.2s ease !important;
+    margin-top: 1.5rem !important;
+}
+
+.toggle-evidence:hover {
+    background: rgba(69, 123, 157, 0.15) !important;
+    border-color: rgba(69, 123, 157, 0.3) !important;
+    transform: translateY(-1px);
+}
+
+/* Community Evidence Section */
+.community-section {
+    margin-top: 2.5rem;
+    padding-top: 2.5rem;
+    border-top: 2px solid #e9ecef;
+}
+
+.community-section h3 {
+    color: var(--color-text-primary);
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+/* Validate Cards (Community Contributions) */
+.validate-card {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-left: 4px solid #457b9d;
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    transition: all 0.2s ease;
+}
+
+.validate-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    border-color: #457b9d; /* ALL borders shift to blue on hover */
+    border-left-color: #457b9d; /* Keep left border blue */
+}
+
+/* Empty State Card */
+.empty-state-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px dashed var(--color-rose-gold);
+    border-radius: 12px;
+    padding: 3rem 2rem;
     text-align: center;
+    margin-top: 1.5rem;
+    margin-bottom: 2rem;
 }
 
-.actions a {
-    margin: 0 1rem;
-    color: #457b9d;
+/* ==========================================
+   RELATED FORCES SECTION - Distinct & Clear
+   ========================================== */
+.related-forces {
+    background: linear-gradient(135deg, rgba(127, 29, 29, 0.03) 0%, rgba(158, 128, 66, 0.03) 100%);
+    border: 2px solid rgba(127, 29, 29, 0.15);
+    border-radius: 12px;
+    padding: 2.5rem;
+    margin-top: 4rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.related-forces h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: var(--color-burgundy);
+    font-size: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(127, 29, 29, 0.15);
+}
+
+/* Each force as a distinct card */
+.related-forces > div {
+    background: #ffffff;
+    border: 1px solid rgba(254, 205, 211, 0.4);
+    border-left: 4px solid var(--color-gold);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+}
+
+.related-forces > div:hover {
+    border-left-color: var(--color-burgundy);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateX(4px);
+}
+
+.related-forces a {
+    color: var(--color-text-primary);
+    font-weight: 600;
+    font-size: 1.05rem;
     text-decoration: none;
+    display: block;
+    margin-bottom: 0.5rem;
+    transition: color 0.2s ease;
 }
 
-.actions a:hover {
-    text-decoration: underline;
+.related-forces a:hover {
+    color: var(--color-burgundy);
 }
 
-.evidence p {
-    font-family: 'Source Sans Pro', system-ui, sans-serif;
+.related-forces p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+/* Back to Top Button */
+.lens-container > div:last-child button {
+    color: #457b9d;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.lens-container > div:last-child button:hover {
+    color: var(--color-burgundy);
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .issue {
+        padding: 1.75rem;
+        margin-bottom: 2rem;
+    }
+    
+    .related-forces {
+        padding: 1.75rem;
+    }
+    
+    .validate-card {
+        padding: 1.5rem;
+    }
 }

@@ -228,13 +228,12 @@ function drawSunburst(data, container) {
             .attrTween("d", d => () => arc(d.current));
 
         // 2. Update the hidden arcs (for text) using the SAME d.current
-        // We must select the hidden arcs and update their 'd' attribute 
-        // in the same transition to ensure they move with the wedges.
+        // Select the hidden arcs and update their 'd' attribute in the same transition to ensure they move with the wedges.
         g.selectAll(".hidden-arc")
             .transition(t)
             .attrTween("d", function(d) {
                 // 'this' is the hidden arc path element
-                // We use the same interpolation logic to ensure sync
+                // Use the same interpolation logic to ensure sync
                 const i = d3.interpolate(d.current, d.target);
                 return t => middleArcLine(i(t)); // Use the interpolated values directly
             });
@@ -244,7 +243,7 @@ function drawSunburst(data, container) {
             .attr("opacity", d => arcVisible(d.target) ? 1 : 0);
 
         // Update the text content to fit the NEW target geometry
-        // We do this after the transition starts so it uses the final positions
+        // Do this after the transition starts so it uses the final positions
         label.select("textPath")
             .transition(t)
             .tween("text", function(d) {

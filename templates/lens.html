@@ -299,6 +299,23 @@
             toggleBtn.textContent = 'Hide community evidence & discussion';
         }
     }
+
+    // Toggle reply form visibility
+    function toggleReply(elementId) {
+        const replyForm = document.getElementById(elementId);
+        if (replyForm) {
+            replyForm.classList.toggle('hidden');
+            
+            // Optional: Focus on textarea when opened
+            if (!replyForm.classList.contains('hidden')) {
+                const textarea = replyForm.querySelector('textarea');
+                if (textarea) {
+                    textarea.focus();
+                }
+            }
+        }
+    }
+
 </script>
 
 {% endblock %}
