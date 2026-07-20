@@ -231,7 +231,7 @@
     <div class="related-forces" style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #e9ecef;">
         <h2>Related forces</h2>
         {% for f in forces %}
-        <div style="margin-bottom: 1.25rem;">
+        <div style="margin-bottom: .65rem;">
             <a href="{{ url_for('force_detail', slug=f.slug) }}" style="font-weight: 600; color: #1d3557; text-decoration: none; font-size: 1.05rem;">{{ f.title }}</a>
             {% if f.explanation %}
                 <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #495057; line-height: 1.4;">{{ f.explanation }}</p>

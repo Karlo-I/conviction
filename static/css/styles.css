@@ -647,8 +647,9 @@ main {
 .evidence-card {
     background: #f8f9fa;
     border-left: 4px solid #457b9d;
+    font-family: 'Lora', serif;
     padding: 1.5rem;
-    border-radius: 0 6px 6px 0;
+    border-radius: 6px 6px 6px 6px;
     margin-bottom: 2rem;
 }
 
@@ -1532,13 +1533,14 @@ button,
 /* ==========================================
    RELATED FORCES SECTION - Distinct & Clear
    ========================================== */
+/* Related Forces Outer Container - Match Forces Page */
 .related-forces {
-    background: linear-gradient(135deg, rgba(127, 29, 29, 0.03) 0%, rgba(158, 128, 66, 0.03) 100%);
-    border: 2px solid rgba(127, 29, 29, 0.15);
-    border-radius: 12px;
-    padding: 2.5rem;
-    margin-top: 4rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    background-color: #fafafa;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    padding: 1rem !important;
+    margin-top: 4rem !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .related-forces h2 {
@@ -1546,44 +1548,26 @@ button,
     margin-bottom: 1.5rem;
     color: var(--color-burgundy);
     font-size: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid rgba(127, 29, 29, 0.15);
-}
-
-/* Each force as a distinct card */
-.related-forces > div {
-    background: #ffffff;
-    border: 1px solid rgba(254, 205, 211, 0.4);
-    border-left: 4px solid var(--color-gold);
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-    transition: all 0.2s ease;
-}
-
-.related-forces > div:hover {
-    border-left-color: var(--color-burgundy);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transform: translateX(4px);
+    padding-bottom: .5rem;
+    border-bottom: 2px solid rgba(254, 205, 211, 0.3);
 }
 
 .related-forces a {
-    color: var(--color-text-primary);
-    font-weight: 600;
-    font-size: 1.05rem;
-    text-decoration: none;
+    color: var(--color-text-primary) !important; /* Forces dark blue text */
+    font-family: 'Lora', serif;
+    font-weight: 600 !important;
+    font-size: 1.05rem !important;
+    text-decoration: none !important;
     display: block;
-    margin-bottom: 0.5rem;
-    transition: color 0.2s ease;
+    transition: color 0.2s ease !important;
 }
 
 .related-forces a:hover {
-    color: var(--color-burgundy);
+    color: var(--color-burgundy) !important; /* Forces burgundy text on hover */
 }
 
 .related-forces p {
-    margin: 0;
+    margin: 0.5rem 0 0 0;
     font-size: 0.9rem;
     color: var(--color-text-secondary);
     line-height: 1.5;
