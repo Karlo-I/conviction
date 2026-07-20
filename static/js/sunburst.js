@@ -211,6 +211,7 @@ function drawSunburst(data, container) {
 
         const t = g.transition().duration(750);
 
+        // 1. Update the colored wedges
         path.transition(t)
             .tween("data", d => {
                 const i = d3.interpolate(d.current, d.target);
@@ -223,17 +224,32 @@ function drawSunburst(data, container) {
             .attr("pointer-events", d => arcVisible(d.target) ? "auto" : "none")
             .attrTween("d", d => () => arc(d.current));
 
-        // Update hidden arcs
+        // 2. Update the hidden arcs (for text) using the SAME d.current
+        // We must select the hidden arcs and update their 'd' attribute 
+        // in the same transition to ensure they move with the wedges.
         g.selectAll(".hidden-arc")
             .transition(t)
-            .attrTween("d", d => () => middleArcLine(d.target));
+            .attrTween("d", function(d) {
+                // 'this' is the hidden arc path element
+                // We use the same interpolation logic to ensure sync
+                const i = d3.interpolate(d.current, d.target);
+                return t => middleArcLine(i(t)); // Use the interpolated values directly
+            });
 
-        // Update text visibility and content
+        // 3. Update text visibility and content
         label.transition(t)
             .attr("opacity", d => arcVisible(d.target) ? 1 : 0);
 
+        // Update the text content to fit the NEW target geometry
+        // We do this after the transition starts so it uses the final positions
         label.select("textPath")
-            .text(d => fitArcText(d.data.name, d.target));   // NEW — re-truncate against target geometry after zoom
+            .transition(t)
+            .tween("text", function(d) {
+                const targetText = fitArcText(d.data.name, d.target);
+                const currentText = this.textContent;
+                const i = d3.interpolateString(currentText, targetText);
+                return t => this.textContent = i(t);
+            });
 
         renderTitle(p.depth === 0 ? "Mechanisms" : p.data.name, p.depth);
     }
@@ -241,4 +257,5 @@ function drawSunburst(data, container) {
     function arcVisible(d) {
         return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
     }
+
 }
