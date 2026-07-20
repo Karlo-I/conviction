@@ -1414,7 +1414,7 @@ button,
 }
 
 /* ============================================================
-   15. LENS PAGE - ISSUE CARDS & RELATED FORCES
+   16. LENS PAGE - ISSUE CARDS & RELATED FORCES
    ============================================================ */
 
 /* Main Lens Container */
@@ -1531,7 +1531,7 @@ button,
 }
 
 /* ==========================================
-   RELATED FORCES SECTION - Distinct & Clear
+   17. RELATED FORCES SECTION - Distinct & Clear
    ========================================== */
 /* Related Forces Outer Container - Match Forces Page */
 .related-forces {
@@ -1596,6 +1596,193 @@ button,
     }
     
     .validate-card {
+        padding: 1.5rem;
+    }
+}
+
+/* ============================================================
+   18. CONFIRMATION PAGE LAYOUT
+   ============================================================ */
+   .confirm-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Success Banner */
+.success-banner {
+    background: var(--color-burgundy);
+    color: #ffffff;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(127, 29, 29, 0.15);
+}
+
+.success-banner h1 {
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+}
+
+.success-banner p {
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Digest Card */
+.contribution-digest {
+    background: #ffffff;
+    border: 1px solid rgba(254, 205, 211, 0.5);
+    border-radius: 12px;
+    padding: 2.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    margin-bottom: 2rem;
+}
+
+.digest-section {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.digest-section:last-of-type {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.digest-section h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: var(--color-text-primary);
+    font-size: 1.25rem;
+}
+
+/* Aligned Detail Rows */
+.digest-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.detail-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    line-height: 1.6;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    min-width: 100px; /* Ensures all labels align perfectly */
+}
+
+.detail-value {
+    color: var(--color-text-secondary);
+    flex: 1;
+}
+
+.source-link {
+    color: #457b9d;
+    word-break: break-all;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease;
+}
+
+.source-link:hover {
+    border-bottom-color: #457b9d;
+}
+
+/* Evidence Section */
+.evidence-section {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #457b9d;
+}
+
+.evidence-section h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+}
+
+.confidence-badge {
+    display: inline-block;
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    text-transform: capitalize;
+}
+
+.confidence-badge.strong { background: #d1fae5; color: #065f46; }
+.confidence-badge.partial { background: #fef3c7; color: #92400e; }
+.confidence-badge.weak { background: #fee2e2; color: #991b1b; }
+.confidence-badge.none { background: #f3f4f6; color: #4b5563; }
+
+.evidence-summary {
+    margin: 0;
+    line-height: 1.7;
+    font-family: 'Lora', serif;
+    font-size: .92rem;
+    color: var(--color-text-secondary);
+}
+
+.evidence-loading {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
+
+/* Action Links */
+.confirm-actions {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.action-link {
+    font-size: 0.95rem;
+    color: #457b9d;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.action-link:hover {
+    color: var(--color-burgundy);
+    background: rgba(127, 29, 29, 0.05);
+}
+
+/* Mobile Responsiveness */
+@media screen and (max-width: 600px) {
+    .confirm-actions {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .detail-row {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .detail-label {
+        min-width: auto;
+    }
+    
+    .contribution-digest {
         padding: 1.5rem;
     }
 }

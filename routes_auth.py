@@ -11,7 +11,7 @@ auth_bp = Blueprint('auth', __name__)
 def register():
     # If already logged in, kick them to the home page
     if 'user_id' in session:
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
     
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -48,7 +48,7 @@ def register():
         # Fetch the starting balance so the navbar updates instantly
         session['token_balance'] = models.get_token_balance(get_db(), user['id'])
 
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
 
     return render_template('register.html')
 
@@ -57,7 +57,7 @@ def register():
 def login():
     # If already logged in, kick them to the home page
     if 'user_id' in session:
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
     
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -79,7 +79,7 @@ def login():
         # Fetch and save the token balance to the session
         session['token_balance'] = models.get_token_balance(get_db(), user['id'])
 
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
     
     return render_template('login.html')
 
@@ -87,4 +87,4 @@ def login():
 @auth_bp.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('index'))
+    return redirect(url_for('main.index'))

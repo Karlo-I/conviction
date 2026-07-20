@@ -22,7 +22,7 @@ def quiz_route():
     retake_days = int(models.get_config(db, 'quiz_retake_days') or 90)
     if not models.can_retake_quiz(db, user_id, retake_days=retake_days):
         flash(f'You can retake the quiz every {retake_days} days.', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
     
     if request.method == 'POST':
         responses = {q['id']: request.form.get(q['id']) for q in quiz.get_questions()}

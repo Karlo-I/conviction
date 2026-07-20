@@ -4,61 +4,102 @@
 
 {% block content %}
 <div class="confirm-page">
+    
+    <!-- Success Banner -->
     <div class="success-banner">
         <h1>✓ Contribution submitted</h1>
         <p>Your contribution is now pending peer validation. At least three validators need to approve it before it appears on the platform.</p>
     </div>
 
+    <!-- Contribution Digest Card -->
     <article class="contribution-digest">
+        
         {% if is_owner %}
-        <section>
-            <h2>What you submitted</h2>
-            <p><strong>Country:</strong> {{ contribution.country_code }}</p>
-            <p><strong>Claim:</strong> {{ contribution.note }}</p>
-            {% if contribution.source_url %}
-            <p><strong>Source:</strong> <a href="{{ contribution.source_url }}" target="_blank">{{ contribution.source_url }}</a></p>
-            {% endif %}
-        </section>
+            <section class="digest-section">
+                <h2>What you submitted</h2>
+                <div class="digest-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Country:</span>
+                        <span class="detail-value">{{ contribution.country_code }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Claim:</span>
+                        <span class="detail-value">{{ contribution.note }}</span>
+                    </div>
+                    {% if contribution.source_url %}
+                    <div class="detail-row">
+                        <span class="detail-label">Source:</span>
+                        <span class="detail-value">
+                            <a href="{{ contribution.source_url }}" target="_blank" rel="noopener noreferrer" class="source-link">{{ contribution.source_url }}</a>
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
         {% else %}
-        <section>
-            <h2>Your source</h2>
-            {% if my_source.source_url %}
-            <p><a href="{{ my_source.source_url }}" target="_blank">{{ my_source.source_url }}</a></p>
-            {% endif %}
-            {% if my_source.source_excerpt %}
-            <p>{{ my_source.source_excerpt }}</p>
+            <section class="digest-section">
+                <h2>Your source</h2>
+                <div class="digest-details">
+                    {% if my_source.source_url %}
+                    <div class="detail-row">
+                        <span class="detail-label">Source:</span>
+                        <span class="detail-value">
+                            <a href="{{ my_source.source_url }}" target="_blank" rel="noopener noreferrer" class="source-link">{{ my_source.source_url }}</a>
+                        </span>
+                    </div>
+                    {% endif %}
+                    {% if my_source.source_excerpt %}
+                    <div class="detail-row">
+                        <span class="detail-label">Excerpt:</span>
+                        <span class="detail-value">{{ my_source.source_excerpt }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="digest-section">
+                <h2>Added to existing claim</h2>
+                <div class="digest-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Country:</span>
+                        <span class="detail-value">{{ contribution.country_code }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Claim:</span>
+                        <span class="detail-value">{{ contribution.note }}</span>
+                    </div>
+                </div>
+            </section>
+        {% endif %}
+
+        <!-- Evidence Assessment -->
+        <section class="evidence-section">
+            <h2>Evidence Assessment</h2>
+            {% if contribution.summary %}
+                <p class="confidence-badge {% if contribution.confidence == 'strong evidence' %}strong
+                           {% elif contribution.confidence == 'partial evidence' %}partial
+                           {% elif contribution.confidence == 'weak evidence' %}weak
+                           {% else %}none{% endif %}">
+                    {{ contribution.confidence | title }}
+                </p>
+                <p class="evidence-summary">{{ contribution.summary }}</p>
+            {% else %}
+                <div class="evidence-loading">
+                    <p><em>AI digest is being generated. Check back shortly.</em></p>
+                </div>
             {% endif %}
         </section>
 
-        <section>
-            <h2>Added to existing claim</h2>
-            <p><strong>Country:</strong> {{ contribution.country_code }}</p>
-            <p><strong>Claim:</strong> {{ contribution.note }}</p>
-        </section>
-        {% endif %}
-
-        {% if contribution.summary %}
-        <section class="evidence">
-            <h2>Evidence Assessment</h2>
-            <p class="confidence {% if contribution.confidence == 'strong evidence' %}strong
-                       {% elif contribution.confidence == 'partial evidence' %}partial
-                       {% elif contribution.confidence == 'weak evidence' %}weak
-                       {% else %}none{% endif %}">
-                {{ contribution.confidence | title }}
-            </p>
-            <p>{{ contribution.summary }}</p>
-        </section>
-        {% else %}
-        <section class="evidence">
-            <h2>Evidence Assessment</h2>
-            <p><em>AI digest is being generated. Check back shortly.</em></p>
-        </section>
-        {% endif %}
     </article>
 
-    <div class="actions">
-        <a href="{{ url_for('main.index') }}" style="font-size: 0.9rem; color: #457b9d; text-decoration: none;">&larr; Back to home</a>
-        <a href="{{ url_for('contribute') }}"style="font-size: 0.9rem; color: #457b9d; text-decoration: none;">Submit another</a>
+    <!-- Action Links -->
+    <div class="confirm-actions">
+        <a href="{{ url_for('main.index') }}" class="action-link">
+            &larr; Back to home
+        </a>
+        <a href="{{ url_for('contribute.contribute') }}" class="action-link">
+            Submit another contribution
+        </a>
     </div>
 
 </div>
@@ -66,7 +107,6 @@
 {% if not contribution.summary %}
 <script>
     // If the AI digest isn't ready yet, wait 3 seconds and refresh the page.
-    // Once the digest is generated, this script won't run, stopping the loop.
     setTimeout(() => {
         location.reload();
     }, 3000);

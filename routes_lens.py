@@ -16,7 +16,7 @@ def lens(slug):
     lens_data = models.get_lens_by_slug(db, slug)
 
     if lens_data is None:
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
     
     issues = models.get_issues_with_data(db, lens_data['id'])    
     forces = models.get_forces_for_lens(db, lens_data['id'])
@@ -47,7 +47,7 @@ def add_issue_comment_route(issue_id):
     
     if not issue:
         flash('Issue not found.', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
     
     lens_slug = issue['slug']
     
@@ -103,7 +103,7 @@ def spend():
 
     if not contribution_id or not lens_slug:
         flash('Invalid request.', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
     
     # Check balance
     balance = models.get_token_balance(db, user_id)
@@ -126,7 +126,7 @@ def spend():
 
     if contribution is None:
         flash('Invalid contribution.', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
     
     # Double-check balance right before transaction to prevent race conditions
     current_balance = models.get_token_balance(db, user_id)
@@ -168,7 +168,7 @@ def spend_force():
 
     if not force_id or not force_slug:
         flash('Invalid request.', 'error')
-        return redirect(url_for('forces'))
+        return redirect(url_for('forces.forces'))
     
     # First check
     balance = models.get_token_balance(db, user_id)
@@ -184,7 +184,7 @@ def spend_force():
 
     if force is None:
         flash('Invalid force.', 'error')
-        return redirect(url_for('forces'))
+        return redirect(url_for('forces.forces'))
     
     # Double-check balance right before transaction
     current_balance = models.get_token_balance(db, user_id)
