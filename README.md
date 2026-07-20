@@ -2,7 +2,7 @@
 ### CS50x Final Project — Living Project Brief
 **AI Assistance Disclosure:** This `README.md` file was developed with the assistance of AI language models (Claude and Qwen) to refine phrasing, improve formatting, and ensure clarity. All project architecture, design decisions, feature logic, and technical direction are strictly the author's own.
 
-**Last Updated:** July 14, 2026 (rev 18)
+**Last Updated:** July 20, 2026 (rev 19)
 
 **Status:** Deployed — Live at https://conviction-20z3.onrender.com/
 
@@ -93,7 +93,9 @@ The only ongoing cost is the AI agent call triggered when a user submits a contr
 
 7. **Global Heatmap** — Aggregate token spend by country renders as a heatmap via Leaflet.js. Users watch their contribution shift the map. Starts as a static render; near-real-time updates (page refresh triggers new data fetch) are the target. True real-time via WebSockets is a post-submission stretch goal.
 
-   **Echo chamber prevention toggle:** The heatmap has two modes — "highest conviction" (where token spend is densest) and "least heard" (countries and issues with real data but low token spend). The second mode actively directs attention toward underrepresented voices rather than amplifying already-loud ones. This is a JavaScript toggle on the frontend, backed by two different query parameters to the heatmap endpoint in `app.py`.
+   **Echo chamber prevention toggle:** The heatmap has two modes — "highest conviction" (where token spend is densest) and "least heard" (countries and issues with real data but low token spend). The second mode actively directs attention toward underrepresented voices rather than amplifying already-loud ones. This is a JavaScript toggle on the frontend, backed by two different query parameters to the heatmap endpoint in `routes_visual.py`.
+
+8. **D3 Zoomable Sunburst** — An interactive visualisation (`viz.py`, `static/js/sunburst.js`) mapping the full forces hierarchy across five layers: mechanism categories → forces → lenses → issues → contributing countries. Clicking any segment drills into that layer, making cross-domain patterns navigable rather than just described.
 
 ---
 
@@ -129,14 +131,30 @@ This is the most important architectural decision. The schema is designed to be 
 
 ## Project Structure & File Descriptions
 
-- **`app.py`**: The main Flask application entry point. Handles all routing, session management, CSRF protection, and request/response flow, while delegating all database interactions to `models.py`.
-- **`models.py`**: The exclusive location for all SQL database queries. Contains organized functions for user authentication, append-only token ledger management, contribution fetching/validation, and quiz response tracking.
-- **`agent.py`**: The background AI digest agent. Triggered upon contribution submission, it analyzes the user's provided source excerpt, assesses its quality and gaps relative to the claim, and generates a plain-language summary for peer validators.
-- **`quiz.py`**: Contains the rule-based classification logic for the diagnostic quiz, scoring user responses to route them to their most relevant systemic lens.
-- **`seed.py`**: A dual-mode (SQLite/PostgreSQL) initialization script. It populates the database with the foundational structure (lenses, issues, indicators, and pre-approved forces) and a "Data Archive" system user, intentionally omitting external API data fetching to prioritize community-built evidence.
-- **`schema.sql` & `schema_postgres.sql`**: The database schema definitions for local development (SQLite) and production (PostgreSQL), respectively. They establish the unified data architecture, cross-lens force links, and append-only token economy.
-- **`templates/`**: Contains all Jinja2 HTML templates (e.g., `lens.html`, `contribute.html`, `validate.html`, `heatmap.html`) that render the user interface and dynamically display data passed from the backend.
-- **`static/`**: Contains vanilla CSS for styling and JavaScript files (e.g., `heatmap.js` for Leaflet.js map rendering, `charts.js` for data visualization) to handle frontend interactivity without heavy frameworks.
+- **`app.py`**: Flask application entry point. Initialises the app, registers the `Psycopg2Wrapper` database compatibility layer, configures CSRF protection and session security, and registers all route blueprints. Delegates all routing to the `routes_*.py` files and all database interaction to `models.py`.
+- **`db.py`**: Database connection management. Contains the `get_db()` function and the `Psycopg2Wrapper` class that auto-converts SQLite `?` placeholders to PostgreSQL `%s`, allowing `models.py` to remain in SQLite syntax throughout.
+- **`models.py`**: The exclusive location for all SQL database queries. Organised into sections: user authentication, token ledger management, contribution creation and validation, quiz response tracking, forces layer queries, heatmap aggregation, and platform config retrieval.
+- **`agent.py`**: The AI digest agent. Triggered on contribution submission via `background.py`, it analyses the user's source excerpt, assesses quality and gaps relative to the claim, cleans submission text, and writes a plain-language summary to `contribution_digests`.
+- **`background.py`**: Manages background thread execution for the AI agent, ensuring the HTTP request returns immediately while the digest is generated asynchronously.
+- **`quiz.py`**: Rule-based classification logic for the diagnostic quiz. Scores user responses and routes them to their most relevant systemic lens.
+- **`viz.py`**: Queries the database to build the hierarchical data structure (categories → forces → lenses → issues → countries) required by the D3 zoomable sunburst visualisation.
+- **`seed.py`**: Dual-mode (SQLite/PostgreSQL) initialisation script. Populates the database with five lenses, their issues and indicators, four seeded forces with evidence chains and cross-lens links, and a "Data Archive" system user. Triggered via the `/seed-data` web route in production.
+- **`routes_auth.py`**: Registration and login routes. Handles password hashing, session creation, and hCaptcha validation.
+- **`routes_lens.py`**: Lens and issue display routes. Fetches issues with community evidence, issue-level comments, and related forces for each lens page.
+- **`routes_contribute.py`**: Contribution submission route. Handles form validation, calls `models.create_contribution()`, triggers the background AI digest, and redirects to the confirmation page.
+- **`routes_validate.py`**: Peer validation routes. Displays the pending contributions queue, handles approve/reject votes, checks thresholds, and triggers force claim elevation.
+- **`routes_forces.py`**: Forces layer routes. Displays the forces index grouped by category and individual force detail pages with evidence chains and cross-lens links.
+- **`routes_visual.py`**: Visualisation routes. Serves the heatmap page, the `/api/heatmap` JSON endpoint (with conviction/least-heard modes), and the D3 sunburst data endpoint.
+- **`routes_quiz.py`**: Quiz routes. Renders the quiz, scores responses, enforces the 90-day retake gate, and saves results.
+- **`routes_main.py`**: Index and general routes. Renders the landing page with dynamic lens grid.
+- **`routes_info.py`**: Informational page routes — `/how_it_works`, `/privacy`, `/terms`, `/commitments`, `/changelog`.
+- **`schema.sql`**: SQLite schema for local development.
+- **`schema_postgres.sql`**: PostgreSQL schema for production on Render. Key differences: `SERIAL PRIMARY KEY` instead of `AUTOINCREMENT`, `ON CONFLICT DO NOTHING` instead of `INSERT OR IGNORE`, no `PRAGMA` statements.
+- **`Procfile`**: Tells Render to serve the app via gunicorn: `web: gunicorn app:app`.
+- **`countries.json`**: Full ISO country list used for the contribution country dropdown and heatmap coordinate lookup.
+- **`templates/`**: All Jinja2 HTML templates. Key templates: `layout.html` (base), `lens.html` (issue display with collapsible evidence and discussion), `contribute.html` (contribution form with conditional fields by type), `validate.html` (peer validation queue), `heatmap.html` (Leaflet.js map with mode toggle), `force.html` (force detail with evidence chain), `commitments.html` (platform commitments page).
+- **`static/css/styles.css`**: All application styling.
+- **`static/js/sunburst.js`**: D3 zoomable sunburst implementation. Receives hierarchical JSON from `viz.py` via the sunburst API endpoint and renders the interactive five-layer mechanism visualisation.
 
 ---
 
