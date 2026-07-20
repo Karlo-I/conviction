@@ -35,14 +35,15 @@
                 
                 <!-- Navigation Links -->
                 <div class="nav-links" id="navLinks">
-                    <a href="{{ url_for('forces') }}">Forces</a>
                     
+                    <a href="{{ url_for('heatmap') }}">Heatmap</a>
+
                     {% if session.user_id %}
                         <a href="{{ url_for('contribute') }}">Contribute</a>
                         <a href="{{ url_for('validate') }}">Validate</a>
                     {% endif %}
-                    
-                    <a href="{{ url_for('heatmap') }}">Heatmap</a>
+
+                    <a href="{{ url_for('forces') }}">Forces</a>
                     
                 </div>
             </div>
