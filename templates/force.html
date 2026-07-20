@@ -24,7 +24,7 @@
         <!-- Spend Token Button (moved inside the box) -->
         <div style="margin-top: .5rem;">
             {% if session.user_id %}
-            <form method="POST" action="{{ url_for('lens.spend_force') }}" style="margin: 0;">
+            <form method="POST" action="{{ url_for('forces.spend_force') }}" style="margin: 0;">
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="force_id" value="{{ force.id }}">
                 <input type="hidden" name="force_slug" value="{{ force.slug }}">
