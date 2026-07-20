@@ -7,7 +7,7 @@
 
     <!-- Return Button -->
     <div style="margin-top: 3rem;">
-        <a href="{{ url_for('index') }}" style="font-size: 0.9rem; color: #457b9d; text-decoration: none;">&larr; All lenses</a>
+        <a href="{{ url_for('main.index') }}" style="font-size: 0.9rem; color: #457b9d; text-decoration: none;">&larr; All lenses</a>
     </div>
 
     <h1>{{ lens.title }}</h1>
@@ -120,7 +120,7 @@
                 <p style="color: #6c757d; margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto;">
                     This issue has been identified by the community but no data has been contributed yet.
                 </p>
-                <a href="{{ url_for('contribute') }}" class="cta-button">
+                <a href="{{ url_for('contribute.contribute') }}" class="cta-button">
                     Be the first to contribute
                 </a>
                 <p style="color: #adb5bd; margin-top: 1rem; font-size: 0.85rem;">
@@ -232,7 +232,7 @@
         <h2>Related forces</h2>
         {% for f in forces %}
         <div style="margin-bottom: .65rem;">
-            <a href="{{ url_for('force_detail', slug=f.slug) }}" style="font-weight: 600; color: #1d3557; text-decoration: none; font-size: 1.05rem;">{{ f.title }}</a>
+            <a href="{{ url_for('forces.force_detail', slug=f.slug) }}" style="font-weight: 600; color: #1d3557; text-decoration: none; font-size: 1.05rem;">{{ f.title }}</a>
             {% if f.explanation %}
                 <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #495057; line-height: 1.4;">{{ f.explanation }}</p>
             {% endif %}

@@ -13,7 +13,7 @@
         <p>There are no pending contributions waiting for your review right now.</p>
         <p class="empty-state-link">
             Check back later, or 
-            <a href="{{ url_for('contribute') }}">submit your own contribution</a>.
+            <a href="{{ url_for('contribute.contribute') }}">submit your own contribution</a>.
         </p>
     </div>
     {% endif %}
@@ -38,7 +38,7 @@
 
             <div class="vote-counts" id="votes-{{ c.id }}" style="margin-top: 1.5rem;">
                 <!-- Approve Button/Counter -->
-                <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
+                <form method="POST" action="{{ url_for('validate.cast_vote', contribution_id=c.id) }}" class="vote-form">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" name="vote" value="approve" class="vote-badge approve-badge">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -49,7 +49,7 @@
                 </form>
 
                 <!-- Reject Button/Counter -->
-                <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
+                <form method="POST" action="{{ url_for('validate.cast_vote', contribution_id=c.id) }}" class="vote-form">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" name="vote" value="reject" class="vote-badge reject-badge">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -119,7 +119,7 @@
 
             <div class="vote-counts" id="votes-{{ c.id }}" style="margin-top: 1.5rem;">
                 <!-- Approve Button/Counter -->
-                <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
+                <form method="POST" action="{{ url_for('validate.cast_vote', contribution_id=c.id) }}" class="vote-form">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" name="vote" value="approve" class="vote-badge approve-badge">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -130,7 +130,7 @@
                 </form>
 
                 <!-- Reject Button/Counter -->
-                <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
+                <form method="POST" action="{{ url_for('validate.cast_vote', contribution_id=c.id) }}" class="vote-form">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" name="vote" value="reject" class="vote-badge reject-badge">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -197,7 +197,7 @@
 
             <div class="vote-counts" id="votes-{{ c.id }}" style="margin-top: 1.5rem;">
                 <!-- Approve Button/Counter -->
-                <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
+                <form method="POST" action="{{ url_for('validate.cast_vote', contribution_id=c.id) }}" class="vote-form">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" name="vote" value="approve" class="vote-badge approve-badge">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -208,7 +208,7 @@
                 </form>
 
                 <!-- Reject Button/Counter -->
-                <form method="POST" action="{{ url_for('cast_vote', contribution_id=c.id) }}" class="vote-form">
+                <form method="POST" action="{{ url_for('validate.cast_vote', contribution_id=c.id) }}" class="vote-form">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" name="vote" value="reject" class="vote-badge reject-badge">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">

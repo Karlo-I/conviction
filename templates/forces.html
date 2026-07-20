@@ -145,7 +145,7 @@
                         <div class="force-card-grid">
                             <div>
                                 <span class="force-category-tag">{{ category.replace('_', ' ').title() }}</span>
-                                <h3><a href="{{ url_for('force_detail', slug=force.slug) }}">{{ force.title }}</a></h3>
+                                <h3><a href="{{ url_for('forces.force_detail', slug=force.slug) }}">{{ force.title }}</a></h3>
                             </div>
                         </div>
                         {% endfor %}

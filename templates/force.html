@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="force-detail">
-    <p><a href="{{ url_for('forces') }}" style="font-size: 0.9rem; color: #457b9d; text-decoration: none;">← All forces</a></p>
+    <p><a href="{{ url_for('forces.forces') }}" style="font-size: 0.9rem; color: #457b9d; text-decoration: none;">← All forces</a></p>
     <h1>{{ force.title }}</h1>
 
     {% if force.strategic_implication %}

@@ -174,7 +174,7 @@ def spend_force():
     balance = models.get_token_balance(db, user_id)
     if balance < 1:
         flash('Insufficient tokens', 'error')
-        return redirect(url_for('force_detail', slug=force_slug))
+        return redirect(url_for('forces.force_detail', slug=force_slug))
     
     # Verify the force exists
     force = db.execute(
@@ -190,7 +190,7 @@ def spend_force():
     current_balance = models.get_token_balance(db, user_id)
     if current_balance < 1:
         flash('Insufficient tokens', 'error')
-        return redirect(url_for('force_detail', slug=force_slug))
+        return redirect(url_for('forces.force_detail', slug=force_slug))
     
     models.add_token_transactions(db, user_id, -1, 'spend', force_id=force_id)
 
@@ -198,4 +198,4 @@ def spend_force():
     session['token_balance'] = models.reconcile_token_balance(db, user_id)
     
     flash('Token spent.', 'success')
-    return redirect(url_for('force_detail', slug=force_slug))
+    return redirect(url_for('forces.force_detail', slug=force_slug))

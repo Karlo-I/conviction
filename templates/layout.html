@@ -21,7 +21,7 @@
     <nav>
         <div class="nav-container">
             <div class="nav-left-group">
-                <a href="{{ url_for('index') }}" class="logo">
+                <a href="{{ url_for('main.index') }}" class="logo">
                     <img src="{{ url_for('static', filename='images/Luffy-Straw-Hat1.png') }}" alt="Conviction logo" class="logo-img">
                      Conviction
                 </a>
@@ -36,14 +36,14 @@
                 <!-- Navigation Links -->
                 <div class="nav-links" id="navLinks">
                     
-                    <a href="{{ url_for('heatmap') }}">Heatmap</a>
+                    <a href="{{ url_for('visual.heatmap') }}">Heatmap</a>
 
                     {% if session.user_id %}
-                        <a href="{{ url_for('contribute') }}">Contribute</a>
-                        <a href="{{ url_for('validate') }}">Validate</a>
+                        <a href="{{ url_for('contribute.contribute') }}">Contribute</a>
+                        <a href="{{ url_for('validate.validate') }}">Validate</a>
                     {% endif %}
 
-                    <a href="{{ url_for('forces') }}">Forces</a>
+                    <a href="{{ url_for('forces.forces') }}">Forces</a>
                     
                 </div>
             </div>

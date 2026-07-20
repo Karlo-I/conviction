@@ -7,7 +7,7 @@
     <h1>What do you feel most directly?</h1>
     <p style="margin-bottom: 2rem; color: #666;">Five questions. Your answers determine where you start — you can explore all three lenses from there.</p>
 
-    <form method="POST" action="{{ url_for('quiz_route') }}">
+    <form method="POST" action="{{ url_for('quiz.quiz_route') }}">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
         {% for question in questions %}
