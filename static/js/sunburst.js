@@ -95,11 +95,14 @@ function drawSunburst(data, container) {
     // standard alternative to hiding text outright or letting it overflow
     // into a neighboring wedge.
     function fitArcText(name, coords) {
-        const CHAR_SPACE = 2;
+        const CHAR_SPACE = 4.5; 
+        
         const deltaAngle = coords.x1 - coords.x0;
         const r = ((coords.y0 + coords.y1) / 2) * radius;
         const perimeter = r * deltaAngle;
+        
         const maxChars = Math.floor(perimeter / CHAR_SPACE);
+        
         if (name.length <= maxChars) return name;
         if (maxChars < 4) return '';   // truly too narrow for even "…" to help
         return name.substring(0, maxChars - 1) + '…';
