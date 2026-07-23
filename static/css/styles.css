@@ -776,14 +776,26 @@ main {
     }
     
     .user-menu {
-        flex-wrap: wrap;
+        flex-wrap: nowrap !important; /* Forces items to stay on one line */
         justify-content: flex-end;
-        gap: 0.5rem;
+        gap: 0.25rem; /* Reduces space between badge and link */
+        align-items: center;
     }
     
     .username-display {
         display: none;
     }
+
+    .token-badge {
+        padding: 0.2rem 0.5rem !important; 
+        font-size: 0.8rem !important;
+    }
+    
+    .user-menu a {
+        font-size: 0.9rem !important;
+        padding: 0.2rem 0.5rem !important;
+    }
+
 }
 
 @media screen and (max-width: 768px) {
@@ -811,14 +823,14 @@ nav, .nav-container, .user-menu {
 .token-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 0.35rem 0.75rem;
+    gap: 0.3rem;
+    background-color: #9e8042; /* Gold background */
+    border: 1px solid #9e8042;
+    padding: 0.05rem 0.5rem;
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #7f1d1d; /* Burgundy text */
     transition: all 0.2s ease;
     position: relative;
     cursor: help;
@@ -826,7 +838,7 @@ nav, .nav-container, .user-menu {
 }
 
 .token-badge:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background-color: #8a6f39; /* Slightly darker gold on hover */
 }
 
 .token-badge svg {
