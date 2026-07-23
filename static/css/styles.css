@@ -735,6 +735,16 @@ main {
 }
 
 @media screen and (max-width: 900px) {
+    /* Bring Logo and Hamburger closer together */
+    .nav-left-group {
+        gap: 0.5rem !important; 
+    }
+
+    /* Hide the text "Conviction" on mobile */
+    .logo-text {
+        display: none;
+    }
+
     .hamburger {
         display: flex;
     }
@@ -777,9 +787,7 @@ main {
     
     .user-menu {
         flex-wrap: nowrap !important;
-        justify-content: flex-end;
-        gap: 0.2rem !important; /* Reduced gap to save space */
-        align-items: center;
+        gap: 0.5rem !important;
     }
     
     .username-display {
@@ -787,14 +795,13 @@ main {
     }
 
     .token-badge {
-        padding: 0.2rem 0.4rem !important; /* Tighter padding */
-        font-size: 0.75rem !important; /* Smaller text */
+        padding: 0.2rem 0.5rem !important;
+        font-size: 0.8rem !important;
     }
     
     .user-menu a {
-        font-size: 0.8rem !important; /* Smaller text */
-        padding: 0.2rem 0.4rem !important;
-        white-space: nowrap; /* KEY FIX: Prevents "Log" and "out" from stacking */
+        font-size: 0.9rem !important;
+        white-space: nowrap; /* Keeps "Log out" on one line */
     }
 
 }
