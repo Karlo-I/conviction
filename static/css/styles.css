@@ -776,9 +776,9 @@ main {
     }
     
     .user-menu {
-        flex-wrap: nowrap !important; /* Forces items to stay on one line */
+        flex-wrap: nowrap !important;
         justify-content: flex-end;
-        gap: 0.25rem; /* Reduces space between badge and link */
+        gap: 0.2rem !important; /* Reduced gap to save space */
         align-items: center;
     }
     
@@ -787,13 +787,14 @@ main {
     }
 
     .token-badge {
-        padding: 0.2rem 0.5rem !important; 
-        font-size: 0.8rem !important;
+        padding: 0.2rem 0.4rem !important; /* Tighter padding */
+        font-size: 0.75rem !important; /* Smaller text */
     }
     
     .user-menu a {
-        font-size: 0.9rem !important;
-        padding: 0.2rem 0.5rem !important;
+        font-size: 0.8rem !important; /* Smaller text */
+        padding: 0.2rem 0.4rem !important;
+        white-space: nowrap; /* KEY FIX: Prevents "Log" and "out" from stacking */
     }
 
 }
