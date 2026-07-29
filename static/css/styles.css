@@ -1482,7 +1482,7 @@ button,
 .lens-container {
     max-width: 900px;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0 .5rem;
 }
 
 /* Individual Issue Cards - Clear separation */
@@ -1784,12 +1784,12 @@ button,
 /* Responsive */
 @media screen and (max-width: 768px) {
     .issue {
-        padding: 1rem;
+        padding: 1.4rem;
         margin-bottom: 1.5rem;
     }
     
     .related-forces {
-        padding: 1rem;
+        padding: 1.4rem;
     }
 
     h1 {
