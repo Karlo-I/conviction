@@ -33,7 +33,12 @@
                 </button>
             </form>
             {% else %}
-            <a href="{{ url_for('auth.login') }}" style="font-size: 0.85rem; color: #457b9d; font-weight: 500;">Log in to spend a token</a>
+            <div style="margin-top: 0.5rem;">
+                <a href="{{ url_for('auth.login') }}" style="font-size: 0.85rem; color: #457b9d; font-weight: 500;">Log in to spend a token</a>
+                <p class="token-helper-text">
+                    💡 Tokens help signal conviction on evidence you find compelling. Each user receives tokens to allocate thoughtfully.
+                </p>
+            </div>
             {% endif %}
         </div>
     </div>
