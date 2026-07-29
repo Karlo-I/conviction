@@ -40,41 +40,48 @@
 
             {% for c in issue.community_contributions %}
             <div class="validate-card" style="margin-bottom: 1.5rem; border-left: 4px solid #457b9d; padding-left: 2rem;">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                    <div>
-                        <strong style="font-size: 1.1rem; color: #1d3557;">{{ c.country_name }} </strong>
-                        <span style="color: #666; margin-left: 0.0rem;">- {{ c.formatted_date }}</span>
-                    </div>
-                    <span style="font-size: 0.85rem; color: #666;">
-                        Submitted by <strong>{{ c.username }}</strong>
-                    </span>
-                </div>
-                
+    
+                {# 1. OBSERVATION FIRST - The main content #}
                 {% if c.title %}
-                    <h4 style="margin-bottom: 0.5rem; color: #2d3436;">{{ c.title }}</h4>
+                    <h4 style="margin-bottom: 0.5rem; color: #2d3436; font-size: 1.05rem;">{{ c.title }}</h4>
                 {% endif %}
                 
                 {% if c.note %}
-                    <p style="margin-bottom: 1rem; line-height: 1.6;">{{ c.note }}</p>
+                    <p style="margin-bottom: 1rem; line-height: 1.6; font-size: 0.95rem; color: #2d3436;">{{ c.note }}</p>
                 {% endif %}
-                
+
+                {# 2. SOURCE (unchanged) #}
                 {% if c.source_url %}
-                    <p style="margin-bottom: 1rem; font-size: 0.9rem;">
+                    <p style="margin-top: 0rem; margin-bottom: 0rem; font-size: 0.9rem;">
                         <strong>Source:</strong> 
                         <a href="{{ c.source_url }}" target="_blank" rel="noopener noreferrer" style="color: #457b9d;">
                             {{ c.source_url }}
                         </a>
                     </p>
                 {% endif %}
-
-                <!-- Token Count Badge (subtle, top) -->
-                <div style="margin-bottom: 0.5rem;">
+                
+                {# 3. METADATA FOOTER - Clean, uniform, muted #}
+                <div class="evidence-meta">
+                    <span class="meta-item">
+                        <span class="meta-label">Country</span> {{ c.country_name }}
+                    </span>
+                    <span class="meta-separator">·</span>
+                    <span class="meta-item">
+                        <span class="meta-label">Date</span> {{ c.formatted_date }}
+                    </span>
+                    <span class="meta-separator">·</span>
+                    <span class="meta-item">
+                        <span class="meta-label">By</span> <strong>{{ c.username }}</strong>
+                    </span>
+                </div>
+            
+                {# 4. TOKEN COUNT & SPEND BUTTON (unchanged) #}
+                <div style="margin-top: 1rem;">
                     <span style="font-size: 0.85rem; color: #6c757d; font-weight: 500;">
                         {{ c.token_spend }} token{{ 's' if c.token_spend != 1 else '' }} spent
                     </span>
                 </div>
-
-                <!-- Spend Button (aligned left, clean) -->
+            
                 {% if session.user_id %}
                 <form method="POST" action="{{ url_for('lens.spend') }}" style="margin-top: 0.5rem; margin-bottom: 0;">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
@@ -88,6 +95,7 @@
                 <a href="{{ url_for('auth.login') }}" style="font-size: 0.85rem; color: #457b9d; margin-top: 0.5rem; display: inline-block;">Log in to spend a token</a>
                 {% endif %}
                 
+                {# 5. AI DIGEST (unchanged) #}
                 {% if c.ai_summary %}
                 <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
                     <details>
