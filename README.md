@@ -2,14 +2,12 @@
 ### CS50x Final Project — Living Project Brief
 **AI Assistance Disclosure:** This `README.md` file was developed with the assistance of AI language models (Claude and Qwen) to refine phrasing, improve formatting, and ensure clarity. All project architecture, design decisions, feature logic, and technical direction are strictly the author's own.
 
-**Last Updated:** July 20, 2026 (rev 19)
-
-**Status:** Deployed — Live at https://conviction-20z3.onrender.com/
+**Last Updated:** August 10, 2026 (rev 20)
 
 ---
 
 #### Video Demo
-`<URL to be added after recording>`
+`<https://youtu.be/BR4Fp412k8k>`
 
 ---
 
@@ -35,7 +33,7 @@ The root problem is not individual greed or moral failure. It is that certain sy
 
 The platform classifies mechanisms — financial capture, regulatory arbitrage, externalised cost, information asymmetry — and presents the evidence chains that demonstrate those mechanisms operating. The evidence speaks. Users conclude.
 
-The platform's commitments to truth, transparency, epistemic humility, and non-discrimination are published at https://conviction-20z3.onrender.com/commitments.
+The platform's commitments to truth, transparency, epistemic humility, and non-discrimination are published at the commitment route with a link provided in the footer of the web application.
 
 ---
 
@@ -50,7 +48,7 @@ The platform's commitments to truth, transparency, epistemic humility, and non-d
 | Mapping | Leaflet.js | Free, open source, handles global heatmap |
 | Visual | D3 Zoomable sunburst | Data visualisation for force mechanisms |
 | AI Agent | claude-haiku-4-5-20251001 | Contribution digest generation |
-| Hosting | Render (free tier) | Live at https://conviction-20z3.onrender.com/ |
+| Hosting | Render (free tier - database w/ 30-day expiry) | Live at https://conviction-20z3.onrender.com/ |
 
 **Cost target: Near-zero**
 The only ongoing cost is the AI agent call triggered when a user submits a contribution. Using a lightweight model (claude-haiku or gpt-4o-mini), each call costs approximately $0.002–$0.01. At low traffic — say 100 contributions in the first few months — total cost is under $1. Cost scales with contributions submitted, not with page views or users. This is the right scaling relationship. All other components remain free.
@@ -191,11 +189,11 @@ Community sources may vary in quality, specificity, or methodological grounding.
 
 ---
 
-**Development timeline:** 4 weeks (June 19 - July 16, 2026)
+**Development timeline:** 4 weeks (June 19 - July 26, 2026)
 - Week 1: Schema, auth, Flask skeleton
 - Week 2: Lenses, quiz, token system
 - Week 3: Heatmap, contributions, AI agent, validation
-- Week 4: Polish, PostgreSQL migration, deployment
+- Week 4-5: Polish, PostgreSQL migration, deployment
 
 ---
 
@@ -231,7 +229,7 @@ A platform built around systemic critique will attract users who already agree. 
 
 **Live Deployment**
 - **URL:** https://conviction-20z3.onrender.com/
-- **Infrastructure:** Render free tier (Web Service + Managed PostgreSQL)
+- **Infrastructure:** Render free tier (Web Service + Managed PostgreSQL (database is valid for 30 days only))
 - **Availability:** UptimeRobot configured to ping every 5 minutes, preventing the 50-second cold start inherent to free-tier hosting.
 
 **Deferred Features (Post-Submission)**
@@ -245,8 +243,8 @@ Every Python and JavaScript file in this project includes a header comment attri
 ---
 
 ## Submission Checklist
-- [ ] Step 1: Record 3-minute video (title, name, GitHub username, edX username, city/country, date) → upload to YouTube unlisted
-- [ ] Step 2: Finalise README.md (750+ words) → run `submit50 cs50/problems/2026/x/project`
+- [x] Step 1: Record 3-minute video (title, name, GitHub username, edX username, city/country, date) → upload to YouTube unlisted
+- [x] Step 2: Finalise README.md (750+ words) → run `submit50 cs50/problems/2026/x/project`
 - [x] Step 3 prep: Visit https://conviction-20z3.onrender.com/ to confirm live deployment
 - [ ] Step 3: Visit cs50.me/cs50x to trigger certificate generation
 - [ ] Deadline: Thursday, December 31, 2026 at 4:59 PM PDT
