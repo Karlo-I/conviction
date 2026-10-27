@@ -23,6 +23,7 @@ Users take a short diagnostic quiz that personalises which lens they see first, 
 
 The platform is designed for people who already sense something is wrong and want to understand the mechanism — and made accessible enough that people who don't yet see the problem can be brought in through the quiz. It names no individual actors. It presents mechanisms, evidence chains, and sourced data and lets users draw their own conclusions.
 
+[![Architecture diagram of karlo-i/conviction](https://gitdiagram.com/karlo-i/conviction/diagram.png)](https://gitdiagram.com/karlo-i/conviction?utm_source=readme&utm_medium=picture)
 ---
 
 ## The Thesis
